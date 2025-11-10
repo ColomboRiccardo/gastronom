@@ -23,6 +23,7 @@ import {
     X,
     ZoomIn
 } from 'lucide-react';
+import type {CartItem as GenericCartItem} from '@/types';
 
 type Product = {
     id: string;
@@ -53,10 +54,8 @@ type Review = {
     comment: string;
     verified: boolean;
 };
-type CartItem = {
-    product: Product;
-    quantity: number;
-};
+
+type CartItem = GenericCartItem<Product>;
 
 export interface ProductPageProps {
     productId?: string;

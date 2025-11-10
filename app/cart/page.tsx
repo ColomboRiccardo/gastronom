@@ -5,7 +5,6 @@ import {useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import {
     AlertCircle,
-    ArrowLeft,
     ChevronRight,
     Heart,
     Info,
@@ -18,16 +17,7 @@ import {
     TruckIcon
 } from 'lucide-react';
 
-export type Product = {
-    id: string;
-    name: string;
-    price: number;
-    category: string;
-    image: string;
-    description: string;
-    badge?: string;
-    weight: string;
-};
+
 export type CartItem = {
     product: Product;
     quantity: number;
@@ -138,28 +128,6 @@ export default function CartPage({
     const isEmpty = cartItems.length === 0;
     return <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-red-50/30">
         {/* Header */}
-        <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-            <div className="container mx-auto px-4 sm:px-6">
-                <div className="flex items-center justify-between h-16 sm:h-20">
-                    <button onClick={onContinueShopping}
-                            className="flex items-center gap-2 text-gray-700 hover:text-red-900 transition-colors group"
-                            aria-label="Back to shop">
-                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform"/>
-                        <span className="text-sm font-medium hidden sm:inline">Back to Shop</span>
-                    </button>
-
-                    <h1 className="text-2xl sm:text-3xl font-serif tracking-wider text-red-900">
-                        GASTRONOM
-                    </h1>
-
-                    <div className="flex items-center gap-2 text-gray-700">
-                        <ShoppingCart className="w-5 h-5"/>
-                        <span className="text-sm font-medium">{cartItems.length} items</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
         <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
             {isEmpty ? (/* Empty Cart State */
                 <motion.div initial={{
