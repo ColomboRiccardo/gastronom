@@ -7,15 +7,10 @@ import {ChevronRight, Home, SlidersHorizontal, X} from 'lucide-react';
 import {ALLPRODUCTS, collectionData} from "@/lib/apiExample";
 import {SortOption} from "@/types";
 import DetailedProductCard from "@/components/DetailedProductCard";
-import {useCart} from "@/hooks";
 
 export default function CollectionsPage() {
-    const {cart, addToCart, removeFromCart, clearCart} = useCart();
-
     const collection = "caviar"
 
-    const [favorites, setFavorites] = useState<string[]>([]);
-    const [comparedProducts, setComparedProducts] = useState<string[]>([]);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [sortBy, setSortBy] = useState<SortOption>('featured');
@@ -58,14 +53,6 @@ export default function CollectionsPage() {
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-    const toggleFavorite = (productId: string) => {
-        setFavorites(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]);
-    };
-
-    const toggleCompare = (productId: string) => {
-        setComparedProducts(prev => prev.includes(productId) ? prev.filter(id => id !== productId) : prev.length < 3 ? [...prev, productId] : prev);
-    };
 
     return <div className="min-h-screen bg-white">
         {/* Breadcrumb */}
@@ -178,23 +165,6 @@ export default function CollectionsPage() {
                                 </label>
                             </div>
                         </div>
-
-                        {/* Product Comparison */}
-                        {comparedProducts.length > 0 && <motion.div initial={{
-                            opacity: 0,
-                            y: 10
-                        }} animate={{
-                            opacity: 1,
-                            y: 0
-                        }} className="bg-amber-50 border border-amber-200 rounded-xl p-6">
-                            <h4 className="text-sm font-semibold text-amber-900 mb-3">
-                                Compare Products ({comparedProducts.length}/3)
-                            </h4>
-                            <button
-                                className="w-full px-4 py-2.5 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors">
-                                Compare Now
-                            </button>
-                        </motion.div>}
                     </div>
                 </aside>
 
@@ -235,12 +205,9 @@ export default function CollectionsPage() {
                     {/* Products Grid */}
                     <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
                         {paginatedProducts.map((product, index) => <DetailedProductCard key={product.id}
-                                                                                        product={product} index={index}
-                                                                                        addToCart={addToCart}
-                                                                                        toggleFavorite={toggleFavorite}
-                                                                                        favorites={favorites}
-                                                                                        comparedProducts={comparedProducts}
-                                                                                        toggleCompare={toggleCompare}/>)}
+                                                                                        product={product}
+                                                                                        index={index}/>)
+                        }
                     </div>
 
                     {/* Pagination */}

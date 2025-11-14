@@ -1,3 +1,6 @@
+import {ForwardRefExoticComponent, RefAttributes} from "react";
+import {LucideProps} from "lucide-react";
+
 export interface ProductType {
     id: string;
     name: string;
@@ -39,4 +42,15 @@ export type CartContextType = {
     removeFromCart: (productId: string) => void;
     cartTotal: number;
     cartCount: number;
+}
+
+export type FavouritesContextType = {
+    favourites: string[]
+    toggleFavourite: (productId: string) => void
+}
+
+export type FeaturesType = {
+    icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>,
+    title: string,
+    description: string
 }

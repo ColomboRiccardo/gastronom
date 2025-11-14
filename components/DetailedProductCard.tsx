@@ -2,22 +2,12 @@ import React from 'react'
 import {Heart, Plus, Star} from "lucide-react";
 import {motion} from 'framer-motion';
 import {ProductType} from "@/types";
+import {useCart, useFavourites} from "@/hooks";
 
-const DetailedProductCard = ({
-                                 product,
-                                 index,
-                                 addToCart,
-                                 toggleFavorite,
-                                 favorites,
-                                 comparedProducts,
-                                 toggleCompare
-                             }: {
-    product: ProductType, index: number, addToCart: (product: ProductType) => void,
-    toggleFavorite: (productId: string) => void,
-    favorites: string[],
-    comparedProducts: string[],
-    toggleCompare: (productId: string) => void
-}) => {
+const DetailedProductCard = ({product, index}: { product: ProductType, index: number }) => {
+    const {addToCart} = useCart()
+    const {favourites, toggleFavourite} = useFavourites()
+
     return (
         <motion.div key={product.id} initial={{
             opacity: 0,
@@ -43,11 +33,11 @@ const DetailedProductCard = ({
         </span>
                     </div>}
                 <div className="absolute top-3 right-3 flex flex-col gap-2">
-                    <button onClick={() => toggleFavorite(product.id)}
+                    <button onClick={() => toggleFavourite(product.id)}
                             className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors"
                             aria-label="Add to favorites">
                         <Heart
-                            className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-800 text-red-800' : 'text-gray-600'}`}/>
+                            className={`w-4 h-4 ${favourites.includes(product.id) ? 'fill-red-800 text-red-800' : 'text-gray-600'}`}/>
                     </button>
                 </div>
             </div>
@@ -85,18 +75,13 @@ const DetailedProductCard = ({
                         <Plus className="w-5 h-5"/>
                     </button>
                 </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                    <label
-                        className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 hover:text-amber-600 transition-colors">
-                        <input type="checkbox" checked={comparedProducts.includes(product.id)}
-                               onChange={() => toggleCompare(product.id)}
-                               disabled={comparedProducts.length >= 3 && !comparedProducts.includes(product.id)}
-                               className="w-4 h-4 text-amber-600 rounded focus:ring-amber-600"/>
-                        Compare
-                    </label>
-                </div>
             </div>
         </motion.div>)
 }
 export default DetailedProductCard
+
+
+//TODO
+//- add stock availability
+//- if possible best before date
+//-

@@ -1,4 +1,4 @@
-import {CategoryType, ProductType} from "@/types";
+import {CategoryType, FeaturesType, ProductType} from "@/types";
 import {Award, Shield, Star, Truck} from "lucide-react";
 
 export const HERO_PRODUCTS = [
@@ -126,7 +126,7 @@ export const FEATURES = [
         icon: Star,
         title: 'Expert Curation',
         description: 'Carefully selected by our culinary specialists'
-    }] as any[];
+    }] as FeaturesType[];
 export const collectionData = {
     caviar: {
         title: 'Premium Caviar Collection',

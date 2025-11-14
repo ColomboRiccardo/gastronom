@@ -5,7 +5,7 @@ import {motion} from 'framer-motion';
 import {ChevronRight} from 'lucide-react';
 import MinProductCard from "@/components/MinProductCard";
 import CategoryCard from "@/components/CategoryCard";
-import ProductCard from "@/components/ProductCard";
+import DetailedProductCard from "@/components/DetailedProductCard";
 import {BESTSELLERS, FEATURED_CATEGORIES, FEATURES, HERO_PRODUCTS} from "@/lib/apiExample";
 import {GastronomHomepageProps} from "@/types";
 
@@ -139,8 +139,7 @@ export default function GastronomHomepage(props: GastronomHomepageProps) {
                     </motion.div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {BESTSELLERS.map((product, index) => <ProductCard key={index} product={product}
-                                                                          handleAddToCart={handleAddToCart}/>)}
+                        {BESTSELLERS.map((product, index) => <DetailedProductCard key={index} product={product}/>)}
                     </div>
                 </div>
             </section>
