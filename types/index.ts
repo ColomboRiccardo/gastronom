@@ -37,7 +37,7 @@ export type CartContextType = {
     setCartOpen: (open: boolean) => void;
     cart: CartProductType[];
     setCart: (cart: CartProductType[]) => void;
-    addToCart: (product: ProductType) => void;
+    addToCart: (product: ProductType, quantity?: number) => void;
     updateQuantity: (productId: string, delta: number) => void;
     removeFromCart: (productId: string) => void;
     cartTotal: number;
@@ -54,3 +54,34 @@ export type FeaturesType = {
     title: string,
     description: string
 }
+
+export type DetailedProductType = {
+    id: string;
+    name: string;
+    price: number;
+    originalPrice?: number;
+    category: string;
+    images: string[];
+    description: string;
+    longDescription: string;
+    badge?: string;
+    weight: string;
+    rating: number;
+    reviews: number;
+    inStock: boolean;
+    stockCount: number;
+    features: string[];
+    specifications: {
+        label: string;
+        value: string;
+    }[];
+};
+
+export type ReviewType = {
+    id: string;
+    author: string;
+    rating: number;
+    date: string;
+    comment: string;
+    verified: boolean;
+};

@@ -1,4 +1,4 @@
-import {CategoryType, FeaturesType, ProductType} from "@/types";
+import {CategoryType, DetailedProductType, FeaturesType, ProductType, ReviewType} from "@/types";
 import {Award, Shield, Star, Truck} from "lucide-react";
 
 export const HERO_PRODUCTS = [
@@ -127,7 +127,7 @@ export const FEATURES = [
         title: 'Expert Curation',
         description: 'Carefully selected by our culinary specialists'
     }] as FeaturesType[];
-export const collectionData = {
+export const COLLECTIONDATA = {
     caviar: {
         title: 'Premium Caviar Collection',
         description: 'The finest selection of sturgeon roe, sourced from pristine waters and prepared with centuries-old techniques. Each tin represents the pinnacle of luxury and taste.',
@@ -291,3 +291,75 @@ export const ALLPRODUCTS: ProductType[] = [
         reviews: 156,
         inStock: true
     }];
+
+export const REVIEWS: ReviewType[] = [{
+    id: '1',
+    author: 'James Morrison',
+    rating: 5,
+    date: 'March 15, 2024',
+    comment: 'Absolutely exceptional caviar. The texture is perfect and the flavor is sublime. Worth every penny for special occasions.',
+    verified: true
+}, {
+    id: '2',
+    author: 'Sofia Petrov',
+    rating: 5,
+    date: 'March 10, 2024',
+    comment: 'This is the real deal. Having grown up with authentic caviar, I can say this is as good as it gets. The delivery packaging was also impressive.',
+    verified: true
+}, {
+    id: '3',
+    author: 'Michael Chen',
+    rating: 4,
+    date: 'March 5, 2024',
+    comment: 'Outstanding quality, though quite pricey. Perfect for our anniversary dinner. The buttery flavor is exactly what you want from Beluga.',
+    verified: true
+}];
+
+// Sample product data
+export const DETAILEDPRODUCTDATA: DetailedProductType = {
+    id: '1',
+    name: 'Beluga Caviar Imperial',
+    price: 280,
+    originalPrice: 320,
+    category: 'caviar',
+    images: ['https://images.unsplash.com/photo-1535473895227-bdecb20fb157?w=1200', 'https://images.unsplash.com/photo-1600243241290-a3cfab8e7ffe?w=1200', 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=1200', 'https://images.unsplash.com/photo-1604909052743-94e838986d24?w=1200'],
+    description: '50g Imperial Selection - Rare Beluga',
+    longDescription: 'Our Beluga Caviar Imperial represents the pinnacle of luxury and refinement. Sourced from the pristine waters of the Caspian Sea, these large, delicate pearls are hand-selected and processed using traditional methods passed down through generations. Each tin contains only the finest roe, characterized by its buttery texture and complex, nuanced flavor profile that develops beautifully on the palate.',
+    badge: 'PREMIUM',
+    weight: '50g',
+    rating: 5.0,
+    reviews: 127,
+    inStock: true,
+    stockCount: 8,
+    features: ['Wild-caught Beluga sturgeon from sustainable sources', 'Hand-selected and graded by master caviar experts', 'Traditional Malossol preparation (lightly salted)', 'Delivered in temperature-controlled packaging', 'Certificate of authenticity included', 'Best consumed within 6 weeks of opening'],
+    specifications: [{
+        label: 'Origin',
+        value: 'Caspian Sea'
+    }, {
+        label: 'Species',
+        value: 'Huso Huso (Beluga Sturgeon)'
+    }, {
+        label: 'Grade',
+        value: 'Imperial Selection'
+    }, {
+        label: 'Color',
+        value: 'Light to Dark Gray'
+    }, {
+        label: 'Bead Size',
+        value: '3.0-3.5mm'
+    }, {
+        label: 'Salt Content',
+        value: '3-4% (Malossol)'
+    }, {
+        label: 'Storage',
+        value: '-2°C to 2°C'
+    }, {
+        label: 'Shelf Life',
+        value: '6 months sealed, 6 weeks opened'
+    }]
+};
+
+export interface ProductPageProps {
+    productId?: string;
+    onNavigateBack?: () => void;
+}

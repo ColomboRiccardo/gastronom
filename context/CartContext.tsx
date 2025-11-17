@@ -10,18 +10,18 @@ export const CartProvider = ({children}: { children: React.ReactNode }) => {
     const [cartOpen, setCartOpen] = useState(false);
     const [cart, setCart] = useState<CartProductType[]>([]);
 
-    const addToCart = (product: ProductType) => {
+    const addToCart = (product: ProductType, quantity = 1) => {
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
                 return prev.map(item => item.id === product.id ? {
                     ...item,
-                    quantity: item.quantity + 1
+                    quantity: item.quantity + quantity
                 } : item);
             }
             return [...prev, {
                 ...product,
-                quantity: 1
+                quantity: quantity
             }];
         });
     };
