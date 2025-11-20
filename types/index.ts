@@ -16,6 +16,18 @@ export interface ProductType {
     inStock: boolean;
 }
 
+export interface DetailedProductType extends ProductType {
+    images: string[];
+    longDescription: string;
+    stockCount: number;
+    features: string[];
+    specifications: {
+        label: string;
+        value: string;
+    }[];
+    nutritionalValues?: string;
+}
+
 export type CategoryType = {
     id: number,
     name: string,
@@ -54,28 +66,6 @@ export type FeaturesType = {
     title: string,
     description: string
 }
-
-export type DetailedProductType = {
-    id: string;
-    name: string;
-    price: number;
-    originalPrice?: number;
-    category: string;
-    images: string[];
-    description: string;
-    longDescription: string;
-    badge?: string;
-    weight: string;
-    rating: number;
-    reviews: number;
-    inStock: boolean;
-    stockCount: number;
-    features: string[];
-    specifications: {
-        label: string;
-        value: string;
-    }[];
-};
 
 export type ReviewType = {
     id: string;

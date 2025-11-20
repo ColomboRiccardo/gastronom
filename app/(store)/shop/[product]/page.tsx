@@ -22,6 +22,7 @@ import {
 import {ALLPRODUCTS, DETAILEDPRODUCTDATA, REVIEWS} from "@/lib/apiExample";
 import {useCart, useFavourites} from "@/hooks";
 import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
+import {useParams} from "next/navigation";
 
 const relatedProducts = ALLPRODUCTS.filter(product => product.category === DETAILEDPRODUCTDATA.category);
 
@@ -30,6 +31,10 @@ export default function ProductPage() {
     const [quantity, setQuantity] = useState(1);
     const [imageZoom, setImageZoom] = useState(false);
     const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'reviews'>('description');
+
+    const {product} = useParams()
+    //TODO: connect product to API from params in url
+    //TODO: reunite api params (detailedproducttype, producttype, etc) into one single source
 
     const {addToCart} = useCart()
     const {favourites, toggleFavourite} = useFavourites()
