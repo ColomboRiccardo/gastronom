@@ -7,10 +7,10 @@ export interface ProductType {
     price: number;
     originalPrice?: number;
     category: string;
-    image: string;
+    image?: string;
     description: string;
     badge?: string;
-    weight: string;
+    weightInGrams: number;
     rating: number;
     reviews: number;
     inStock: boolean;

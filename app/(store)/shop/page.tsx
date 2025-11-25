@@ -4,7 +4,7 @@ import * as React from 'react';
 import {useMemo, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import {ChevronRight, Home, SlidersHorizontal, X} from 'lucide-react';
-import {ALLPRODUCTS, COLLECTIONDATA} from "@/lib/apiExample";
+import {COLLECTIONDATA, DETAILEDPRODUCTS} from "@/lib/apiExample";
 import {SortOption} from "@/types";
 import DetailedProductCard from "@/components/DetailedProductCard";
 import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
@@ -19,7 +19,7 @@ export default function ShopPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
     const currentCollection = COLLECTIONDATA[collection];
-    const categoryProducts = ALLPRODUCTS.filter(p => p.category === collection);
+    const categoryProducts = DETAILEDPRODUCTS.filter(p => p.category === collection);
 
     // Filter and sort products
     const filteredProducts = useMemo(() => {

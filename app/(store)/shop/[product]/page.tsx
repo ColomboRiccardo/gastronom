@@ -19,12 +19,12 @@ import {
     X,
     ZoomIn
 } from 'lucide-react';
-import {ALLPRODUCTS, DETAILEDPRODUCTDATA, REVIEWS} from "@/lib/apiExample";
+import {DETAILEDPRODUCTDATA, DETAILEDPRODUCTS, REVIEWS} from "@/lib/apiExample";
 import {useCart, useFavourites} from "@/hooks";
 import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
 import {useParams} from "next/navigation";
 
-const relatedProducts = ALLPRODUCTS.filter(product => product.category === DETAILEDPRODUCTDATA.category);
+const relatedProducts = DETAILEDPRODUCTS.filter(product => product.category === DETAILEDPRODUCTDATA.category);
 
 export default function ProductPage() {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -162,7 +162,7 @@ export default function ProductPage() {
                     {/* Actions */}
                     <div className="flex gap-4 mb-8">
                         <button
-                            onClick={(e) => addToCart(ALLPRODUCTS.filter(product => product.id === "1")[0], quantity)}
+                            onClick={(e) => addToCart(DETAILEDPRODUCTS.filter(product => product.id === "1")[0], quantity)}
                             disabled={!DETAILEDPRODUCTDATA.inStock}
                             className="flex-1 px-8 py-4 bg-red-800 text-white rounded-lg font-semibold hover:bg-red-900 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                             <ShoppingCart className="w-5 h-5"/>
