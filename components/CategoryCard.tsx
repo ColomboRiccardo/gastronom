@@ -1,7 +1,7 @@
 import {motion} from 'framer-motion'
 import React from 'react'
 
-const CategoryCard = ({category, key: index}) => {
+const CategoryCard = ({category, index: index}) => {
     return (
         <motion.div key={category.id} initial={{
             opacity: 0,

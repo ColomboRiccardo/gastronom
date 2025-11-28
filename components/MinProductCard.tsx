@@ -1,9 +1,10 @@
 import React from 'react'
 import {motion} from "framer-motion";
 import {Star} from "lucide-react";
-import {ProductType} from "@/types";
+import {DetailedProductType} from "@/types";
+import Image from "next/image";
 
-const MinProductCard = ({product, index}: { product: ProductType, index: number }) => {
+const MinProductCard = ({product, index}: { product: DetailedProductType, index: number }) => {
     return (
         <motion.div key={product.id} initial={{
             opacity: 0,
@@ -18,7 +19,9 @@ const MinProductCard = ({product, index}: { product: ProductType, index: number 
         }}
                     className={`bg-card rounded-xl p-4 shadow-md hover:shadow-xl transition-all ${index === 0 ? 'col-span-2' : ''}`}>
             <div className="aspect-square rounded-lg overflow-hidden mb-3">
-                <img src={product.image} alt={product.name} className="w-full h-full object-cover"/>
+                <Image src={product.images[0]} alt={product.name}
+                       className="w-full h-full object-cover" width={300}
+                       height={300}/>
             </div>
             <div className="flex items-start justify-between gap-2">
                 <div>

@@ -5,18 +5,14 @@ export interface ProductType {
     id: string;
     name: string;
     price: number;
-    originalPrice?: number;
+    originalPrice: number;
+    discount: number;
     category: string;
-    image?: string;
     description: string;
-    badge?: string;
     weightInGrams: number;
     rating: number;
     reviews: number;
     inStock: boolean;
-}
-
-export interface DetailedProductType extends ProductType {
     images: string[];
     longDescription: string;
     stockCount: number;
@@ -26,6 +22,7 @@ export interface DetailedProductType extends ProductType {
         value: string;
     }[];
     nutritionalValues?: string;
+    badges: BadgesType[];
 }
 
 export type CategoryType = {
@@ -42,7 +39,7 @@ export interface CartProductType extends ProductType {
 }
 
 export type SortOption = 'featured' | 'price-low' | 'price-high' | 'rating' | 'newest';
-export type CollectionType = 'caviar' | 'vodka' | 'pickles';
+//export type CollectionType = 'caviar' | 'vodka' | 'pickles';
 
 export type CartContextType = {
     cartOpen: boolean;
@@ -67,6 +64,13 @@ export type FeaturesType = {
     description: string
 }
 
+export type CollectionType = {
+    title: string,
+    description: string,
+    hero: string,
+    bgGradient: string
+}
+
 export type ReviewType = {
     id: string;
     author: string;
@@ -75,3 +79,5 @@ export type ReviewType = {
     comment: string;
     verified: boolean;
 };
+
+export type BadgesType = "BESTSELLING" | "HERO" | "LIMITED" | "NEW" | "PREMIUM" | "ORGANIC"

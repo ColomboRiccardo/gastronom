@@ -4,10 +4,10 @@ import React from 'react';
 import {ChevronRight} from 'lucide-react';
 import MinProductCard from "@/components/MinProductCard";
 import CategoryCard from "@/components/CategoryCard";
-import DetailedProductCard from "@/components/DetailedProductCard";
-import {BESTSELLERS, FEATURED_CATEGORIES, FEATURES, HERO_PRODUCTS} from "@/lib/apiExample";
+import {FEATURED_CATEGORIES, FEATURES, PRODUCTLIST} from "@/lib/apiExample";
 import CustomButton from "@/components/CustomButton";
 import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
+import ProductCard from "@/components/ProductCard";
 
 // @component: GastronomHomepage
 export default function GastronomHomepage() {
@@ -40,8 +40,9 @@ export default function GastronomHomepage() {
                         </VerticalAnimatedDiv>
 
                         <VerticalAnimatedDiv delay={0.4} className="grid grid-cols-2 gap-4">
-                            {HERO_PRODUCTS.map((product, index) => <MinProductCard key={index} index={index}
-                                                                                   product={product}/>)}
+                            {PRODUCTLIST.filter(item => item?.badges?.includes("HERO")).map((product, index) =>
+                                <MinProductCard key={index} index={index}
+                                                product={product}/>)}
                         </VerticalAnimatedDiv>
                     </div>
                 </div>
@@ -72,7 +73,8 @@ export default function GastronomHomepage() {
                     </VerticalAnimatedDiv>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {FEATURED_CATEGORIES.map((category, index) => <CategoryCard key={index} category={category}/>)}
+                        {FEATURED_CATEGORIES.map((category, index) => <CategoryCard key={index} index={index}
+                                                                                    category={category}/>)}
                     </div>
                 </div>
             </section>
@@ -85,8 +87,8 @@ export default function GastronomHomepage() {
                     </VerticalAnimatedDiv>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {BESTSELLERS.map((product, index) => <DetailedProductCard key={index} index={index}
-                                                                                  product={product}/>)}
+                        {PRODUCTLIST.map((product, index) => <ProductCard key={index} index={index}
+                                                                          product={product}/>)}
                     </div>
                 </div>
             </section>

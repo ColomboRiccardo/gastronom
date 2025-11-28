@@ -4,23 +4,24 @@ import * as React from 'react';
 import {useMemo, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import {ChevronRight, Home, SlidersHorizontal, X} from 'lucide-react';
-import {COLLECTIONDATA, DETAILEDPRODUCTS} from "@/lib/apiExample";
-import {SortOption} from "@/types";
-import DetailedProductCard from "@/components/DetailedProductCard";
+import {COLLECTIONDATA, PRODUCTLIST} from "@/lib/apiExample";
+import {CollectionType, SortOption} from "@/types";
 import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
+import ProductCard from "@/components/ProductCard";
+import Image from "next/image";
 
 export default function ShopPage() {
-    const collection = "caviar"
 
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [sortBy, setSortBy] = useState<SortOption>('featured');
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
     const [showOutOfStock, setShowOutOfStock] = useState(true);
+    const [collection, setCollection] = useState("all")
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
-    const currentCollection = COLLECTIONDATA[collection];
-    const categoryProducts = DETAILEDPRODUCTS.filter(p => p.category === collection);
+    const categoryProducts = collection !== "all" ? PRODUCTLIST.filter(p => p.category === collection) : PRODUCTLIST;
 
+    const currentCollectionData: CollectionType = useMemo(() => COLLECTIONDATA[collection as keyof typeof COLLECTIONDATA], [collection])
     // Filter and sort products
     const filteredProducts = useMemo(() => {
         const filtered = categoryProducts.filter(p => {
@@ -28,7 +29,6 @@ export default function ShopPage() {
             const stockFilter = showOutOfStock || p.inStock;
             return inPriceRange && stockFilter;
         });
-
         // Sort
         switch (sortBy) {
             case 'price-low':
@@ -49,9 +49,7 @@ export default function ShopPage() {
         }
         return filtered;
     }, [categoryProducts, priceRange, showOutOfStock, sortBy]);
-
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
@@ -73,10 +71,11 @@ export default function ShopPage() {
 
             {/* Hero Section */}
             <section
-                className={`relative bg-gradient-to-br ${currentCollection.bgGradient} text-white overflow-hidden`}>
+                className={`relative bg-gradient-to-br ${currentCollectionData.bgGradient} text-white overflow-hidden`}>
                 <div className="absolute inset-0 opacity-20">
-                    <img src={currentCollection.hero} alt={currentCollection.title}
-                         className="w-full h-full object-cover"/>
+                    <Image src={currentCollectionData.hero} alt={currentCollectionData.title} width={1920}
+                           height={1080}
+                           className="w-full h-full object-cover"/>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
 
@@ -88,10 +87,10 @@ export default function ShopPage() {
                             </span>
                         </div>
                         <h2 className="text-5xl lg:text-6xl font-serif mb-6 leading-tight">
-                            {currentCollection.title}
+                            {currentCollectionData.title}
                         </h2>
                         <p className="text-lg text-gray-200 leading-relaxed max-w-2xl">
-                            {currentCollection.description}
+                            {currentCollectionData.description}
                         </p>
                     </VerticalAnimatedDiv>
                 </div>
@@ -150,8 +149,21 @@ export default function ShopPage() {
                                     </select>
                                 </div>
 
+                                {/* Categories */}
+                                <div className={"mb-6"}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        Categories
+                                    </label>
+                                    <select value={collection} onChange={e => setCollection(e.target.value)}
+                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-800 focus:border-transparent">
+                                        {Object.keys(COLLECTIONDATA).map((cat, index) => <option key={index}
+                                                                                                 value={cat}>{cat.toUpperCase()}</option>)}
+                                        <option value={"all"}>All</option>
+                                    </select>
+                                </div>
+
                                 {/* Stock Filter */}
-                                <div>
+                                <div className={"mt-6"}>
                                     <label className="flex items-center gap-3 cursor-pointer">
                                         <input type="checkbox" checked={showOutOfStock}
                                                onChange={e => setShowOutOfStock(e.target.checked)}
@@ -199,9 +211,9 @@ export default function ShopPage() {
 
                         {/* Products Grid */}
                         <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
-                            {paginatedProducts.map((product, index) => <DetailedProductCard key={product.id}
-                                                                                            product={product}
-                                                                                            index={index}/>)}
+                            {paginatedProducts.map((product, index) => <ProductCard key={product.id}
+                                                                                    product={product}
+                                                                                    index={index}/>)}
                         </div>
 
                         {/* Pagination */}

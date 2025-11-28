@@ -6,6 +6,7 @@ import {ChevronRight, ShoppingCart, X} from "lucide-react";
 import {useCart} from "@/hooks";
 import {CartProductType} from "@/types";
 import CartProduct from "@/components/CartProduct";
+import Link from 'next/link';
 
 const CartSidebar = () => {
     const {
@@ -63,13 +64,15 @@ const CartSidebar = () => {
                         <div className="border-t border-gray-200 pt-6 space-y-4">
                             <div className="flex items-center justify-between text-lg font-bold">
                                 <span>Total</span>
-                                <span className="text-red-900">${cartTotal.toFixed(2)}</span>
+                                <span className="text-red-900">{cartTotal.toFixed(2)}€</span>
                             </div>
-                            <button
-                                className="w-full px-6 py-4 bg-red-800 text-white rounded font-medium hover:bg-red-900 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
-                                Proceed to Checkout
-                                <ChevronRight className="w-5 h-5"/>
-                            </button>
+                            <Link href="/checkout">
+                                <button
+                                    className="w-full px-6 py-4 bg-red-800 text-white rounded font-medium hover:bg-red-900 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+                                    Proceed to Checkout
+                                    <ChevronRight className="w-5 h-5"/>
+                                </button>
+                            </Link>
                             <button onClick={() => setCartOpen(false)}
                                     className="w-full px-6 py-3 border-2 border-amber-500 text-amber-600 rounded font-medium hover:bg-amber-500 hover:text-white transition-colors">
                                 Continue Shopping

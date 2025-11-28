@@ -1,43 +1,43 @@
-import {CategoryType, DetailedProductType, FeaturesType, ProductType, ReviewType} from "@/types";
+import {CategoryType, CollectionType, FeaturesType, ProductType, ReviewType} from "@/types";
 import {Award, Shield, Star, Truck} from "lucide-react";
 
-export const HERO_PRODUCTS = [
-    {
-        id: '1',
-        name: 'Beluga Caviar Imperial',
-        price: 280,
-        originalPrice: 320,
-        category: 'caviar',
-        image: 'https://images.unsplash.com/photo-1535473895227-bdecb20fb157?w=800',
-        description: '50g Imperial Selection - Rare Beluga',
-        badge: 'PREMIUM',
-        weight: '50g',
-        rating: 5.0,
-        reviews: 127,
-        inStock: true
-    }, {
-        id: '2',
-        name: 'Osetra Caviar Classic',
-        price: 180,
-        category: 'caviar',
-        image: 'https://images.unsplash.com/photo-1600243241290-a3cfab8e7ffe?w=800',
-        description: '30g Classic Selection - Golden Osetra',
-        weight: '30g',
-        rating: 4.8,
-        reviews: 89,
-        inStock: true
-    }, {
-        id: '3',
-        name: 'Sevruga Caviar Reserve',
-        price: 145,
-        category: 'caviar',
-        image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800',
-        description: '30g Reserve Selection - Fine Sevruga',
-        weight: '30g',
-        rating: 4.7,
-        reviews: 64,
-        inStock: true
-    }] as ProductType[];
+// export const HERO_PRODUCTS = [
+//     {
+//         id: '1',
+//         name: 'Beluga Caviar Imperial',
+//         price: 280,
+//         originalPrice: 320,
+//         category: 'caviar',
+//         image: 'https://images.unsplash.com/photo-1535473895227-bdecb20fb157?w=800',
+//         description: '50g Imperial Selection - Rare Beluga',
+//         badge: 'PREMIUM',
+//         weight: '50g',
+//         rating: 5.0,
+//         reviews: 127,
+//         inStock: true
+//     }, {
+//         id: '2',
+//         name: 'Osetra Caviar Classic',
+//         price: 180,
+//         category: 'caviar',
+//         image: 'https://images.unsplash.com/photo-1600243241290-a3cfab8e7ffe?w=800',
+//         description: '30g Classic Selection - Golden Osetra',
+//         weight: '30g',
+//         rating: 4.8,
+//         reviews: 89,
+//         inStock: true
+//     }, {
+//         id: '3',
+//         name: 'Sevruga Caviar Reserve',
+//         price: 145,
+//         category: 'caviar',
+//         image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800',
+//         description: '30g Reserve Selection - Fine Sevruga',
+//         weight: '30g',
+//         rating: 4.7,
+//         reviews: 64,
+//         inStock: true
+//     }] as ProductType[];
 
 export const FEATURED_CATEGORIES = [
     {
@@ -62,55 +62,55 @@ export const FEATURED_CATEGORIES = [
         count: '34 Products'
     }] as CategoryType[];
 
-export const BESTSELLERS = [
-    {
-        id: '6',
-        name: 'Platinum Edition Vodka',
-        price: 120,
-        category: 'vodka',
-        image: 'https://images.unsplash.com/photo-1560512823-829485b8bf24?w=800',
-        description: '750ml Platinum Edition - Triple Distilled',
-        badge: 'PREMIUM',
-        weight: '750ml',
-        rating: 5.0,
-        reviews: 167,
-        inStock: true
-    }, {
-        id: '7',
-        name: 'Heritage Vodka 1895',
-        price: 65,
-        category: 'vodka',
-        image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800',
-        description: '750ml Heritage Edition - Classic Recipe',
-        weight: '750ml',
-        rating: 4.6,
-        reviews: 312,
-        inStock: true
-    }, {
-        id: '8',
-        name: 'Imperial Gold Vodka',
-        price: 155,
-        category: 'vodka',
-        image: 'https://images.unsplash.com/photo-1585870938850-2d447a611b57?w=800',
-        description: '750ml Gold Edition - Luxury Blend',
-        badge: 'LIMITED',
-        weight: '750ml',
-        rating: 4.8,
-        reviews: 98,
-        inStock: false
-    }, {
-        id: '9',
-        name: 'Traditional Dill Pickles',
-        price: 18,
-        category: 'pickles',
-        image: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=800',
-        description: '500g Traditional Recipe - Crispy Dill',
-        badge: 'ORGANIC',
-        weight: '500g',
-        rating: 4.7,
-        reviews: 423,
-        inStock: true
-    }] as ProductType[];
+// export const BESTSELLERS = [
+//     {
+//         id: '6',
+//         name: 'Platinum Edition Vodka',
+//         price: 120,
+//         category: 'vodka',
+//         image: 'https://images.unsplash.com/photo-1560512823-829485b8bf24?w=800',
+//         description: '750ml Platinum Edition - Triple Distilled',
+//         badge: 'PREMIUM',
+//         weight: '750ml',
+//         rating: 5.0,
+//         reviews: 167,
+//         inStock: true
+//     }, {
+//         id: '7',
+//         name: 'Heritage Vodka 1895',
+//         price: 65,
+//         category: 'vodka',
+//         image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800',
+//         description: '750ml Heritage Edition - Classic Recipe',
+//         weight: '750ml',
+//         rating: 4.6,
+//         reviews: 312,
+//         inStock: true
+//     }, {
+//         id: '8',
+//         name: 'Imperial Gold Vodka',
+//         price: 155,
+//         category: 'vodka',
+//         image: 'https://images.unsplash.com/photo-1585870938850-2d447a611b57?w=800',
+//         description: '750ml Gold Edition - Luxury Blend',
+//         badge: 'LIMITED',
+//         weight: '750ml',
+//         rating: 4.8,
+//         reviews: 98,
+//         inStock: false
+//     }, {
+//         id: '9',
+//         name: 'Traditional Dill Pickles',
+//         price: 18,
+//         category: 'pickles',
+//         image: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=800',
+//         description: '500g Traditional Recipe - Crispy Dill',
+//         badge: 'ORGANIC',
+//         weight: '500g',
+//         rating: 4.7,
+//         reviews: 423,
+//         inStock: true
+//     }] as ProductType[];
 
 export const FEATURES = [
     {
@@ -131,7 +131,13 @@ export const FEATURES = [
         description: 'Carefully selected by our culinary specialists'
     }] as FeaturesType[];
 
-export const COLLECTIONDATA = {
+export const COLLECTIONDATA: Record<string, CollectionType> = {
+    all: {
+        title: 'All Products Collection',
+        description: 'The finest selection of products. Each tin represents the pinnacle of luxury and taste.',
+        hero: 'https://images.unsplash.com/photo-1535473895227-bdecb20fb157?w=1200',
+        bgGradient: 'from-slate-800 to-slate-900'
+    },
     caviar: {
         title: 'Premium Caviar Collection',
         description: 'The finest selection of sturgeon roe, sourced from pristine waters and prepared with centuries-old techniques. Each tin represents the pinnacle of luxury and taste.',
@@ -320,18 +326,20 @@ export const REVIEWS: ReviewType[] = [{
     verified: true
 }];
 
+
 // Sample product data
-export const DETAILEDPRODUCTS: DetailedProductType[] = [
+export const PRODUCTLIST: ProductType[] = [
     {
         id: '1',
         name: 'Beluga Caviar Imperial',
         price: 280,
         originalPrice: 320,
+        discount: 0.2,
         category: 'caviar',
-        images: ['https://images.unsplash.com/photo-1535473895227-bdecb20fb157?w=1200', 'https://images.unsplash.com/photo-1600243241290-a3cfab8e7ffe?w=1200', 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=1200', 'https://images.unsplash.com/photo-1604909052743-94e838986d24?w=1200'],
+        images: ["/images/products/product_image_1.jpg", "/images/products/product_image_24.jpg", "/images/products/product_image_31.jpg", "/images/products/product_image_45.jpg"],
         description: '50g Imperial Selection - Rare Beluga',
         longDescription: 'Our Beluga Caviar Imperial represents the pinnacle of luxury and refinement. Sourced from the pristine waters of the Caspian Sea, these large, delicate pearls are hand-selected and processed using traditional methods passed down through generations. Each tin contains only the finest roe, characterized by its buttery texture and complex, nuanced flavor profile that develops beautifully on the palate.',
-        badge: 'PREMIUM',
+        badges: ["HERO"],
         weightInGrams: 50,
         rating: 5.0,
         reviews: 127,
@@ -369,11 +377,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Osetra Caviar Classic',
         price: 180,
         originalPrice: 200,
+        discount: 0.2,
         category: 'caviar',
-        images: ['https://images.unsplash.com/photo-1600243241290-a3cfab8e7ffe?w=800'],
+        images: ["/images/products/product_image_5.jpg", "/images/products/product_image_6.jpg", "/images/products/product_image_7.jpg", "/images/products/product_image_8.jpg"],
         description: '30g Classic Selection - Golden Osetra',
         longDescription: '30g Classic Selection - Golden Osetra',
-        badge: "Premium",
+        badges: ["HERO"],
         weightInGrams: 30,
         rating: 4.8,
         reviews: 89,
@@ -411,11 +420,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Sevruga Caviar Reserve',
         price: 145,
         originalPrice: 200,
+        discount: 0.2,
         category: 'caviar',
-        images: ['https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800'],
+        images: ["/images/products/product_image_9.jpg", "/images/products/product_image_10.jpg", "/images/products/product_image_3.jpg", "/images/products/product_image_4.jpg"],
         description: '30g Reserve Selection - Fine Sevruga',
         longDescription: '30g Reserve Selection - Fine Sevruga',
-        badge: "PREMIUM",
+        badges: ["PREMIUM"],
         weightInGrams: 30,
         rating: 4.7,
         reviews: 64,
@@ -453,11 +463,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Kaluga Hybrid Caviar',
         price: 210,
         originalPrice: 260,
+        discount: 0.2,
         category: 'caviar',
-        images: ['https://images.unsplash.com/photo-1604909052743-94e838986d24?w=800'],
+        images: ["/images/products/product_image_12.jpg", "/images/products/product_image_10.jpg", "/images/products/product_image_3.jpg", "/images/products/product_image_4.jpg"],
         description: '50g Premium Selection - Kaluga Hybrid',
         longDescription: '50g Premium Selection - Kaluga Hybrid',
-        badge: 'LIMITED',
+        badges: ["LIMITED"],
         weightInGrams: 50,
         rating: 4.9,
         reviews: 45,
@@ -495,16 +506,17 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Imperial Reserve Vodka',
         price: 85,
         originalPrice: 95,
+        discount: 0.2,
         category: 'vodka',
-        images: ['https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800'],
+        images: ["/images/products/product_image_18.jpg", "/images/products/product_image_10.jpg", "/images/products/product_image_3.jpg", "/images/products/product_image_4.jpg"],
         description: '750ml Premium Reserve - Crystal Clear',
         longDescription: "long description here",
-        badge: "BESTSELLER",
         weightInGrams: 750,
         rating: 4.9,
         reviews: 234,
         inStock: true,
         stockCount: 9,
+        badges: [],
         features: ['Wild-caught Beluga sturgeon from sustainable sources', 'Hand-selected and graded by master caviar experts', 'Traditional Malossol preparation (lightly salted)', 'Delivered in temperature-controlled packaging', 'Certificate of authenticity included', 'Best consumed within 6 weeks of opening'],
         specifications: [{
             label: 'Storage',
@@ -519,11 +531,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Platinum Edition Vodka',
         price: 120,
         originalPrice: 150,
+        discount: 0.2,
         category: 'vodka',
-        images: ['https://images.unsplash.com/photo-1560512823-829485b8bf24?w=800'],
+        images: ["/images/products/product_image_20.jpg", "/images/products/product_image_10.jpg", "/images/products/product_image_3.jpg", "/images/products/product_image_4.jpg"],
         description: '750ml Platinum Edition - Triple Distilled',
         longDescription: "long description here",
-        badge: 'PREMIUM',
+        badges: ["PREMIUM"],
         weightInGrams: 750,
         rating: 5.0,
         reviews: 167,
@@ -543,11 +556,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Heritage Vodka 1895',
         price: 65,
         originalPrice: 120,
+        discount: 0.2,
         category: 'vodka',
-        images: ['https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800'],
+        images: ["/images/products/product_image_30.jpg", "/images/products/product_image_43.jpg", "/images/products/product_image_3.jpg", "/images/products/product_image_4.jpg"],
         description: '750ml Heritage Edition - Classic Recipe',
         longDescription: "long description here",
-        badge: "PREMIUM",
+        badges: ["HERO"],
         weightInGrams: 750,
         rating: 4.6,
         reviews: 312,
@@ -567,11 +581,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Imperial Gold Vodka',
         price: 155,
         originalPrice: 170,
+        discount: 0.2,
         category: 'vodka',
-        images: ['https://images.unsplash.com/photo-1585870938850-2d447a611b57?w=800'],
+        images: ["/images/products/product_image_24.jpg", "/images/products/product_image_23.jpg", "/images/products/product_image_33.jpg", "/images/products/product_image_4.jpg"],
         description: '750ml Gold Edition - Luxury Blend',
         longDescription: "long description here",
-        badge: 'LIMITED',
+        badges: ["LIMITED"],
         weightInGrams: 750,
         rating: 4.8,
         reviews: 98,
@@ -591,11 +606,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Traditional Dill Pickles',
         price: 18,
         originalPrice: 20,
+        discount: 0.2,
         category: 'pickles',
-        images: ['https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=800'],
+        images: ["/images/products/product_image_31.jpg", "/images/products/product_image_18.jpg", "/images/products/product_image_3.jpg", "/images/products/product_image_4.jpg"],
         description: '500g Traditional Recipe - Crispy Dill',
         longDescription: "long description here",
-        badge: 'ORGANIC',
+        badges: ["ORGANIC"],
         weightInGrams: 500,
         rating: 4.7,
         reviews: 423,
@@ -615,11 +631,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Garlic & Herb Pickles',
         price: 20,
         originalPrice: 22,
+        discount: 0.2,
         category: 'pickles',
-        images: ['https://images.unsplash.com/photo-1619419152703-15cbe2a2e93e?w=800'],
+        images: ["/images/products/product_image_40.jpg", "/images/products/product_image_14.jpg", "/images/products/product_image_3.jpg", "/images/products/product_image_4.jpg"],
         description: '500g Gourmet Blend - Bold Garlic',
         longDescription: "",
-        badge: 'ORGANIC',
+        badges: ["ORGANIC"],
         weightInGrams: 500,
         rating: 4.8,
         reviews: 289,
@@ -639,11 +656,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Spicy Pickled Vegetables',
         price: 22,
         originalPrice: 26,
+        discount: 0.2,
         category: 'pickles',
-        images: ['https://images.unsplash.com/photo-1599021662715-eb19bb62c3eb?w=800'],
+        images: ["/images/products/product_image_45.jpg", "/images/products/product_image_16.jpg", "/images/products/product_image_13.jpg", "/images/products/product_image_47.jpg"],
         description: '650g Mixed Vegetables - Fiery Blend',
         longDescription: "",
-        badge: "",
+        badges: [],
         weightInGrams: 650,
         rating: 4.6,
         reviews: 198,
@@ -663,11 +681,12 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         name: 'Artisan Pickled Tomatoes',
         price: 24,
         originalPrice: 30,
+        discount: 0.2,
         category: 'pickles',
-        images: ['https://images.unsplash.com/photo-1592921869218-8c8bf5d1497c?w=800'],
+        images: ["/images/products/product_image_38.jpg", "/images/products/product_image_20.jpg", "/images/products/product_image_31.jpg", "/images/products/product_image_40.jpg"],
         description: '550g Cherry Tomatoes - Sweet & Tangy',
         longDescription: "",
-        badge: 'NEW',
+        badges: ["NEW"],
         weightInGrams: 550,
         rating: 4.9,
         reviews: 156,
@@ -683,48 +702,48 @@ export const DETAILEDPRODUCTS: DetailedProductType[] = [
         }]
     }];
 
-export const DETAILEDPRODUCTDATA: DetailedProductType = {
-    id: '1',
-    name: 'Beluga Caviar Imperial',
-    price: 280,
-    originalPrice: 320,
-    category: 'caviar',
-    images: ['https://images.unsplash.com/photo-1535473895227-bdecb20fb157?w=1200', 'https://images.unsplash.com/photo-1600243241290-a3cfab8e7ffe?w=1200', 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=1200', 'https://images.unsplash.com/photo-1604909052743-94e838986d24?w=1200'],
-    description: '50g Imperial Selection - Rare Beluga',
-    longDescription: 'Our Beluga Caviar Imperial represents the pinnacle of luxury and refinement. Sourced from the pristine waters of the Caspian Sea, these large, delicate pearls are hand-selected and processed using traditional methods passed down through generations. Each tin contains only the finest roe, characterized by its buttery texture and complex, nuanced flavor profile that develops beautifully on the palate.',
-    badge: 'PREMIUM',
-    weight: '50g',
-    rating: 5.0,
-    reviews: 127,
-    inStock: true,
-    stockCount: 8,
-    features: ['Wild-caught Beluga sturgeon from sustainable sources', 'Hand-selected and graded by master caviar experts', 'Traditional Malossol preparation (lightly salted)', 'Delivered in temperature-controlled packaging', 'Certificate of authenticity included', 'Best consumed within 6 weeks of opening'],
-    specifications: [{
-        label: 'Origin',
-        value: 'Caspian Sea'
-    }, {
-        label: 'Species',
-        value: 'Huso Huso (Beluga Sturgeon)'
-    }, {
-        label: 'Grade',
-        value: 'Imperial Selection'
-    }, {
-        label: 'Color',
-        value: 'Light to Dark Gray'
-    }, {
-        label: 'Bead Size',
-        value: '3.0-3.5mm'
-    }, {
-        label: 'Salt Content',
-        value: '3-4% (Malossol)'
-    }, {
-        label: 'Storage',
-        value: '-2°C to 2°C'
-    }, {
-        label: 'Shelf Life',
-        value: '6 months sealed, 6 weeks opened'
-    }]
-};
+// export const DETAILEDPRODUCTDATA: DetailedProductType = {
+//     id: '1',
+//     name: 'Beluga Caviar Imperial',
+//     price: 280,
+//     originalPrice: 320,
+//     category: 'caviar',
+//     images: ['https://images.unsplash.com/photo-1535473895227-bdecb20fb157?w=1200', 'https://images.unsplash.com/photo-1600243241290-a3cfab8e7ffe?w=1200', 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=1200', 'https://images.unsplash.com/photo-1604909052743-94e838986d24?w=1200'],
+//     description: '50g Imperial Selection - Rare Beluga',
+//     longDescription: 'Our Beluga Caviar Imperial represents the pinnacle of luxury and refinement. Sourced from the pristine waters of the Caspian Sea, these large, delicate pearls are hand-selected and processed using traditional methods passed down through generations. Each tin contains only the finest roe, characterized by its buttery texture and complex, nuanced flavor profile that develops beautifully on the palate.',
+//     badge: 'PREMIUM',
+//     weightInGrams: 50,
+//     rating: 5.0,
+//     reviews: 127,
+//     inStock: true,
+//     stockCount: 8,
+//     features: ['Wild-caught Beluga sturgeon from sustainable sources', 'Hand-selected and graded by master caviar experts', 'Traditional Malossol preparation (lightly salted)', 'Delivered in temperature-controlled packaging', 'Certificate of authenticity included', 'Best consumed within 6 weeks of opening'],
+//     specifications: [{
+//         label: 'Origin',
+//         value: 'Caspian Sea'
+//     }, {
+//         label: 'Species',
+//         value: 'Huso Huso (Beluga Sturgeon)'
+//     }, {
+//         label: 'Grade',
+//         value: 'Imperial Selection'
+//     }, {
+//         label: 'Color',
+//         value: 'Light to Dark Gray'
+//     }, {
+//         label: 'Bead Size',
+//         value: '3.0-3.5mm'
+//     }, {
+//         label: 'Salt Content',
+//         value: '3-4% (Malossol)'
+//     }, {
+//         label: 'Storage',
+//         value: '-2°C to 2°C'
+//     }, {
+//         label: 'Shelf Life',
+//         value: '6 months sealed, 6 weeks opened'
+//     }]
+// };
 
 export interface ProductPageProps {
     productId?: string;

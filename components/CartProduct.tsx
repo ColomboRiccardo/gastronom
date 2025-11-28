@@ -9,14 +9,14 @@ const CartProduct = ({item}: { item: CartProductType }) => {
     return (
         <div key={item.id}
              className="flex gap-4 p-4 bg-gray-50 rounded-lg">
-            <img src={item.image} alt={item.name}
+            <img src={item.images[0]} alt={item.name}
                  className="w-20 h-20 object-cover rounded"/>
             <div className="flex-1">
                 <h4 className="font-semibold text-gray-900 mb-1">
                     {item.name}
                 </h4>
                 <p className="text-sm text-gray-600 mb-2">
-                    ${item.price}
+                    {item.price}€
                 </p>
                 <div className="flex items-center gap-2">
                     <button onClick={() => updateQuantity(item.id, -1)}
