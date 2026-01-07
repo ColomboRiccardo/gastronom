@@ -4,6 +4,7 @@ import {AnimatePresence, motion} from 'framer-motion';
 import {ArrowLeft, ChevronRight, Info, Minus, Package, Plus, ShoppingCart, Tag, Trash2, Truck} from 'lucide-react';
 import React, {useState} from 'react'
 import {useCart} from "@/hooks";
+import HorizontalAnimatedDiv from "@/animations/HorizontalAnimatedDiv";
 
 const CheckoutPage = () => {
     const {cart, cartTotal, addToCart, removeFromCart, updateQuantity} = useCart()
@@ -42,7 +43,7 @@ const CheckoutPage = () => {
                     </div>
                     <h1 className="text-4xl font-serif font-bold text-foreground mb-4">Your Cart is Empty</h1>
                     <p className="text-lg text-muted-foreground mb-8">
-                        Looks like you haven't added any gourmet delights yet. Explore our collection and discover
+                        Looks like you haven&apos;t added any gourmet delights yet. Explore our collection and discover
                         something special.
                     </p>
                     <motion.button whileHover={{
@@ -100,7 +101,7 @@ const CheckoutPage = () => {
                 <div className="flex items-center gap-3 mb-3">
                     <Truck className="w-5 h-5 text-primary"/>
                     <p className="text-sm font-medium text-foreground">
-                        You're <span
+                        You&apos;re <span
                         className="text-primary font-bold">${remainingForFreeShipping.toFixed(2)}</span> away from free
                         shipping!
                     </p>
@@ -304,11 +305,7 @@ const CheckoutPage = () => {
                         </div>
 
                         {/* Checkout Button */}
-                        <motion.button whileHover={{
-                            scale: 1.02
-                        }} whileTap={{
-                            scale: 0.98
-                        }}
+                        <motion.button whileHover={{scale: 1.02}} whileTap={{scale: 0.98}}
                                        className="w-full px-8 py-4 bg-primary text-primary-foreground rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all mb-4">
                             Proceed to Checkout
                         </motion.button>
@@ -324,18 +321,11 @@ const CheckoutPage = () => {
                             }, {
                                 icon: Tag,
                                 text: 'Best Price Guarantee'
-                            }].map((feature, index) => <motion.div key={index} initial={{
-                                opacity: 0,
-                                x: -10
-                            }} animate={{
-                                opacity: 1,
-                                x: 0
-                            }} transition={{
-                                delay: 0.3 + index * 0.1
-                            }} className="flex items-center gap-3 text-sm text-muted-foreground">
+                            }].map((feature, index) => <HorizontalAnimatedDiv key={index} delay={0.3}
+                                                                              className="flex items-center gap-3 text-sm text-muted-foreground">
                                 <feature.icon className="w-4 h-4 text-primary"/>
                                 <span>{feature.text}</span>
-                            </motion.div>)}
+                            </HorizontalAnimatedDiv>)}
                         </div>
                     </motion.div>
                 </div>

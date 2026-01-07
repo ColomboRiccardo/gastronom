@@ -6,9 +6,10 @@ import {AnimatePresence, motion} from 'framer-motion';
 import {ChevronRight, Home, SlidersHorizontal, X} from 'lucide-react';
 import {COLLECTIONDATA, PRODUCTLIST} from "@/lib/apiExample";
 import {CollectionType, SortOption} from "@/types";
-import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
+import VerticalAnimatedDiv from "@/animations/VerticalAnimatedDiv";
 import ProductCard from "@/components/ProductCard";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function ShopPage() {
 
@@ -60,9 +61,9 @@ export default function ShopPage() {
                     <div className="flex items-center gap-2 text-sm">
                         <Home className="w-4 h-4 text-gray-500"/>
                         <ChevronRight className="w-4 h-4 text-gray-400"/>
-                        <a href="#collections" className="text-gray-600 hover:text-red-900 transition-colors">
+                        <Link href="/shop" className="text-gray-600 hover:text-red-900 transition-colors">
                             Collections
-                        </a>
+                        </Link>
                         <ChevronRight className="w-4 h-4 text-gray-400"/>
                         <span className="text-red-900 font-medium capitalize">{collection}</span>
                     </div>

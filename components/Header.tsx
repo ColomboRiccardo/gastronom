@@ -2,9 +2,9 @@
 
 import React from 'react';
 import {Search, ShoppingCart, User} from "lucide-react";
-import {motion} from "framer-motion";
 import Link from "next/link";
 import {useCart} from "@/hooks";
+import HorizontalAnimatedDiv from "@/animations/HorizontalAnimatedDiv";
 
 // A simple, reusable Header component
 // Matches tests in tests/Header.test.tsx
@@ -15,12 +15,12 @@ export default function Header() {
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
             <div className="max-w-7xl mx-auto px-4 py-4">
                 <div className="flex items-center justify-between">
-                    <motion.div initial={{opacity: 0, x: -20}} animate={{opacity: 1, x: 0}}
-                                className="flex items-center gap-2">
+                    <HorizontalAnimatedDiv
+                        className="flex items-center gap-2">
                         <Link href="/" className="flex items-center gap-2">
                             <span className="text-5xl font-serif text-foreground">Gastronom</span>
                         </Link>
-                    </motion.div>
+                    </HorizontalAnimatedDiv>
 
                     <nav className="hidden md:flex items-center gap-8">
                         <Link href={"/shop"}

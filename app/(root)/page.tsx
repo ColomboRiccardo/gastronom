@@ -6,7 +6,7 @@ import MinProductCard from "@/components/MinProductCard";
 import CategoryCard from "@/components/CategoryCard";
 import {FEATURED_CATEGORIES, FEATURES, PRODUCTLIST} from "@/lib/apiExample";
 import CustomButton from "@/components/CustomButton";
-import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
+import VerticalAnimatedDiv from "@/animations/VerticalAnimatedDiv";
 import ProductCard from "@/components/ProductCard";
 
 // @component: GastronomHomepage
@@ -25,7 +25,8 @@ export default function GastronomHomepage() {
                                 Curated Fine Foods for Discerning Palates
                             </h1>
                             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                                Discover an exquisite collection of artisan products, handpicked from the world's finest
+                                Discover an exquisite collection of artisan products, handpicked from the world&apos;s
+                                finest
                                 producers. Elevate your culinary experience.
                             </p>
                             <div className="flex flex-wrap gap-4">

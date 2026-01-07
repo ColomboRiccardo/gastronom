@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import {PRODUCTLIST, REVIEWS} from "@/lib/apiExample";
 import {useCart, useFavourites} from "@/hooks";
-import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
+import VerticalAnimatedDiv from "@/animations/VerticalAnimatedDiv";
 import {useParams} from "next/navigation";
 import Image from "next/image";
 import ProductCard from "@/components/ProductCard";

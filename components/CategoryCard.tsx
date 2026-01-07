@@ -1,7 +1,9 @@
 import {motion} from 'framer-motion'
 import React from 'react'
+import Image from "next/image";
+import {CategoryType} from "@/types";
 
-const CategoryCard = ({category, index: index}) => {
+const CategoryCard = ({category, index}: { category: CategoryType, index: number }) => {
     return (
         <motion.div key={category.id} initial={{
             opacity: 0,
@@ -17,8 +19,8 @@ const CategoryCard = ({category, index: index}) => {
             y: -8
         }} className="group cursor-pointer">
             <div className="relative h-64 rounded-xl overflow-hidden mb-4">
-                <img src={category.image} alt={category.name}
-                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
+                <Image src={category.image} alt={category.name}
+                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
                 <div
                     className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent"/>
                 <div className="absolute bottom-4 left-4 right-4">

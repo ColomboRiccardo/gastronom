@@ -2,7 +2,7 @@ import React from 'react'
 import {Heart, Plus, Star} from "lucide-react";
 import {ProductType} from "@/types";
 import {useCart, useFavourites} from "@/hooks";
-import VerticalAnimatedDiv from "@/components/VerticalAnimatedDiv";
+import VerticalAnimatedDiv from "@/animations/VerticalAnimatedDiv";
 import Link from "next/link";
 import Image from "next/image";
 
