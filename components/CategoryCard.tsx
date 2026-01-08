@@ -19,7 +19,7 @@ const CategoryCard = ({category, index}: { category: CategoryType, index: number
             y: -8
         }} className="group cursor-pointer">
             <div className="relative h-64 rounded-xl overflow-hidden mb-4">
-                <Image src={category.image} alt={category.name}
+                <Image src={category.image} alt={category.name} width={500} height={500}
                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
                 <div
                     className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent"/>

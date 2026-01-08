@@ -1,10 +1,10 @@
 import React from 'react'
 import {motion} from "framer-motion";
 import {Star} from "lucide-react";
-import {DetailedProductType} from "@/types";
+import {ProductType} from "@/types";
 import Image from "next/image";
 
-const MinProductCard = ({product, index}: { product: DetailedProductType, index: number }) => {
+const MinProductCard = ({product, index}: { product: ProductType, index: number }) => {
     return (
         <motion.div key={product.id} initial={{
             opacity: 0,

@@ -16,10 +16,11 @@ import {
     Trash2,
     TruckIcon
 } from 'lucide-react';
+import {ProductType} from "@/types";
 
 
 export type CartItem = {
-    product: Product;
+    product: ProductType;
     quantity: number;
 };
 
@@ -29,35 +30,63 @@ export interface CartPageProps {
     onCheckout?: (items: CartItem[], total: number) => void;
     onUpdateQuantity?: (productId: string, quantity: number) => void;
     onRemoveItem?: (productId: string) => void;
-    recommendedProducts?: Product[];
+    recommendedProducts?: ProductType[];
 }
 
-const defaultRecommendedProducts: Product[] = [{
+const defaultRecommendedProducts: ProductType[] = [{
     id: 'r1',
     name: 'Sevruga Caviar',
     price: 150,
     category: 'caviar',
-    image: 'https://images.unsplash.com/photo-1589621316382-008455b857cd?w=800',
+    images: ['https://images.unsplash.com/photo-1589621316382-008455b857cd?w=800'],
     description: '30g Premium Selection',
-    badge: 'NEW',
-    weight: '30g'
+    badges: ['NEW'],
+    originalPrice: 0,
+    discount: 0,
+    weightInGrams: 0,
+    rating: 0,
+    reviews: 0,
+    inStock: false,
+    longDescription: '',
+    stockCount: 0,
+    features: [],
+    specifications: []
 }, {
     id: 'r2',
     name: 'Crystal Vodka',
     price: 65,
     category: 'vodka',
-    image: 'https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800',
+    images: ['https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800'],
     description: '500ml Premium Crystal',
-    weight: '500ml'
+    badges: ['NEW'],
+    originalPrice: 0,
+    discount: 0,
+    weightInGrams: 0,
+    rating: 0,
+    reviews: 0,
+    inStock: false,
+    longDescription: '',
+    stockCount: 0,
+    features: [],
+    specifications: []
 }, {
     id: 'r3',
     name: 'Pickled Mushrooms',
     price: 22,
     category: 'pickles',
-    image: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800',
+    images: ['https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800'],
     description: '400g Forest Selection',
-    badge: 'ORGANIC',
-    weight: '400g'
+    badges: ['ORGANIC'],
+    originalPrice: 0,
+    discount: 0,
+    weightInGrams: 0,
+    rating: 0,
+    reviews: 0,
+    inStock: false,
+    longDescription: '',
+    stockCount: 0,
+    features: [],
+    specifications: []
 }];
 export default function CartPage({
                                      initialCartItems = [],
@@ -105,7 +134,7 @@ export default function CartPage({
             setPromoApplied(false);
         }
     };
-    const handleAddRecommended = (product: Product) => {
+    const handleAddRecommended = (product: ProductType) => {
         setCartItems(prev => {
             const existing = prev.find(item => item.product.id === product.id);
             if (existing) {
@@ -182,11 +211,11 @@ export default function CartPage({
                                     {/* Product Image */}
                                     <div
                                         className="relative w-full sm:w-32 h-48 sm:h-32 rounded-lg overflow-hidden flex-shrink-0 group">
-                                        <img src={item.product.image} alt={item.product.name}
+                                        <img src={item.product.images[0]} alt={item.product.name}
                                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-                                        {item.product.badge && <div
+                                        {item.product.badges[0] && <div
                                             className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded">
-                                            {item.product.badge}
+                                            {item.product.badges[0]}
                                         </div>}
                                     </div>
 
@@ -203,7 +232,7 @@ export default function CartPage({
                                                 <div className="flex items-center gap-3 text-sm">
                                 <span className="flex items-center gap-1 text-gray-500">
                                   <Package className="w-4 h-4"/>
-                                    {item.product.weight}
+                                    {item.product.weightInGrams}
                                 </span>
                                                     <span className="text-gray-300">•</span>
                                                     <span className="text-amber-600 font-medium capitalize">
@@ -425,11 +454,11 @@ export default function CartPage({
                     }}
                                                                              className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow border border-gray-100">
                         <div className="relative aspect-square overflow-hidden">
-                            <img src={product.image} alt={product.name}
+                            <img src={product.images[0]} alt={product.name}
                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-                            {product.badge && <div
+                            {product.badges[0] && <div
                                 className="absolute top-3 left-3 px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded">
-                                {product.badge}
+                                {product.badges[0]}
                             </div>}
                             <button
                                 className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
