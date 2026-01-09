@@ -303,29 +303,29 @@ export const COLLECTIONDATA: Record<string, CollectionType> = {
 //         inStock: true
 //     }];
 
-export const REVIEWS: ReviewType[] = [{
-    id: '1',
-    author: 'James Morrison',
-    rating: 5,
-    date: 'March 15, 2024',
-    comment: 'Absolutely exceptional caviar. The texture is perfect and the flavor is sublime. Worth every penny for special occasions.',
-    verified: true
-}, {
-    id: '2',
-    author: 'Sofia Petrov',
-    rating: 5,
-    date: 'March 10, 2024',
-    comment: 'This is the real deal. Having grown up with authentic caviar, I can say this is as good as it gets. The delivery packaging was also impressive.',
-    verified: true
-}, {
-    id: '3',
-    author: 'Michael Chen',
-    rating: 4,
-    date: 'March 5, 2024',
-    comment: 'Outstanding quality, though quite pricey. Perfect for our anniversary dinner. The buttery flavor is exactly what you want from Beluga.',
-    verified: true
-}];
-
+export const REVIEWS: ReviewType[] = [
+    {
+        id: '1',
+        author: 'James Morrison',
+        rating: 5,
+        date: 'March 15, 2024',
+        comment: 'Absolutely exceptional caviar. The texture is perfect and the flavor is sublime. Worth every penny for special occasions.',
+        verified: true
+    }, {
+        id: '2',
+        author: 'Sofia Petrov',
+        rating: 5,
+        date: 'March 10, 2024',
+        comment: 'This is the real deal. Having grown up with authentic caviar, I can say this is as good as it gets. The delivery packaging was also impressive.',
+        verified: true
+    }, {
+        id: '3',
+        author: 'Michael Chen',
+        rating: 4,
+        date: 'March 5, 2024',
+        comment: 'Outstanding quality, though quite pricey. Perfect for our anniversary dinner. The buttery flavor is exactly what you want from Beluga.',
+        verified: true
+    }];
 
 // Sample product data
 export const PRODUCTLIST: ProductType[] = [

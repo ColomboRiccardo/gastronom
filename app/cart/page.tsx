@@ -18,20 +18,10 @@ import {
 } from 'lucide-react';
 import {ProductType} from "@/types";
 
-
 export type CartItem = {
     product: ProductType;
     quantity: number;
 };
-
-export interface CartPageProps {
-    initialCartItems?: CartItem[];
-    onContinueShopping?: () => void;
-    onCheckout?: (items: CartItem[], total: number) => void;
-    onUpdateQuantity?: (productId: string, quantity: number) => void;
-    onRemoveItem?: (productId: string) => void;
-    recommendedProducts?: ProductType[];
-}
 
 const defaultRecommendedProducts: ProductType[] = [{
     id: 'r1',
@@ -88,20 +78,41 @@ const defaultRecommendedProducts: ProductType[] = [{
     features: [],
     specifications: []
 }];
-export default function CartPage({
-                                     initialCartItems = [],
-                                     onContinueShopping,
-                                     onCheckout,
-                                     onUpdateQuantity,
-                                     onRemoveItem,
-                                     recommendedProducts = defaultRecommendedProducts
-                                 }: CartPageProps) {
-    const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
+export default function CartPage() {
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [recommendedProducts] = useState<ProductType[]>(defaultRecommendedProducts);
     const [promoCode, setPromoCode] = useState('');
     const [promoApplied, setPromoApplied] = useState(false);
     const [orderNotes, setOrderNotes] = useState('');
     const [promoError, setPromoError] = useState('');
+
+    // Calculate cart totals
     const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+
+    // Handlers
+    const onContinueShopping = () => {
+        window.history.back();
+    };
+
+    const onCheckout = (items: CartItem[], total: number) => {
+        console.log('Proceeding to checkout with items:', items, 'Total:', total);
+    };
+
+    const onUpdateQuantity = (productId: string, quantity: number) => {
+        setCartItems(prevItems =>
+            prevItems.map(item =>
+                item.product.id === productId
+                    ? {...item, quantity: Math.max(1, quantity)}
+                    : item
+            )
+        );
+    };
+
+    const onRemoveItem = (productId: string) => {
+        setCartItems(prevItems =>
+            prevItems.filter(item => item.product.id !== productId)
+        );
+    };
     const discount = promoApplied ? subtotal * 0.1 : 0;
     const shippingEstimate = subtotal > 200 ? 0 : 15;
     const taxEstimate = (subtotal - discount) * 0.08;

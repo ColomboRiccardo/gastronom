@@ -5,6 +5,7 @@ import {Search, ShoppingCart, User} from "lucide-react";
 import Link from "next/link";
 import {useCart} from "@/hooks";
 import HorizontalAnimatedDiv from "@/animations/HorizontalAnimatedDiv";
+import Dropdown from "@/components/Dropdown";
 
 // A simple, reusable Header component
 // Matches tests in tests/Header.test.tsx
@@ -25,12 +26,11 @@ export default function Header() {
                     <nav className="hidden md:flex items-center gap-8">
                         <Link href={"/shop"}
                               className="text-foreground hover:text-primary transition-colors font-medium">Shop</Link>
-                        <a href="#"
-                           className="text-foreground hover:text-primary transition-colors font-medium">Categories</a>
-                        <a href="#"
-                           className="text-foreground hover:text-primary transition-colors font-medium">About</a>
-                        <a href="#"
-                           className="text-foreground hover:text-primary transition-colors font-medium">Contact</a>
+                        <Dropdown title="Categories" items={["Caviar", "Vodka", "Pickles"]}/>
+                        <Link href="#"
+                              className="text-foreground hover:text-primary transition-colors font-medium">About</Link>
+                        <Link href="#"
+                              className="text-foreground hover:text-primary transition-colors font-medium">Contact</Link>
                     </nav>
 
                     <div className="flex items-center gap-4">
