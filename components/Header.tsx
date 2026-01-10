@@ -14,7 +14,7 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
-            <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between">
                     <HorizontalAnimatedDiv
                         className="flex items-center gap-2">
@@ -25,12 +25,12 @@ export default function Header() {
 
                     <nav className="hidden md:flex items-center gap-8">
                         <Link href={"/shop"}
-                              className="text-foreground hover:text-primary transition-colors font-medium">Shop</Link>
+                              className="text-foreground hover:text-primary transition-colors font-medium py-6">Shop</Link>
                         <Dropdown title="Categories" items={["Caviar", "Vodka", "Pickles"]}/>
-                        <Link href="#"
-                              className="text-foreground hover:text-primary transition-colors font-medium">About</Link>
-                        <Link href="#"
-                              className="text-foreground hover:text-primary transition-colors font-medium">Contact</Link>
+                        <Link href="/about"
+                              className="text-foreground hover:text-primary transition-colors font-medium py-6">About</Link>
+                        <Link href="/contact"
+                              className="text-foreground hover:text-primary transition-colors font-medium py-6">Contact</Link>
                     </nav>
 
                     <div className="flex items-center gap-4">

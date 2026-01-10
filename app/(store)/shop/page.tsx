@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from 'react';
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import {ChevronRight, Home, SlidersHorizontal, X} from 'lucide-react';
 import {COLLECTIONDATA, PRODUCTLIST} from "@/lib/apiExample";
@@ -10,9 +10,12 @@ import VerticalAnimatedDiv from "@/animations/VerticalAnimatedDiv";
 import ProductCard from "@/components/ProductCard";
 import Image from "next/image";
 import Link from "next/link";
+import {useRouter, useSearchParams} from "next/navigation";
 
 export default function ShopPage() {
 
+    const searchParams = useSearchParams()
+    const router = useRouter();
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [sortBy, setSortBy] = useState<SortOption>('featured');
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
@@ -53,6 +56,33 @@ export default function ShopPage() {
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+    // Update URL when filters change
+    useEffect(() => {
+        const params = new URLSearchParams();
+
+        if (sortBy !== 'featured') params.set('sort', sortBy);
+        if (priceRange[0] !== 0) params.set('minPrice', priceRange[0].toString());
+        if (priceRange[1] !== 500) params.set('maxPrice', priceRange[1].toString());
+        if (!showOutOfStock) params.set('stock', 'false');
+        if (collection !== 'all') params.set('collection', collection);
+        if (currentPage !== 1) params.set('page', currentPage.toString());
+
+        // Update URL without page reload
+        router.replace(`/shop?${params.toString()}`, {scroll: false});
+    }, [sortBy, priceRange, showOutOfStock, collection, currentPage, router]);
+
+    // Update state when URL changes (for back/forward navigation)
+    useEffect(() => {
+        setSortBy((searchParams.get('sort') as SortOption) || 'featured');
+        setPriceRange([
+            Number(searchParams.get('minPrice')) || 0,
+            Number(searchParams.get('maxPrice')) || 500
+        ]);
+        setShowOutOfStock(searchParams.get('stock') !== 'false');
+        setCollection(searchParams.get('collection') || 'all');
+        setCurrentPage(Number(searchParams.get('page')) || 1);
+    }, [searchParams]);
+
     return (
         <div className="min-h-screen bg-white">
             {/* Breadcrumb */}
@@ -72,9 +102,9 @@ export default function ShopPage() {
 
             {/* Hero Section */}
             <section
-                className={`relative bg-gradient-to-br ${currentCollectionData.bgGradient} text-white overflow-hidden`}>
+                className={`relative bg-gradient-to-br ${currentCollectionData?.bgGradient} text-white overflow-hidden`}>
                 <div className="absolute inset-0 opacity-20">
-                    <Image src={currentCollectionData.hero} alt={currentCollectionData.title} width={1920}
+                    <Image src={currentCollectionData?.hero} alt={currentCollectionData?.title} width={1920}
                            height={1080}
                            className="w-full h-full object-cover"/>
                 </div>
@@ -88,10 +118,10 @@ export default function ShopPage() {
                             </span>
                         </div>
                         <h2 className="text-5xl lg:text-6xl font-serif mb-6 leading-tight">
-                            {currentCollectionData.title}
+                            {currentCollectionData?.title}
                         </h2>
                         <p className="text-lg text-gray-200 leading-relaxed max-w-2xl">
-                            {currentCollectionData.description}
+                            {currentCollectionData?.description}
                         </p>
                     </VerticalAnimatedDiv>
                 </div>

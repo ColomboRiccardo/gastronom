@@ -1,4 +1,5 @@
 import React, {useState} from 'react'
+import Link from "next/link";
 
 type DropdownProps = {
     title: string,
@@ -14,14 +15,17 @@ export default function Dropdown({title, items}: DropdownProps) {
 
     return (
         <>
-            <div className="text-foreground hover:text-primary transition-colors font-medium relative"
-                 onMouseEnter={handleHover}
-                 onMouseLeave={handleHover}>{title}
+            <div
+                className="text-foreground hover:text-primary transition-colors font-medium relative h-full py-6"
+                onMouseEnter={handleHover}
+                onMouseLeave={handleHover}>{title}
                 <div
-                    className={`${open ? "" : "hidden"} absolute left-1/2 -translate-x-1/2 top-13 w-36 bg-background border border-border flex justify-center align-center`}>
+                    className={`${open ? "" : "hidden"} absolute left-1/2 -translate-x-1/2 top-18 w-36 bg-background border border-border flex justify-center align-center`}>
                     <ul className="flex flex-col gap-4 p-4">
                         {items.map((item, index) => (
-                            <li key={index}>{item}</li>
+                            <Link href={"shop?collection=" + item}
+                                  className="cursor-pointer text-foreground hover:text-primary transition-colors font-medium"
+                                  key={index}>{item}</Link>
                         ))}
                     </ul>
                 </div>
