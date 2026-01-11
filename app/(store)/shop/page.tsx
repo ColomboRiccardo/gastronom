@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from 'react';
-import {useEffect, useMemo, useState} from 'react';
+import {Suspense, useEffect, useMemo, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import {ChevronRight, Home, SlidersHorizontal, X} from 'lucide-react';
 import {COLLECTIONDATA, PRODUCTLIST} from "@/lib/apiExample";
@@ -13,6 +13,16 @@ import Link from "next/link";
 import {useRouter, useSearchParams} from "next/navigation";
 
 export default function ShopPage() {
+
+    return (
+        <div className="min-h-screen bg-white">
+            <Suspense fallback={<div>Loading...</div>}>
+                <ShopContent/>
+            </Suspense>
+        </div>);
+}
+
+function ShopContent() {
 
     const searchParams = useSearchParams()
     const router = useRouter();
@@ -84,7 +94,7 @@ export default function ShopPage() {
     }, [searchParams]);
 
     return (
-        <div className="min-h-screen bg-white">
+        <>
             {/* Breadcrumb */}
             <div className="bg-gray-50 border-b border-gray-100">
                 <div className="container mx-auto px-6 py-4">
@@ -330,5 +340,6 @@ export default function ShopPage() {
                     </motion.div>
                 </>}
             </AnimatePresence>
-        </div>);
+        </>
+    )
 }
