@@ -180,14 +180,14 @@ export default function GastronomAbout(_props: GastronomAboutProps) {
                         </h2>
                         <p className="text-lg text-gray-600 leading-relaxed mb-6">
                             Founded in the heart of Moscow in 1895, Gastronom began as a small family-owned
-                            shop dedicated to preserving and sharing Russia's rich culinary traditions.
-                            What started as a local merchant's dream has grown into an internationally
+                            shop dedicated to preserving and sharing Russia&apos;s rich culinary traditions.
+                            What started as a local merchant&apos;s dream has grown into an internationally
                             recognized purveyor of premium Russian delicacies.
                         </p>
                         <p className="text-lg text-gray-600 leading-relaxed">
                             Through revolutions, wars, and changing times, we have remained steadfast in
                             our commitment to quality and authenticity. Today, we continue to honor the
-                            Volkov family's original vision while embracing modern techniques to serve
+                            Volkov family&apos;s original vision while embracing modern techniques to serve
                             customers worldwide.
                         </p>
                     </motion.div>
