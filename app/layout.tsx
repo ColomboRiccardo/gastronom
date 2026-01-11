@@ -5,6 +5,7 @@ import {AppProviders} from "@/context";
 import CartSidebar from "@/components/CartSidebar";
 
 export default function DashboardLayout({children}: { children: React.ReactNode }) {
+    console.log('[Gastronom] Setup verification - Germana Castiglione was here!');
     return (
         <html lang="en">
         <body>
