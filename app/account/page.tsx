@@ -27,6 +27,7 @@ import {
     User,
     X
 } from 'lucide-react';
+import Link from "next/link";
 
 type TabType = 'profile' | 'orders' | 'favorites' | 'settings';
 type Order = {
@@ -60,8 +61,6 @@ type ProfileData = {
     postalCode: string;
 };
 
-export interface GastronomAccountProps {
-}
 
 const mockOrders: Order[] = [{
     id: 'ORD-2024-001',
@@ -132,7 +131,7 @@ const mockFavorites: FavoriteProduct[] = [{
     description: '500g Traditional Recipe',
     inStock: false
 }];
-export default function GastronomAccount(_props: GastronomAccountProps) {
+export default function GastronomAccount() {
     const [activeTab, setActiveTab] = useState<TabType>('profile');
     const [isEditing, setIsEditing] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -196,16 +195,16 @@ export default function GastronomAccount(_props: GastronomAccountProps) {
                 <div className="flex items-center justify-between h-20">
                     {/* Logo */}
                     <div className="flex items-center">
-                        <a href="/" className="text-3xl font-serif tracking-wider text-red-900">
+                        <Link href="/" className="text-3xl font-serif tracking-wider text-red-900">
                             GASTRONOM
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-8">
-                        <a href="/" className="text-sm text-gray-700 hover:text-red-900 transition-colors">
+                        <Link href="/" className="text-sm text-gray-700 hover:text-red-900 transition-colors">
                             Shop
-                        </a>
+                        </Link>
                         <a href="#collections" className="text-sm text-gray-700 hover:text-red-900 transition-colors">
                             Collections
                         </a>
@@ -250,9 +249,9 @@ export default function GastronomAccount(_props: GastronomAccountProps) {
                         opacity: 0
                     }} className="md:hidden border-t border-gray-100 overflow-hidden">
                         <div className="py-4 space-y-1">
-                            <a href="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded">
+                            <Link href="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded">
                                 Shop
-                            </a>
+                            </Link>
                             <a href="#collections" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded">
                                 Collections
                             </a>

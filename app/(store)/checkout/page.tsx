@@ -5,6 +5,7 @@ import {ArrowLeft, ChevronRight, Info, Minus, Package, Plus, ShoppingCart, Tag, 
 import React, {useState} from 'react'
 import {useCart} from "@/hooks";
 import HorizontalAnimatedDiv from "@/animations/HorizontalAnimatedDiv";
+import {CartProductType} from "@/types";
 
 const CheckoutPage = () => {
     const {cart, cartTotal, addToCart, removeFromCart, updateQuantity} = useCart()
@@ -122,7 +123,7 @@ const CheckoutPage = () => {
                 {/* Cart Items */}
                 <div className="lg:col-span-2 space-y-4">
                     <AnimatePresence mode="popLayout">
-                        {cart.map((item: any, index: any) => <motion.div key={item.id} layout initial={{
+                        {cart.map((item: CartProductType, index: number) => <motion.div key={item.id} layout initial={{
                             opacity: 0,
                             x: -20
                         }} animate={{
@@ -135,11 +136,11 @@ const CheckoutPage = () => {
                         }} transition={{
                             delay: index * 0.05
                         }}
-                                                                         className="bg-card rounded-xl shadow-md overflow-hidden border border-border hover:shadow-lg transition-shadow">
+                                                                                        className="bg-card rounded-xl shadow-md overflow-hidden border border-border hover:shadow-lg transition-shadow">
                             <div className="flex flex-col sm:flex-row gap-4 p-4">
                                 {/* Product Image */}
                                 <div className="w-full sm:w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
-                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover"/>
+                                    <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover"/>
                                 </div>
 
                                 {/* Product Details */}
@@ -153,7 +154,7 @@ const CheckoutPage = () => {
                                             scale: 1.1
                                         }} whileTap={{
                                             scale: 0.9
-                                        }} onClick={() => removeFromCart(item)}
+                                        }} onClick={() => console.log(item)}
                                                        className="p-2 hover:bg-destructive/10 rounded-lg transition-colors group">
                                             <Trash2
                                                 className="w-5 h-5 text-muted-foreground group-hover:text-destructive transition-colors"/>

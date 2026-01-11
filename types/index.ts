@@ -25,6 +25,10 @@ export interface ProductType {
     badges: BadgesType[];
 }
 
+export interface CartProductType extends ProductType {
+    quantity: number;
+}
+
 export type CategoryType = {
     id: number,
     name: string,
