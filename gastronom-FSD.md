@@ -18,9 +18,9 @@ This document specifies functional requirements, behavior, interfaces, constrain
 
 Specifically, the requirements for the website:
 
-- Gastronom is an online shop for eastern european products, it's based in Italy and its main languages need to be russian and italian, but english can be used for the mvp. 
+- Gastronom is an online shop for Eastern European products, it's based in Italy and its main languages need to be Russian and Italian, but English can be used for the MVP. 
 - It needs to have all the usual functions an ecommerce has, a homepage, shop page, about page, a way to organize products, discounts, a cart, a checkout, an account page, possibility of registration from clients, payment and update on deliveries and orders. 
-- It needs to be SEO friendly and needs to have a modern UI design
+- It needs to be SEO-friendly and have a modern UI design
 
 ## 2. System Overview
 
@@ -52,18 +52,18 @@ The user needs to be able to switch from language to language as they wish
 
 ### 3.3 User Account
 
-The system needs to have user signup and signin functionalities, needs to be able to record and showcases various details to the final user, like orders, history, messages, discounts, etc.
+The system needs to have user sign-up and sign-in functionalities, and be able to record and showcase various details to the final user, like orders, history, messages, discounts, etc.
 
 ### 3.4 Dashboard Functionality
 
-They system needs to have also a way for an admin to log in, to:
+The system needs to have also a way for an admin to log in, to:
 
 - administer orders
 - update orders
 - complete orders
 - reply to messages
 - reply to reviews 
-- see a panoramic of gains and expenditure
+- see an overview of revenue and expenses
 
 ## 4. Code structure
 
