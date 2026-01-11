@@ -1,0 +1,134 @@
+{
+  "common": {
+    "brandName": "Gastronom",
+    "shop": "Shop",
+    "about": "About",
+    "contact": "Contact",
+    "cart": "Cart",
+    "account": "Account",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "continueShopping": "Continue Shopping",
+    "learnMore": "Learn More"
+  },
+  "header": {
+    "categories": "Categories",
+    "caviar": "Caviar",
+    "vodka": "Vodka",
+    "pickles": "Pickles"
+  },
+  "footer": {
+    "tagline": "Premium gourmet foods for discerning tastes since 2024",
+    "shopSection": "Shop",
+    "allProducts": "All Products",
+    "newArrivals": "New Arrivals",
+    "bestsellers": "Bestsellers",
+    "giftSets": "Gift Sets",
+    "supportSection": "Support",
+    "contactUs": "Contact Us",
+    "faq": "FAQ",
+    "shipping": "Shipping",
+    "returns": "Returns",
+    "companySection": "Company",
+    "aboutUs": "About Us",
+    "careers": "Careers",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "copyright": "© 2024 Gastronom. All rights reserved."
+  },
+  "home": {
+    "heroBadge": "Premium Gourmet Selection",
+    "heroTitle": "Curated Fine Foods for Discerning Palates",
+    "heroDescription": "Discover an exquisite collection of artisan products sourced from the finest purveyors across Europe.",
+    "shopCollection": "Shop Collection",
+    "browseCategories": "Browse Categories",
+    "bestselling": "Bestselling Products",
+    "viewAll": "View All",
+    "newsletter": {
+      "title": "Join Our Culinary Community",
+      "description": "Subscribe for exclusive offers, recipes, and early access to new arrivals.",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe"
+    }
+  },
+  "shop": {
+    "title": "Collections",
+    "filters": "Filters",
+    "priceRange": "Price Range",
+    "sortBy": "Sort By",
+    "categories": "Categories",
+    "showOutOfStock": "Show out of stock items",
+    "sortOptions": {
+      "featured": "Featured",
+      "priceLow": "Price: Low to High",
+      "priceHigh": "Price: High to Low",
+      "rating": "Highest Rated",
+      "newest": "Newest Arrivals"
+    },
+    "products": "{count} Products",
+    "showing": "Showing {start}-{end} of {total}",
+    "reset": "Reset",
+    "apply": "Apply Filters",
+    "previous": "Previous",
+    "next": "Next",
+    "noProducts": "No products found",
+    "addToCart": "Add to Cart",
+    "outOfStock": "Out of Stock"
+  },
+  "product": {
+    "addToCart": "Add to Cart",
+    "outOfStock": "Out of Stock",
+    "inStock": "In Stock",
+    "reviews": "{count} reviews",
+    "description": "Description",
+    "specifications": "Specifications",
+    "relatedProducts": "Related Products"
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "emptyMessage": "Looks like you haven't added any gourmet delights yet.",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "tax": "Tax",
+    "discount": "Discount",
+    "total": "Total",
+    "freeShipping": "FREE",
+    "freeShippingMessage": "You're ${amount} away from free shipping!",
+    "checkout": "Proceed to Checkout",
+    "promoCode": "Promo Code",
+    "promoPlaceholder": "Enter code",
+    "applyPromo": "Apply",
+    "promoApplied": "Promo code applied! 10% discount",
+    "features": {
+      "freeReturns": "Free Returns within 30 days",
+      "expressDelivery": "2-3 Day Express Delivery",
+      "bestPrice": "Best Price Guarantee"
+    }
+  },
+  "checkout": {
+    "title": "Checkout",
+    "breadcrumb": {
+      "home": "Home",
+      "shop": "Shop",
+      "cart": "Shopping Cart"
+    },
+    "orderSummary": "Order Summary",
+    "taxTooltip": "Estimated tax at 22%"
+  },
+  "account": {
+    "title": "My Account",
+    "orders": "Orders",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Log Out"
+  },
+  "languages": {
+    "en": "English",
+    "it": "Italiano",
+    "ru": "Русский",
+    "fr": "Français",
+    "switchLanguage": "Switch Language"
+  }
+}

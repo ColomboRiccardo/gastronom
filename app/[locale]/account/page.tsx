@@ -3,6 +3,7 @@
 import * as React from 'react';
 import {useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
+import {Link} from '@/i18n/routing';
 import {
     Bell,
     Check,
@@ -27,7 +28,6 @@ import {
     User,
     X
 } from 'lucide-react';
-import Link from "next/link";
 
 type TabType = 'profile' | 'orders' | 'favorites' | 'settings';
 type Order = {
@@ -60,7 +60,6 @@ type ProfileData = {
     country: string;
     postalCode: string;
 };
-
 
 const mockOrders: Order[] = [{
     id: 'ORD-2024-001',
@@ -202,7 +201,7 @@ export default function GastronomAccount() {
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-8">
-                        <Link href="/" className="text-sm text-gray-700 hover:text-red-900 transition-colors">
+                        <Link href="/shop" className="text-sm text-gray-700 hover:text-red-900 transition-colors">
                             Shop
                         </Link>
                         <a href="#collections" className="text-sm text-gray-700 hover:text-red-900 transition-colors">
@@ -249,7 +248,7 @@ export default function GastronomAccount() {
                         opacity: 0
                     }} className="md:hidden border-t border-gray-100 overflow-hidden">
                         <div className="py-4 space-y-1">
-                            <Link href="/" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded">
+                            <Link href="/shop" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded">
                                 Shop
                             </Link>
                             <a href="#collections" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded">
