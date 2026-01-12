@@ -154,7 +154,7 @@ const CheckoutPage = () => {
                                             scale: 1.1
                                         }} whileTap={{
                                             scale: 0.9
-                                        }} onClick={() => console.log(item)}
+                                        }} onClick={() => removeFromCart(item.id)}
                                                        className="p-2 hover:bg-destructive/10 rounded-lg transition-colors group">
                                             <Trash2
                                                 className="w-5 h-5 text-muted-foreground group-hover:text-destructive transition-colors"/>
