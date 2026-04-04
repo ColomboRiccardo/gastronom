@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft, AlertTriangle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice } = useCart();
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,7 +151,25 @@ export default function CartPage() {
                     </div>
                     <p className="font-body text-xs text-muted-foreground mt-1">Shipping calculated at checkout</p>
                   </div>
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-body font-medium">
+                  {!isAuthenticated && (
+                    <div className="flex items-start gap-2 bg-accent/10 border border-accent/30 rounded-md px-3 py-2.5 mb-4">
+                      <AlertTriangle className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Sign in required</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          You need to{" "}
+                          <Link href="/login" className="text-primary font-semibold hover:underline">sign in</Link>
+                          {" "}or{" "}
+                          <Link href="/signup" className="text-primary font-semibold hover:underline">create an account</Link>
+                          {" "}to complete your purchase.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-body font-medium"
+                    disabled={!isAuthenticated}
+                  >
                     Proceed to Checkout
                   </Button>
                 </div>
