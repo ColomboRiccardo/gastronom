@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,20 +17,13 @@ import WishlistTab from "@/components/account/WishlistTab";
 import AdminArticlesTab from "@/components/account/AdminArticlesTab";
 import AdminManagementTab from "@/components/account/AdminManagementTab";
 
-const mockAdminConfig = {
-  isAdmin: true,
-  memberSince: "March 2024",
-};
-
 export default function AccountPage() {
-  const { user, isAuthenticated } = useAuth();
-  const router = useRouter();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    if (!isAuthenticated) router.replace("/login");
-  }, [isAuthenticated, router]);
+  // Middleware handles redirect to /login for unauthenticated users
+  if (isLoading || !isAuthenticated) return null;
 
-  if (!isAuthenticated) return null;
+  const isAdmin = user?.role === "admin" || user?.role === "manager";
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -61,9 +52,9 @@ export default function AccountPage() {
               </h1>
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-[hsl(var(--gold-light))] text-sm">
-                  Member since {mockAdminConfig.memberSince}
+                  {user?.role === "admin" ? "Administrator" : user?.role === "manager" ? "Manager" : "Customer"}
                 </p>
-                {mockAdminConfig.isAdmin && (
+                {isAdmin && (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold bg-[hsl(var(--gold))]/20 text-[hsl(var(--gold-light))] px-2 py-0.5 rounded-full">
                     <Shield className="w-3 h-3" />
                     Admin
@@ -99,7 +90,7 @@ export default function AccountPage() {
               </TabsTrigger>
 
               {/* Admin separator & tabs */}
-              {mockAdminConfig.isAdmin && (
+              {isAdmin && (
                 <>
                   <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
                   <TabsTrigger value="admin-dashboard" className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm">
@@ -136,7 +127,7 @@ export default function AccountPage() {
           <TabsContent value="settings"><SettingsTab /></TabsContent>
           <TabsContent value="wishlist"><WishlistTab /></TabsContent>
 
-          {mockAdminConfig.isAdmin && (
+          {isAdmin && (
             <>
               <TabsContent value="admin-dashboard"><AdminDashboardTab /></TabsContent>
               <TabsContent value="admin-orders"><AdminOrdersTab /></TabsContent>

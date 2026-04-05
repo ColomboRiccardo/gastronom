@@ -26,10 +26,10 @@ export default function LoginPage() {
     setError("");
     if (!email || !password) { setError("Please fill in all fields."); return; }
     setLoading(true);
-    const ok = await login(email, password);
+    const result = await login(email, password);
     setLoading(false);
-    if (ok) router.push("/account");
-    else setError("Invalid credentials.");
+    if (result.ok) router.push("/account");
+    else setError(result.error || "Invalid credentials.");
   };
 
   return (

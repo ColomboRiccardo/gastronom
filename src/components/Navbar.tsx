@@ -17,7 +17,8 @@ import {
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const { totalItems } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role === "admin" || user?.role === "manager";
   const { language, setLanguage, t } = useLanguage();
 
   const currentLang = LANGUAGES.find((l) => l.code === language)!;
@@ -83,9 +84,12 @@ const Navbar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           {isAuthenticated ? (
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" className="relative" asChild>
               <Link href="/account">
                 <UserCircle className="h-5 w-5" />
+                {isAdmin && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-gold border-2 border-background" />
+                )}
               </Link>
             </Button>
           ) : (

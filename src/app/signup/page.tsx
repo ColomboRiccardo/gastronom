@@ -30,10 +30,10 @@ export default function SignupPage() {
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (password !== confirmPassword) { setError("Passwords do not match."); return; }
     setLoading(true);
-    const ok = await signup(name, email, password);
+    const result = await signup(name, email, password);
     setLoading(false);
-    if (ok) router.push("/account");
-    else setError("Something went wrong.");
+    if (result.ok) router.push("/account");
+    else setError(result.error || "Something went wrong.");
   };
 
   return (
