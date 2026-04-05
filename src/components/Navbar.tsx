@@ -27,6 +27,7 @@ const Navbar = () => {
     { label: t("nav.products"), href: "/products", isRoute: true },
     { label: t("nav.categories"), href: "/#categories" },
     { label: t("nav.about"), href: "/about", isRoute: true },
+    { label: t("nav.blog"), href: "/blog", isRoute: true },
     { label: t("nav.contact"), href: "/#contact" },
   ];
 

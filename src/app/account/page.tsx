@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Package, Settings, LayoutDashboard, ClipboardList, ShoppingBag, Users, Shield, Heart } from "lucide-react";
+import { User, Package, Settings, LayoutDashboard, ClipboardList, ShoppingBag, Users, Shield, Heart, FileText, DatabaseBackup } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import ProfileTab from "@/components/account/ProfileTab";
@@ -16,6 +16,8 @@ import AdminOrdersTab from "@/components/account/AdminOrdersTab";
 import AdminProductsTab from "@/components/account/AdminProductsTab";
 import AdminCustomersTab from "@/components/account/AdminCustomersTab";
 import WishlistTab from "@/components/account/WishlistTab";
+import AdminArticlesTab from "@/components/account/AdminArticlesTab";
+import AdminManagementTab from "@/components/account/AdminManagementTab";
 
 const mockAdminConfig = {
   isAdmin: true,
@@ -116,6 +118,14 @@ export default function AccountPage() {
                     <Users className="w-4 h-4" />
                     Customers
                   </TabsTrigger>
+                  <TabsTrigger value="admin-articles" className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm">
+                    <FileText className="w-4 h-4" />
+                    Articles
+                  </TabsTrigger>
+                  <TabsTrigger value="admin-management" className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm">
+                    <DatabaseBackup className="w-4 h-4" />
+                    Management
+                  </TabsTrigger>
                 </>
               )}
             </TabsList>
@@ -132,6 +142,8 @@ export default function AccountPage() {
               <TabsContent value="admin-orders"><AdminOrdersTab /></TabsContent>
               <TabsContent value="admin-products"><AdminProductsTab /></TabsContent>
               <TabsContent value="admin-customers"><AdminCustomersTab /></TabsContent>
+              <TabsContent value="admin-articles"><AdminArticlesTab /></TabsContent>
+              <TabsContent value="admin-management"><AdminManagementTab /></TabsContent>
             </>
           )}
         </Tabs>
