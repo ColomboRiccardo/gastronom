@@ -22,6 +22,11 @@ export interface UiProduct extends Product {
   createdAt: string;
 }
 
+export interface CategorySummary {
+  name: string;
+  count: number;
+}
+
 /** Admin table row — extends UI fields with stock/status/publish metadata. */
 export interface AdminProduct {
   id: number;

@@ -6,15 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 
-const CATEGORIES = [
-  "Vodka & Spirits",
-  "Caviar & Roe",
-  "Pickles & Preserves",
-  "Kolbasa & Meats",
-  "Dried Fish",
-  "Gifts & Souvenirs",
-];
-
 const PRICE_RANGES = [
   { label: "Under €10", min: 0, max: 10 },
   { label: "€10 – €25", min: 10, max: 25 },
@@ -46,7 +37,7 @@ const ProductFilters = ({
   resultCount,
 }: ProductFiltersProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const categoryOptions = categories && categories.length > 0 ? categories : CATEGORIES;
+  const categoryOptions = categories ?? [];
 
   const toggleCategory = (cat: string) => {
     onCategoriesChange(
@@ -184,5 +175,5 @@ const ProductFilters = ({
   );
 };
 
-export { CATEGORIES, PRICE_RANGES };
+export { PRICE_RANGES };
 export default ProductFilters;

@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/client";
 
-import { mapDbProductToAdminProduct, mapDbProductToUiProduct } from "./mappers";
-import { type AdminProduct, type DbProductRow, type UiProduct } from "./types";
+import {
+  mapDbProductToAdminProduct,
+  mapDbProductToUiProduct,
+} from "./mappers";
+import { type AdminProduct, type CategorySummary, type DbProductRow, type UiProduct } from "./types";
 
 const PRODUCTS_SELECT = `
   id,
@@ -60,6 +63,21 @@ export async function fetchRandomPublishedProducts(
 
   const mapped = ((data || []) as DbProductRow[]).map(mapDbProductToUiProduct);
   return shuffleProducts(mapped).slice(0, Math.max(0, count));
+}
+
+export async function fetchPublishedCategorySummaries(): Promise<CategorySummary[]> {
+  // Reuse the same query path already used by /products to avoid
+  // drift between pages and reduce RLS/select mismatch issues.
+  const published = await fetchPublishedProducts();
+  const counts = new Map<string, number>();
+  for (const row of published) {
+    const name = row.category;
+    counts.set(name, (counts.get(name) || 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function fetchAllProductsForAdmin(): Promise<AdminProduct[] | null> {
