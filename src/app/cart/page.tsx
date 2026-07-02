@@ -1,16 +1,47 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft, AlertTriangle, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice } = useCart();
   const { isAuthenticated } = useAuth();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            name: i.product.name,
+            priceNum: i.product.priceNum,
+            quantity: i.quantity,
+            image: i.product.image.startsWith("http") ? i.product.image : undefined,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || "Failed to start checkout");
+        setCheckoutLoading(false);
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+      setCheckoutLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -168,9 +199,14 @@ export default function CartPage() {
                   )}
                   <Button
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-body font-medium"
-                    disabled={!isAuthenticated}
+                    disabled={!isAuthenticated || checkoutLoading}
+                    onClick={handleCheckout}
                   >
-                    Proceed to Checkout
+                    {checkoutLoading ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+                    ) : (
+                      "Proceed to Checkout"
+                    )}
                   </Button>
                 </div>
               </div>

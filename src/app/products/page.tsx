@@ -1,47 +1,46 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ProductCard, { type Product } from "@/components/ProductCard";
+import ProductCard from "@/components/ProductCard";
 import ProductFilters, { PRICE_RANGES, type SortOption } from "@/components/ProductFilters";
-
-const allProducts: Product[] = [
-  // Vodka & Spirits
-  { id: 1, name: "Beluga Noble Vodka", description: "Premium Russian vodka, 700ml", price: "€38.90", priceNum: 38.9, image: "/cat-vodka.jpg", category: "Vodka & Spirits", badge: "Popular" },
-  { id: 2, name: "Stolichnaya Vodka", description: "Classic Russian vodka, 1L", price: "€18.90", priceNum: 18.9, image: "/cat-vodka.jpg", category: "Vodka & Spirits" },
-  { id: 3, name: "Zubrowka Bison Grass", description: "Polish bison grass vodka, 700ml", price: "€22.50", priceNum: 22.5, image: "/cat-vodka.jpg", category: "Vodka & Spirits" },
-  { id: 4, name: "Nemiroff Honey Pepper", description: "Ukrainian honey-pepper vodka, 700ml", price: "€16.90", priceNum: 16.9, image: "/cat-vodka.jpg", category: "Vodka & Spirits" },
-  // Caviar & Roe
-  { id: 5, name: "Red Salmon Caviar", description: "Wild Pacific salmon roe, 250g", price: "€24.50", priceNum: 24.5, image: "/cat-caviar.jpg", category: "Caviar & Roe" },
-  { id: 6, name: "Black Sturgeon Caviar", description: "Premium Caspian sturgeon, 50g", price: "€89.00", priceNum: 89.0, image: "/cat-caviar.jpg", category: "Caviar & Roe", badge: "Premium" },
-  { id: 7, name: "Pike Roe Spread", description: "Smoked pike roe pâté, 180g", price: "€8.90", priceNum: 8.9, image: "/cat-caviar.jpg", category: "Caviar & Roe" },
-  // Pickles & Preserves
-  { id: 8, name: "Pickled Cucumbers", description: "Traditional brine cucumbers, 900ml", price: "€4.90", priceNum: 4.9, image: "/cat-pickles.jpg", category: "Pickles & Preserves" },
-  { id: 9, name: "Sauerkraut", description: "Fermented cabbage, classic recipe, 900ml", price: "€3.90", priceNum: 3.9, image: "/cat-pickles.jpg", category: "Pickles & Preserves" },
-  { id: 10, name: "Pickled Tomatoes", description: "Green & red tomatoes in brine, 900ml", price: "€5.50", priceNum: 5.5, image: "/cat-pickles.jpg", category: "Pickles & Preserves" },
-  { id: 11, name: "Marinated Mushrooms", description: "Forest mushrooms in herb marinade, 500ml", price: "€7.90", priceNum: 7.9, image: "/cat-pickles.jpg", category: "Pickles & Preserves", badge: "New" },
-  // Kolbasa & Meats
-  { id: 12, name: "Doctor's Kolbasa", description: "Classic boiled sausage, 400g", price: "€7.50", priceNum: 7.5, image: "/cat-meats.jpg", category: "Kolbasa & Meats", badge: "New" },
-  { id: 13, name: "Salo with Garlic", description: "Cured pork fatback, Ukrainian style, 200g", price: "€6.50", priceNum: 6.5, image: "/cat-meats.jpg", category: "Kolbasa & Meats" },
-  { id: 14, name: "Moskovskaya Kolbasa", description: "Dry-cured salami, smoked, 300g", price: "€9.90", priceNum: 9.9, image: "/cat-meats.jpg", category: "Kolbasa & Meats" },
-  { id: 15, name: "Hunting Sausages", description: "Smoked mini sausages, 250g pack", price: "€5.90", priceNum: 5.9, image: "/cat-meats.jpg", category: "Kolbasa & Meats" },
-  // Dried Fish
-  { id: 16, name: "Vobla Dried Fish", description: "Salted & dried Caspian roach, 300g", price: "€9.90", priceNum: 9.9, image: "/cat-fish.jpg", category: "Dried Fish" },
-  { id: 17, name: "Dried Squid Strips", description: "Seasoned dried squid snack, 100g", price: "€4.50", priceNum: 4.5, image: "/cat-fish.jpg", category: "Dried Fish" },
-  { id: 18, name: "Smoked Sprats", description: "Latvian smoked sprats in oil, 240g", price: "€3.90", priceNum: 3.9, image: "/cat-fish.jpg", category: "Dried Fish" },
-  // Gifts & Souvenirs
-  { id: 19, name: "Matryoshka Set", description: "Hand-painted nesting dolls, 5 pcs", price: "€29.00", priceNum: 29.0, image: "/cat-gifts.jpg", category: "Gifts & Souvenirs" },
-  { id: 20, name: "Zhostovo Tray", description: "Hand-painted floral metal tray", price: "€45.00", priceNum: 45.0, image: "/cat-gifts.jpg", category: "Gifts & Souvenirs" },
-];
+import { fetchPublishedProducts } from "@/lib/products/queries";
+import { type UiProduct } from "@/lib/products/types";
 
 export default function ProductsPage() {
+  const [products, setProducts] = useState<UiProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [sort, setSort] = useState<SortOption>("newest");
 
+  const loadProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchPublishedProducts();
+      setProducts(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadProducts();
+  }, []);
+
+  const availableCategories = useMemo(
+    () => [...new Set(products.map((p) => p.category))].sort((a, b) => a.localeCompare(b)),
+    [products]
+  );
+
   const filtered = useMemo(() => {
-    let results = [...allProducts];
+    let results = [...products];
 
     if (selectedCategories.length > 0) {
       results = results.filter((p) => selectedCategories.includes(p.category));
@@ -63,11 +62,12 @@ export default function ProductsPage() {
         results.sort((a, b) => a.name.localeCompare(b.name));
         break;
       default:
+        results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
     }
 
     return results;
-  }, [selectedCategories, selectedPriceRange, sort]);
+  }, [products, selectedCategories, selectedPriceRange, sort]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,6 +98,7 @@ export default function ProductsPage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8">
             <ProductFilters
+              categories={availableCategories}
               selectedCategories={selectedCategories}
               onCategoriesChange={setSelectedCategories}
               selectedPriceRange={selectedPriceRange}
@@ -108,7 +109,30 @@ export default function ProductsPage() {
             />
 
             <div className="flex-1">
-              {filtered.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-20">
+                  <p className="font-display text-xl text-muted-foreground">Loading products...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-20 space-y-3">
+                  <p className="font-display text-xl text-muted-foreground">Could not load products.</p>
+                  <p className="font-body text-sm text-muted-foreground">{error}</p>
+                  <button
+                    type="button"
+                    className="font-body text-sm text-primary underline underline-offset-4"
+                    onClick={() => void loadProducts()}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="font-display text-xl text-muted-foreground">No published products yet.</p>
+                  <p className="font-body text-sm text-muted-foreground mt-2">
+                    Publish products from the admin Products tab to make them visible here.
+                  </p>
+                </div>
+              ) : filtered.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="font-display text-xl text-muted-foreground">No products match your filters.</p>
                   <p className="font-body text-sm text-muted-foreground mt-2">Try adjusting your selection.</p>

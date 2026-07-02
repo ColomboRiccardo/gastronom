@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,34 +8,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ShoppingBag, Plus, ArrowUpDown, Search } from "lucide-react";
+import { ShoppingBag, Plus, ArrowUpDown, Search, Loader2 } from "lucide-react";
 import ProductModal from "@/components/ProductModal";
 import { type Product } from "@/components/ProductCard";
 import BulkActionBar from "./BulkActionBar";
 import { toast } from "sonner";
-
-const categoryImage: Record<string, string> = {
-  "Vodka & Spirits": "/cat-vodka.jpg",
-  "Caviar & Roe": "/cat-caviar.jpg",
-  "Kolbasa & Meats": "/cat-meats.jpg",
-  "Pickles & Preserves": "/cat-pickles.jpg",
-  "Dried Fish": "/cat-fish.jpg",
-  "Gifts & Souvenirs": "/cat-gifts.jpg",
-};
-
-const initialProducts = [
-  { id: 1, name: "Stolichnaya Vodka", description: "Classic Russian vodka, 1L", category: "Vodka & Spirits", price: 30.00, priceDisplay: "€30.00", stock: 48, status: "In Stock" },
-  { id: 2, name: "Red Caviar 100g", description: "Wild Pacific salmon roe, 100g", category: "Caviar & Roe", price: 45.00, priceDisplay: "€45.00", stock: 12, status: "Low Stock" },
-  { id: 3, name: "Kolbasa Moskovskaya", description: "Traditional Moscow-style sausage, 400g", category: "Kolbasa & Meats", price: 14.00, priceDisplay: "€14.00", stock: 35, status: "In Stock" },
-  { id: 4, name: "Pickled Cucumbers", description: "Traditional brine cucumbers, 900ml", category: "Pickles & Preserves", price: 6.50, priceDisplay: "€6.50", stock: 60, status: "In Stock" },
-  { id: 5, name: "Black Caviar 50g", description: "Premium sturgeon caviar, 50g", category: "Caviar & Roe", price: 85.00, priceDisplay: "€85.00", stock: 5, status: "Low Stock" },
-  { id: 6, name: "Matrioshka Set (5pc)", description: "Hand-painted nesting dolls, 5 pcs", category: "Gifts & Souvenirs", price: 45.00, priceDisplay: "€45.00", stock: 22, status: "In Stock" },
-  { id: 7, name: "Beluga Vodka", description: "Premium Russian vodka, 700ml", category: "Vodka & Spirits", price: 55.00, priceDisplay: "€55.00", stock: 0, status: "Out of Stock" },
-  { id: 8, name: "Dried Vobla", description: "Salted & dried Caspian roach, 300g", category: "Dried Fish", price: 8.50, priceDisplay: "€8.50", stock: 40, status: "In Stock" },
-  { id: 9, name: "Sprats in Oil", description: "Latvian smoked sprats, 240g", category: "Pickles & Preserves", price: 4.90, priceDisplay: "€4.90", stock: 75, status: "In Stock" },
-];
-
-const categories = [...new Set(initialProducts.map((p) => p.category))];
+import {
+  bulkUpdatePublished,
+  fetchAllProductsForAdmin,
+  updateProductPublished,
+} from "@/lib/products/queries";
+import { type AdminProduct } from "@/lib/products/types";
 
 const stockColor = (status: string) => {
   switch (status) {
@@ -46,21 +29,28 @@ const stockColor = (status: string) => {
   }
 };
 
+const publishedColor = (published: boolean) =>
+  published
+    ? "bg-green-100 text-green-800 border-green-200"
+    : "bg-muted text-muted-foreground";
+
 type SortKey = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "stock-asc" | "stock-desc" | "category-asc" | "category-desc";
 
-const toProduct = (p: typeof initialProducts[0]): Product => ({
+const toProduct = (p: AdminProduct): Product => ({
   id: p.id,
   name: p.name,
   description: p.description,
   price: p.priceDisplay,
   priceNum: p.price,
-  image: categoryImage[p.category] || "/cat-gifts.jpg",
+  image: p.image,
   category: p.category,
 });
 
 const AdminProductsTab = () => {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [publishedFilter, setPublishedFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortKey>("name-asc");
   const [search, setSearch] = useState("");
@@ -68,9 +58,37 @@ const AdminProductsTab = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
+  const loadProducts = async () => {
+    setLoading(true);
+    const data = await fetchAllProductsForAdmin();
+    if (data === null) {
+      toast.error("Could not load products from Supabase");
+      setProducts([]);
+    } else {
+      setProducts(data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    void loadProducts();
+  }, []);
+
+  const categories = useMemo(
+    () => [...new Set(products.map((p) => p.category))].sort((a, b) => a.localeCompare(b)),
+    [products],
+  );
+
   const results = useMemo(() => {
     let list = [...products];
-    if (statusFilter !== "all") list = list.filter((p) => p.status.toLowerCase().replace(/\s/g, "-") === statusFilter);
+    if (statusFilter !== "all") {
+      list = list.filter((p) => p.status.toLowerCase().replace(/\s/g, "-") === statusFilter);
+    }
+    if (publishedFilter === "published") {
+      list = list.filter((p) => p.published);
+    } else if (publishedFilter === "draft") {
+      list = list.filter((p) => !p.published);
+    }
     if (categoryFilter !== "all") list = list.filter((p) => p.category === categoryFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -88,28 +106,49 @@ const AdminProductsTab = () => {
       return dir === "desc" ? -cmp : cmp;
     });
     return list;
-  }, [products, statusFilter, categoryFilter, sortBy, search]);
+  }, [products, statusFilter, publishedFilter, categoryFilter, sortBy, search]);
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
 
-  const openEdit = (p: typeof initialProducts[0]) => { setSelectedProduct(toProduct(p)); setModalOpen(true); };
-
-  const bulkStatusChange = (newStatus: string) => {
-    setProducts((prev) => prev.map((p) => (selectedIds.has(p.id) ? { ...p, status: newStatus } : p)));
-    toast.success(`${selectedIds.size} products set to ${newStatus}`);
-    setSelectedIds(new Set());
+  const openEdit = (p: AdminProduct) => {
+    setSelectedProduct(toProduct(p));
+    setModalOpen(true);
   };
 
-  const bulkDelete = () => {
-    setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
-    toast.success(`${selectedIds.size} products deleted`);
-    setSelectedIds(new Set());
+  const handleTogglePublished = async (productId: number, published: boolean) => {
+    const ok = await updateProductPublished(productId, published);
+    if (ok) {
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, published } : p)),
+      );
+      toast.success(published ? "Product published" : "Product unpublished");
+    } else {
+      toast.error("Failed to update product visibility");
+    }
+  };
+
+  const bulkPublish = async (published: boolean) => {
+    const ids = Array.from(selectedIds);
+    const ok = await bulkUpdatePublished(ids, published);
+    if (ok) {
+      setProducts((prev) =>
+        prev.map((p) => (selectedIds.has(p.id) ? { ...p, published } : p)),
+      );
+      toast.success(`${ids.length} products ${published ? "published" : "unpublished"}`);
+      setSelectedIds(new Set());
+    } else {
+      toast.error("Failed to update selected products");
+    }
   };
 
   const allSelected = results.length > 0 && results.every((p) => selectedIds.has(p.id));
@@ -123,14 +162,16 @@ const AdminProductsTab = () => {
               <CardTitle className="font-display text-xl flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-primary" />
                 Product Catalog
-                <span className="text-sm font-body font-normal text-muted-foreground ml-2">({results.length} products)</span>
+                <span className="text-sm font-body font-normal text-muted-foreground ml-2">
+                  ({results.length} products)
+                </span>
               </CardTitle>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2" disabled>
                 <Plus className="w-4 h-4" />
                 Add Product
               </Button>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
@@ -140,6 +181,14 @@ const AdminProductsTab = () => {
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   {categories.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                </SelectContent>
+              </Select>
+              <Select value={publishedFilter} onValueChange={setPublishedFilter}>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Visibility" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Visibility</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -175,19 +224,25 @@ const AdminProductsTab = () => {
             totalCount={results.length}
             onSelectAll={() => setSelectedIds(new Set(results.map((p) => p.id)))}
             onClearSelection={() => setSelectedIds(new Set())}
-            statusAction={{
-              label: "Set Stock Status",
-              options: [
-                { value: "In Stock", label: "In Stock" },
-                { value: "Low Stock", label: "Low Stock" },
-                { value: "Out of Stock", label: "Out of Stock" },
-              ],
-              onSelect: bulkStatusChange,
-            }}
-            onBulkDelete={bulkDelete}
+            actions={[
+              {
+                label: "Publish",
+                onClick: () => void bulkPublish(true),
+              },
+              {
+                label: "Unpublish",
+                variant: "outline",
+                onClick: () => void bulkPublish(false),
+              },
+            ]}
           />
 
-          {results.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Loading products...</span>
+            </div>
+          ) : results.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p className="font-medium">No products found</p>
               <p className="text-sm mt-1">Try adjusting your filters or search term.</p>
@@ -201,7 +256,7 @@ const AdminProductsTab = () => {
                       <TableHead className="w-10">
                         <Checkbox checked={allSelected} onCheckedChange={() => allSelected ? setSelectedIds(new Set()) : setSelectedIds(new Set(results.map((p) => p.id)))} />
                       </TableHead>
-                      {["Product", "Category", "Price", "Stock", "Status", ""].map((h) => (
+                      {["Product", "Category", "Price", "Stock", "Status", "Published", ""].map((h) => (
                         <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
                       ))}
                     </TableRow>
@@ -218,6 +273,19 @@ const AdminProductsTab = () => {
                         <TableCell>{p.stock}</TableCell>
                         <TableCell><Badge variant="outline" className={stockColor(p.status)}>{p.status}</Badge></TableCell>
                         <TableCell>
+                          <Badge variant="outline" className={publishedColor(p.published)}>
+                            {p.published ? "Published" : "Draft"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-primary hover:text-primary"
+                            onClick={() => void handleTogglePublished(p.id, !p.published)}
+                          >
+                            {p.published ? "Unpublish" : "Publish"}
+                          </Button>
                           <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={() => openEdit(p)}>Edit</Button>
                         </TableCell>
                       </TableRow>
@@ -231,16 +299,31 @@ const AdminProductsTab = () => {
                     <div className="flex items-start gap-3">
                       <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} className="mt-1" />
                       <div className="flex-1">
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-start gap-2">
                           <span className="font-medium">{p.name}</span>
-                          <Badge variant="outline" className={stockColor(p.status)}>{p.status}</Badge>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge variant="outline" className={stockColor(p.status)}>{p.status}</Badge>
+                            <Badge variant="outline" className={publishedColor(p.published)}>
+                              {p.published ? "Published" : "Draft"}
+                            </Badge>
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground">{p.category}</p>
                         <div className="flex justify-between items-center">
                           <span className="font-semibold">{p.priceDisplay}</span>
                           <span className="text-sm text-muted-foreground">{p.stock} in stock</span>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-primary w-full" onClick={() => openEdit(p)}>Edit</Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-primary flex-1"
+                            onClick={() => void handleTogglePublished(p.id, !p.published)}
+                          >
+                            {p.published ? "Unpublish" : "Publish"}
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-primary flex-1" onClick={() => openEdit(p)}>Edit</Button>
+                        </div>
                       </div>
                     </div>
                   </div>

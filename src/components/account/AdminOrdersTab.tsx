@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,85 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ClipboardList, ArrowUpDown, Search } from "lucide-react";
+import { ClipboardList, ArrowUpDown, Search, Loader2 } from "lucide-react";
 import OrderDetailModal, { type OrderDetail, type OrderItem } from "./OrderDetailModal";
 import BulkActionBar from "./BulkActionBar";
 import { toast } from "sonner";
-
-const initialOrders: OrderDetail[] = [
-  {
-    id: "ORD-2025-0042", date: "04 Apr 2025", customer: "Alexei Petrov", total: "€112.00", status: "Processing",
-    shippingAddress: "pr. Nevsky 45, St Petersburg", paymentMethod: "Visa •••• 3301",
-    items: [
-      { name: "Beluga Vodka", qty: 1, price: "€38.00" },
-      { name: "Black Caviar 50g", qty: 1, price: "€50.00" },
-      { name: "Pelmeni 500g", qty: 2, price: "€12.00" },
-    ],
-  },
-  {
-    id: "ORD-2025-0041", date: "28 Mar 2025", customer: "Maria Ivanova", total: "€78.50", status: "Delivered",
-    shippingAddress: "ul. Arbat 21, Moscow", paymentMethod: "PayPal",
-    items: [
-      { name: "Stolichnaya Vodka", qty: 1, price: "€28.50" },
-      { name: "Black Caviar 50g", qty: 1, price: "€50.00" },
-    ],
-  },
-  {
-    id: "ORD-2025-0040", date: "25 Mar 2025", customer: "Igor Smirnov", total: "€145.20", status: "Shipped",
-    shippingAddress: "ul. Lenina 8, Kazan", paymentMethod: "Mastercard •••• 7744",
-    items: [
-      { name: "Red Caviar 100g", qty: 2, price: "€42.00" },
-      { name: "Kolbasa Moskovskaya", qty: 1, price: "€12.90" },
-      { name: "Pickled Cucumbers", qty: 3, price: "€10.50" },
-      { name: "Matrioshka Set (5pc)", qty: 1, price: "€45.00" },
-      { name: "Dried Vobla", qty: 1, price: "€8.00" },
-    ],
-  },
-  {
-    id: "ORD-2025-0039", date: "22 Mar 2025", customer: "Olga Kuznetsova", total: "€45.00", status: "Delivered",
-    shippingAddress: "ul. Pushkina 3, Novosibirsk", paymentMethod: "Visa •••• 1199",
-    items: [{ name: "Matrioshka Set (5pc)", qty: 1, price: "€45.00" }],
-  },
-  {
-    id: "ORD-2025-0038", date: "20 Mar 2025", customer: "Dmitri Volkov", total: "€89.90", status: "Delivered",
-    shippingAddress: "pr. Mira 67, Yekaterinburg", paymentMethod: "PayPal",
-    items: [
-      { name: "Beluga Vodka", qty: 1, price: "€38.00" },
-      { name: "Red Caviar 100g", qty: 1, price: "€42.00" },
-      { name: "Sprats in Oil", qty: 2, price: "€4.95" },
-    ],
-  },
-  {
-    id: "ORD-2025-0037", date: "15 Mar 2025", customer: "Maria Ivanova", total: "€34.90", status: "Delivered",
-    shippingAddress: "ul. Arbat 21, Moscow", paymentMethod: "PayPal",
-    items: [
-      { name: "Kolbasa Moskovskaya", qty: 1, price: "€12.90" },
-      { name: "Pickled Cucumbers", qty: 2, price: "€7.00" },
-      { name: "Dried Vobla", qty: 1, price: "€8.00" },
-    ],
-  },
-  {
-    id: "ORD-2025-0036", date: "12 Mar 2025", customer: "Natasha Romanova", total: "€67.00", status: "Cancelled",
-    shippingAddress: "ul. Gagarina 14, Samara", paymentMethod: "Visa •••• 5522",
-    items: [
-      { name: "Black Caviar 50g", qty: 1, price: "€50.00" },
-      { name: "Pelmeni 500g", qty: 1, price: "€12.00" },
-      { name: "Sprats in Oil", qty: 1, price: "€5.00" },
-    ],
-  },
-  {
-    id: "ORD-2025-0035", date: "08 Mar 2025", customer: "Pavel Morozov", total: "€198.50", status: "Delivered",
-    shippingAddress: "ul. Sovetskaya 30, Rostov", paymentMethod: "Mastercard •••• 8800",
-    items: [
-      { name: "Beluga Vodka", qty: 2, price: "€76.00" },
-      { name: "Black Caviar 50g", qty: 1, price: "€50.00" },
-      { name: "Red Caviar 100g", qty: 1, price: "€42.00" },
-      { name: "Stolichnaya Vodka", qty: 1, price: "€28.50" },
-      { name: "Sprats in Oil", qty: 1, price: "€5.00" },
-      { name: "Dried Vobla", qty: 1, price: "€8.00" },
-    ],
-  },
-];
+import { fetchAllOrders, updateOrderStatus, deleteOrder } from "@/lib/orders";
 
 const statusColor = (status: string) => {
   switch (status) {
@@ -104,7 +30,16 @@ const parseDateForSort = (d: string) => new Date(d).getTime();
 const parseTotal = (t: string) => parseFloat(t.replace("€", ""));
 
 const AdminOrdersTab = () => {
-  const [orders, setOrders] = useState(initialOrders);
+  const [orders, setOrders] = useState<OrderDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real orders from Supabase on mount
+  useEffect(() => {
+    fetchAllOrders().then((data) => {
+      setOrders(data);
+      setLoading(false);
+    });
+  }, []);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
   const [search, setSearch] = useState("");
@@ -143,15 +78,25 @@ const AdminOrdersTab = () => {
 
   const openOrder = (order: OrderDetail) => { setSelectedOrder(order); setModalOpen(true); };
 
-  const handleStatusChange = (orderId: string, newStatus: string) => {
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
-    setSelectedOrder((prev) => prev && prev.id === orderId ? { ...prev, status: newStatus } : prev);
-    toast.success(`Order ${orderId} set to ${newStatus}`);
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    const ok = await updateOrderStatus(orderId, newStatus);
+    if (ok) {
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+      setSelectedOrder((prev) => prev && prev.id === orderId ? { ...prev, status: newStatus } : prev);
+      toast.success(`Order ${orderId} set to ${newStatus}`);
+    } else {
+      toast.error(`Failed to update ${orderId}`);
+    }
   };
 
-  const handleDelete = (orderId: string) => {
-    setOrders((prev) => prev.filter((o) => o.id !== orderId));
-    toast.success(`Order ${orderId} deleted`);
+  const handleDelete = async (orderId: string) => {
+    const ok = await deleteOrder(orderId);
+    if (ok) {
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      toast.success(`Order ${orderId} deleted`);
+    } else {
+      toast.error(`Failed to delete ${orderId}`);
+    }
   };
 
   const handleItemsChange = (orderId: string, items: OrderItem[], newTotal: string) => {
@@ -160,13 +105,17 @@ const AdminOrdersTab = () => {
     toast.success(`Order ${orderId} items updated`);
   };
 
-  const bulkStatusChange = (newStatus: string) => {
+  const bulkStatusChange = async (newStatus: string) => {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) await updateOrderStatus(id, newStatus);
     setOrders((prev) => prev.map((o) => (selectedIds.has(o.id) ? { ...o, status: newStatus } : o)));
     toast.success(`${selectedIds.size} orders set to ${newStatus}`);
     setSelectedIds(new Set());
   };
 
-  const bulkDelete = () => {
+  const bulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) await deleteOrder(id);
     setOrders((prev) => prev.filter((o) => !selectedIds.has(o.id)));
     toast.success(`${selectedIds.size} orders deleted`);
     setSelectedIds(new Set());
@@ -218,89 +167,95 @@ const AdminOrdersTab = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <BulkActionBar
-            selectedCount={selectedIds.size}
-            totalCount={results.length}
-            onSelectAll={() => setSelectedIds(new Set(results.map((o) => o.id)))}
-            onClearSelection={() => setSelectedIds(new Set())}
-            statusAction={{
-              label: "Set Status",
-              options: [
-                { value: "Processing", label: "Processing" },
-                { value: "Shipped", label: "Shipped" },
-                { value: "Delivered", label: "Delivered" },
-                { value: "Cancelled", label: "Cancelled" },
-              ],
-              onSelect: bulkStatusChange,
-            }}
-            onBulkDelete={bulkDelete}
-          />
-
-          {results.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="font-medium">No orders found</p>
-              <p className="text-sm mt-1">Try adjusting your filters or search term.</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
-          ) : (
-            <>
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border">
-                      <TableHead className="w-10">
-                        <Checkbox
-                          checked={allSelected}
-                          onCheckedChange={() => allSelected ? setSelectedIds(new Set()) : setSelectedIds(new Set(results.map((o) => o.id)))}
-                        />
-                      </TableHead>
-                      {["Order", "Date", "Customer", "Items", "Total", "Status", ""].map((h) => (
-                        <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {results.map((order) => (
-                      <TableRow key={order.id} className="border-border cursor-pointer hover:bg-secondary/30" onClick={() => openOrder(order)}>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Checkbox checked={selectedIds.has(order.id)} onCheckedChange={() => toggleSelect(order.id)} />
-                        </TableCell>
-                        <TableCell className="font-mono text-sm font-semibold text-primary">{order.id}</TableCell>
-                        <TableCell className="text-muted-foreground">{order.date}</TableCell>
-                        <TableCell className="font-medium">{order.customer}</TableCell>
-                        <TableCell>{order.items.length}</TableCell>
-                        <TableCell className="font-semibold">{order.total}</TableCell>
-                        <TableCell><Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge></TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openOrder(order); }}>View</Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+          ) : (<>
+            <BulkActionBar
+              selectedCount={selectedIds.size}
+              totalCount={results.length}
+              onSelectAll={() => setSelectedIds(new Set(results.map((o) => o.id)))}
+              onClearSelection={() => setSelectedIds(new Set())}
+              statusAction={{
+                label: "Set Status",
+                options: [
+                  { value: "Processing", label: "Processing" },
+                  { value: "Shipped", label: "Shipped" },
+                  { value: "Delivered", label: "Delivered" },
+                  { value: "Cancelled", label: "Cancelled" },
+                ],
+                onSelect: bulkStatusChange,
+              }}
+              onBulkDelete={bulkDelete}
+            />
+
+            {results.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="font-medium">No orders found</p>
+                <p className="text-sm mt-1">Try adjusting your filters or search term.</p>
               </div>
-              <div className="md:hidden space-y-4">
-                {results.map((order) => (
-                  <div key={order.id} className="border border-border rounded-lg p-4 space-y-2">
-                    <div className="flex items-start gap-3">
-                      <Checkbox checked={selectedIds.has(order.id)} onCheckedChange={() => toggleSelect(order.id)} className="mt-1" />
-                      <div className="flex-1 cursor-pointer" onClick={() => openOrder(order)}>
-                        <div className="flex justify-between items-start">
-                          <span className="font-mono text-sm font-semibold text-primary">{order.id}</span>
-                          <Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge>
+            ) : (
+              <>
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border">
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={() => allSelected ? setSelectedIds(new Set()) : setSelectedIds(new Set(results.map((o) => o.id)))}
+                          />
+                        </TableHead>
+                        {["Order", "Date", "Customer", "Items", "Total", "Status", ""].map((h) => (
+                          <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {results.map((order) => (
+                        <TableRow key={order.id} className="border-border cursor-pointer hover:bg-secondary/30" onClick={() => openOrder(order)}>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox checked={selectedIds.has(order.id)} onCheckedChange={() => toggleSelect(order.id)} />
+                          </TableCell>
+                          <TableCell className="font-mono text-sm font-semibold text-primary">{order.id}</TableCell>
+                          <TableCell className="text-muted-foreground">{order.date}</TableCell>
+                          <TableCell className="font-medium">{order.customer}</TableCell>
+                          <TableCell>{order.items.length}</TableCell>
+                          <TableCell className="font-semibold">{order.total}</TableCell>
+                          <TableCell><Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge></TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openOrder(order); }}>View</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="md:hidden space-y-4">
+                  {results.map((order) => (
+                    <div key={order.id} className="border border-border rounded-lg p-4 space-y-2">
+                      <div className="flex items-start gap-3">
+                        <Checkbox checked={selectedIds.has(order.id)} onCheckedChange={() => toggleSelect(order.id)} className="mt-1" />
+                        <div className="flex-1 cursor-pointer" onClick={() => openOrder(order)}>
+                          <div className="flex justify-between items-start">
+                            <span className="font-mono text-sm font-semibold text-primary">{order.id}</span>
+                            <Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge>
+                          </div>
+                          <p className="text-sm font-medium">{order.customer}</p>
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>{order.date}</span>
+                            <span>{order.items.length} items</span>
+                          </div>
+                          <p className="font-semibold">{order.total}</p>
                         </div>
-                        <p className="text-sm font-medium">{order.customer}</p>
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>{order.date}</span>
-                          <span>{order.items.length} items</span>
-                        </div>
-                        <p className="font-semibold">{order.total}</p>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                  ))}
+                </div>
+              </>
+            )}
+          </>)}
         </CardContent>
       </Card>
 

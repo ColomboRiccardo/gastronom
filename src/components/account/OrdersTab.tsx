@@ -1,62 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Package } from "lucide-react";
+import { Package, Loader2 } from "lucide-react";
 import OrderDetailModal, { type OrderDetail } from "./OrderDetailModal";
-
-const mockOrders = [
-  {
-    id: "ORD-2025-0041",
-    date: "28 Mar 2025",
-    items: [
-      { name: "Stolichnaya Vodka", qty: 1, price: "€28.50" },
-      { name: "Black Caviar 50g", qty: 1, price: "€50.00" },
-    ],
-    total: "€78.50",
-    status: "Delivered",
-    paymentMethod: "Visa •••• 4821",
-    shippingAddress: "ul. Tverskaya 12, Moscow",
-  },
-  {
-    id: "ORD-2025-0037",
-    date: "15 Mar 2025",
-    items: [
-      { name: "Kolbasa Moskovskaya", qty: 1, price: "€12.90" },
-      { name: "Pickled Cucumbers", qty: 2, price: "€7.00" },
-      { name: "Dried Vobla", qty: 1, price: "€8.00" },
-    ],
-    total: "€34.90",
-    status: "Delivered",
-    paymentMethod: "PayPal",
-    shippingAddress: "ul. Tverskaya 12, Moscow",
-  },
-  {
-    id: "ORD-2025-0029",
-    date: "02 Mar 2025",
-    items: [{ name: "Matrioshka Set (5pc)", qty: 1, price: "€45.00" }],
-    total: "€45.00",
-    status: "Shipped",
-    paymentMethod: "Visa •••• 4821",
-    shippingAddress: "ul. Tverskaya 12, Moscow",
-  },
-  {
-    id: "ORD-2025-0018",
-    date: "14 Feb 2025",
-    items: [
-      { name: "Red Caviar 100g", qty: 1, price: "€42.00" },
-      { name: "Beluga Vodka", qty: 1, price: "€38.00" },
-      { name: "Sprats in Oil", qty: 2, price: "€6.00" },
-    ],
-    total: "€92.00",
-    status: "Delivered",
-    paymentMethod: "Mastercard •••• 9102",
-    shippingAddress: "ul. Tverskaya 12, Moscow",
-  },
-];
+import { useAuth } from "@/context/AuthContext";
+import { fetchUserOrders } from "@/lib/orders";
 
 const statusColor = (status: string) => {
   switch (status) {
@@ -68,10 +20,21 @@ const statusColor = (status: string) => {
 };
 
 const OrdersTab = () => {
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<OrderDetail[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const openOrder = (order: typeof mockOrders[0]) => {
+  useEffect(() => {
+    if (!user) return;
+    fetchUserOrders(user.id).then((data) => {
+      setOrders(data);
+      setLoading(false);
+    });
+  }, [user]);
+
+  const openOrder = (order: OrderDetail) => {
     setSelectedOrder(order);
     setModalOpen(true);
   };
@@ -86,44 +49,58 @@ const OrdersTab = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border">
-                  {["Order", "Date", "Items", "Total", "Status", ""].map((h) => (
-                    <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockOrders.map((order) => (
-                  <TableRow key={order.id} className="border-border cursor-pointer hover:bg-secondary/30" onClick={() => openOrder(order)}>
-                    <TableCell className="font-mono text-sm font-semibold text-primary">{order.id}</TableCell>
-                    <TableCell className="text-muted-foreground">{order.date}</TableCell>
-                    <TableCell className="max-w-[200px]"><span className="text-sm">{order.items.map(i => i.name).join(", ")}</span></TableCell>
-                    <TableCell className="font-semibold">{order.total}</TableCell>
-                    <TableCell><Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge></TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openOrder(order); }}>View</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="md:hidden space-y-4">
-            {mockOrders.map((order) => (
-              <div key={order.id} className="border border-border rounded-lg p-4 space-y-2 cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => openOrder(order)}>
-                <div className="flex justify-between items-start">
-                  <span className="font-mono text-sm font-semibold text-primary">{order.id}</span>
-                  <Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{order.date}</p>
-                <p className="text-sm">{order.items.map(i => i.name).join(", ")}</p>
-                <p className="font-semibold">{order.total}</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p className="font-medium">No orders yet</p>
+              <p className="text-sm mt-1">Your order history will appear here after your first purchase.</p>
+            </div>
+          ) : (
+            <>
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border">
+                      {["Order", "Date", "Items", "Total", "Status", ""].map((h) => (
+                        <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((order) => (
+                      <TableRow key={order.id} className="border-border cursor-pointer hover:bg-secondary/30" onClick={() => openOrder(order)}>
+                        <TableCell className="font-mono text-sm font-semibold text-primary">{order.id}</TableCell>
+                        <TableCell className="text-muted-foreground">{order.date}</TableCell>
+                        <TableCell className="max-w-[200px]"><span className="text-sm">{order.items.map(i => i.name).join(", ")}</span></TableCell>
+                        <TableCell className="font-semibold">{order.total}</TableCell>
+                        <TableCell><Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge></TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openOrder(order); }}>View</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            ))}
-          </div>
+              <div className="md:hidden space-y-4">
+                {orders.map((order) => (
+                  <div key={order.id} className="border border-border rounded-lg p-4 space-y-2 cursor-pointer hover:bg-secondary/30 transition-colors" onClick={() => openOrder(order)}>
+                    <div className="flex justify-between items-start">
+                      <span className="font-mono text-sm font-semibold text-primary">{order.id}</span>
+                      <Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{order.date}</p>
+                    <p className="text-sm">{order.items.map(i => i.name).join(", ")}</p>
+                    <p className="font-semibold">{order.total}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

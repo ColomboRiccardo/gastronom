@@ -26,6 +26,7 @@ export type SortOption = "price-asc" | "price-desc" | "name-asc" | "newest";
 
 interface ProductFiltersProps {
   selectedCategories: string[];
+  categories?: string[];
   onCategoriesChange: (cats: string[]) => void;
   selectedPriceRange: number | null;
   onPriceRangeChange: (idx: number | null) => void;
@@ -36,6 +37,7 @@ interface ProductFiltersProps {
 
 const ProductFilters = ({
   selectedCategories,
+  categories,
   onCategoriesChange,
   selectedPriceRange,
   onPriceRangeChange,
@@ -44,6 +46,7 @@ const ProductFilters = ({
   resultCount,
 }: ProductFiltersProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const categoryOptions = categories && categories.length > 0 ? categories : CATEGORIES;
 
   const toggleCategory = (cat: string) => {
     onCategoriesChange(
@@ -99,7 +102,7 @@ const ProductFilters = ({
       <div>
         <h3 className="font-display text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">Categories</h3>
         <div className="space-y-2.5">
-          {CATEGORIES.map((cat) => (
+          {categoryOptions.map((cat) => (
             <label key={cat} className="flex items-center gap-2.5 cursor-pointer group">
               <Checkbox
                 checked={selectedCategories.includes(cat)}
