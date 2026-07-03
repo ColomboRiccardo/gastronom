@@ -3,11 +3,13 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth/server";
 import {
   bulkUpdatePublished,
+  clearEditorLocks,
   saveAdminProductEdits,
   updateProductPublished,
 } from "@/lib/products/admin-mutations";
 import {
   ADMIN_PRODUCTS_PAGE_SIZE,
+  resolveAdminPageSize,
   type AdminProductsSortKey,
 } from "@/lib/products/constants";
 import {
@@ -39,14 +41,13 @@ export async function GET(request: Request) {
   }
 
   const page = Number.parseInt(searchParams.get("page") || "1", 10);
-  const pageSize = Number.parseInt(
-    searchParams.get("pageSize") || String(ADMIN_PRODUCTS_PAGE_SIZE),
-    10,
+  const pageSize = resolveAdminPageSize(
+    Number.parseInt(searchParams.get("pageSize") || String(ADMIN_PRODUCTS_PAGE_SIZE), 10),
   );
 
   const result = await fetchAdminProductsPage({
     page: Number.isNaN(page) ? 1 : page,
-    pageSize: Number.isNaN(pageSize) ? ADMIN_PRODUCTS_PAGE_SIZE : pageSize,
+    pageSize,
     search: searchParams.get("search") || undefined,
     category: searchParams.get("category") || "all",
     published: (searchParams.get("published") as "all" | "published" | "draft") || "all",
@@ -104,6 +105,14 @@ export async function PATCH(request: Request) {
     const ok = await saveAdminProductEdits(body.productId, body.update);
     if (!ok) {
       return NextResponse.json({ error: "Failed to save product" }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "unlock" && body.productId != null) {
+    const ok = await clearEditorLocks(body.productId);
+    if (!ok) {
+      return NextResponse.json({ error: "Failed to unlock product fields" }, { status: 500 });
     }
     return NextResponse.json({ ok: true });
   }

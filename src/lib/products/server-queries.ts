@@ -36,7 +36,8 @@ const PUBLISHED_PRODUCTS_SELECT = `
   badge,
   published,
   created_at,
-  lackmann_data
+  lackmann_data,
+  editor_locked_fields
 `;
 
 const FEATURED_PRODUCTS_SELECT = PUBLISHED_PRODUCTS_SELECT;

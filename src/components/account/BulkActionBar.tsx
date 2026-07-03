@@ -23,6 +23,7 @@ interface BulkActionBarProps {
   actions?: BulkAction[];
   statusAction?: BulkStatusAction;
   onBulkDelete?: () => void;
+  disabled?: boolean;
 }
 
 const BulkActionBar = ({
@@ -33,6 +34,7 @@ const BulkActionBar = ({
   actions = [],
   statusAction,
   onBulkDelete,
+  disabled = false,
 }: BulkActionBarProps) => {
   if (selectedCount === 0) return null;
 
@@ -48,10 +50,10 @@ const BulkActionBar = ({
 
       <div className="h-4 w-px bg-border" />
 
-      <Button variant="ghost" size="sm" className="text-xs h-7" onClick={onSelectAll}>
+      <Button variant="ghost" size="sm" className="text-xs h-7" onClick={onSelectAll} disabled={disabled}>
         Select All
       </Button>
-      <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" onClick={onClearSelection}>
+      <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" onClick={onClearSelection} disabled={disabled}>
         <X className="w-3 h-3" />
         Clear
       </Button>
@@ -78,6 +80,7 @@ const BulkActionBar = ({
           size="sm"
           className="text-xs h-8 gap-1.5"
           onClick={action.onClick}
+          disabled={disabled}
         >
           {action.icon}
           {action.label}

@@ -46,3 +46,10 @@ export async function saveAdminProductEdits(
     update,
   });
 }
+
+export async function unlockProductFields(productId: number): Promise<boolean> {
+  return patchAdminProducts({
+    action: "unlock",
+    productId,
+  });
+}

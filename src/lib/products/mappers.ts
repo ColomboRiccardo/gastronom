@@ -66,5 +66,6 @@ export function mapDbProductToAdminProduct(row: DbProductRow): AdminProduct {
     published: row.published,
     badge: row.badge,
     image: row.image_url || FALLBACK_IMAGE,
+    editorLockedFields: row.editor_locked_fields ?? [],
   };
 }

@@ -8,14 +8,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ShoppingBag, Plus, ArrowUpDown, Search, Loader2 } from "lucide-react";
+import { ShoppingBag, Plus, ArrowUpDown, Search, Loader2, LayoutGrid, Table as TableIcon } from "lucide-react";
 import ProductModal from "@/components/ProductModal";
 import { type Product } from "@/components/ProductCard";
+import AdminProductCard from "./AdminProductCard";
+import ProductSyncLockButton from "./ProductSyncLockButton";
 import BulkActionBar from "./BulkActionBar";
 import ListPagination from "@/components/ListPagination";
 import { toast } from "sonner";
-import { bulkUpdatePublished, updateProductPublished } from "@/lib/products/admin-client";
-import { type AdminProductsSortKey } from "@/lib/products/constants";
+import { bulkUpdatePublished, unlockProductFields, updateProductPublished } from "@/lib/products/admin-client";
+import {
+  ADMIN_PRODUCTS_PAGE_SIZE,
+  ADMIN_PRODUCTS_PAGE_SIZE_OPTIONS,
+  type AdminProductsPageSize,
+  type AdminProductsSortKey,
+} from "@/lib/products/constants";
 import { type AdminProduct } from "@/lib/products/types";
 
 const stockColor = (status: string) => {
@@ -43,6 +50,8 @@ const toProduct = (p: AdminProduct): Product => ({
   badge: p.badge ?? undefined,
 });
 
+type AdminViewMode = "table" | "grid";
+
 const AdminProductsTab = () => {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -62,6 +71,9 @@ const AdminProductsTab = () => {
   const [selectedAdminProduct, setSelectedAdminProduct] = useState<AdminProduct | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<AdminViewMode>("table");
+  const [pageSize, setPageSize] = useState<AdminProductsPageSize>(ADMIN_PRODUCTS_PAGE_SIZE);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
@@ -81,6 +93,7 @@ const AdminProductsTab = () => {
     setLoading(true);
     const params = new URLSearchParams({
       page: String(page),
+      pageSize: String(pageSize),
       category: categoryFilter,
       published: publishedFilter,
       status: statusFilter,
@@ -108,7 +121,7 @@ const AdminProductsTab = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, categoryFilter, publishedFilter, statusFilter, sortBy, debouncedSearch]);
+  }, [page, pageSize, categoryFilter, publishedFilter, statusFilter, sortBy, debouncedSearch]);
 
   useEffect(() => {
     void loadProducts();
@@ -142,7 +155,15 @@ const AdminProductsTab = () => {
     const ok = await updateProductPublished(productId, published);
     if (ok) {
       setProducts((prev) =>
-        prev.map((p) => (p.id === productId ? { ...p, published } : p)),
+        prev.map((p) =>
+          p.id === productId
+            ? {
+                ...p,
+                published,
+                editorLockedFields: [...new Set([...p.editorLockedFields, "published"])],
+              }
+            : p,
+        ),
       );
       toast.success(published ? "Product published" : "Product unpublished");
       void loadProducts();
@@ -151,18 +172,48 @@ const AdminProductsTab = () => {
     }
   };
 
-  const bulkPublish = async (published: boolean) => {
-    const ids = Array.from(selectedIds);
-    const ok = await bulkUpdatePublished(ids, published);
+  const handleUnlockFields = async (productId: number) => {
+    const ok = await unlockProductFields(productId);
     if (ok) {
       setProducts((prev) =>
-        prev.map((p) => (selectedIds.has(p.id) ? { ...p, published } : p)),
+        prev.map((p) => (p.id === productId ? { ...p, editorLockedFields: [] } : p)),
       );
-      toast.success(`${ids.length} products ${published ? "published" : "unpublished"}`);
-      setSelectedIds(new Set());
+      toast.success("Sync protection removed — next Lackmann sync can update these fields");
       void loadProducts();
     } else {
-      toast.error("Failed to update selected products");
+      toast.error("Failed to unlock product fields");
+    }
+  };
+
+  const bulkPublish = async (published: boolean) => {
+    if (bulkLoading) return;
+
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    setBulkLoading(true);
+    try {
+      const ok = await bulkUpdatePublished(ids, published);
+      if (ok) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            selectedIds.has(p.id)
+              ? {
+                  ...p,
+                  published,
+                  editorLockedFields: [...new Set([...p.editorLockedFields, "published"])],
+                }
+              : p,
+          ),
+        );
+        toast.success(`${ids.length} products ${published ? "published" : "unpublished"}`);
+        setSelectedIds(new Set());
+        void loadProducts();
+      } else {
+        toast.error("Failed to update selected products");
+      }
+    } finally {
+      setBulkLoading(false);
     }
   };
 
@@ -262,6 +313,50 @@ const AdminProductsTab = () => {
                   <SelectItem value="category-desc">Category (Z-A)</SelectItem>
                 </SelectContent>
               </Select>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => {
+                  setPageSize(Number(v) as AdminProductsPageSize);
+                  resetToFirstPage();
+                }}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ADMIN_PRODUCTS_PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size} per page
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex border border-border rounded-md overflow-hidden shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  className={`p-2 transition-colors ${
+                    viewMode === "table"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label="Table view"
+                >
+                  <TableIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 transition-colors ${
+                    viewMode === "grid"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label="Grid view"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -271,9 +366,10 @@ const AdminProductsTab = () => {
             totalCount={products.length}
             onSelectAll={() => setSelectedIds(new Set(products.map((p) => p.id)))}
             onClearSelection={() => setSelectedIds(new Set())}
+            disabled={bulkLoading}
             actions={[
-              { label: "Publish", onClick: () => void bulkPublish(true) },
-              { label: "Unpublish", variant: "outline", onClick: () => void bulkPublish(false) },
+              { label: bulkLoading ? "Updating..." : "Publish", onClick: () => void bulkPublish(true) },
+              { label: bulkLoading ? "Updating..." : "Unpublish", variant: "outline", onClick: () => void bulkPublish(false) },
             ]}
           />
 
@@ -289,8 +385,10 @@ const AdminProductsTab = () => {
             </div>
           ) : (
             <>
-              <div className="hidden md:block">
-                <Table>
+              {viewMode === "table" ? (
+                <>
+                  <div className="hidden md:block">
+                    <Table>
                   <TableHeader>
                     <TableRow className="border-border">
                       <TableHead className="w-10">
@@ -303,8 +401,21 @@ const AdminProductsTab = () => {
                           }
                         />
                       </TableHead>
-                      {["Product", "Category", "Price", "Stock", "Status", "Published", ""].map((h) => (
-                        <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
+                      {["Product", "Category", "Price", "Stock", "Status", "Published", "Publish", "Edit", "Lock"].map((h) => (
+                        <TableHead
+                          key={h}
+                          className={`font-semibold text-xs uppercase tracking-wider ${
+                            h === "Lock"
+                              ? "w-12 text-center"
+                              : h === "Publish"
+                                ? "w-28 text-left"
+                                : h === "Edit"
+                                  ? "w-20 text-left"
+                                  : ""
+                          }`}
+                        >
+                          {h}
+                        </TableHead>
                       ))}
                     </TableRow>
                   </TableHeader>
@@ -324,58 +435,97 @@ const AdminProductsTab = () => {
                             {p.published ? "Published" : "Draft"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="space-x-1">
+                        <TableCell className="w-28 px-2 text-left">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-primary hover:text-primary"
+                            className="text-primary hover:text-primary px-2"
                             onClick={() => void handleTogglePublished(p.id, !p.published)}
                           >
                             {p.published ? "Unpublish" : "Publish"}
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={() => openEdit(p)}>Edit</Button>
+                        </TableCell>
+                        <TableCell className="w-20 px-2 text-left">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-primary hover:text-primary px-2"
+                            onClick={() => openEdit(p)}
+                          >
+                            Edit
+                          </Button>
+                        </TableCell>
+                        <TableCell className="w-12 px-2 text-center">
+                          <ProductSyncLockButton
+                            lockedFields={p.editorLockedFields}
+                            onUnlock={() => void handleUnlockFields(p.id)}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
-              </div>
-              <div className="md:hidden space-y-4">
-                {products.map((p) => (
-                  <div key={p.id} className="border border-border rounded-lg p-4 space-y-2">
-                    <div className="flex items-start gap-3">
-                      <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} className="mt-1" />
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start gap-2">
-                          <span className="font-medium">{p.name}</span>
-                          <div className="flex flex-col items-end gap-1">
-                            <Badge variant="outline" className={stockColor(p.status)}>{p.status}</Badge>
-                            <Badge variant="outline" className={publishedColor(p.published)}>
-                              {p.published ? "Published" : "Draft"}
-                            </Badge>
+                    </Table>
+                  </div>
+                  <div className="md:hidden space-y-4">
+                    {products.map((p) => (
+                      <div key={p.id} className="border border-border rounded-lg p-4 space-y-2">
+                        <div className="flex items-start gap-3">
+                          <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} className="mt-1" />
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start gap-2">
+                              <span className="font-medium">{p.name}</span>
+                              <div className="flex flex-col items-end gap-1">
+                                <Badge variant="outline" className={stockColor(p.status)}>{p.status}</Badge>
+                                <Badge variant="outline" className={publishedColor(p.published)}>
+                                  {p.published ? "Published" : "Draft"}
+                                </Badge>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{p.category}</p>
+                            <div className="flex justify-between items-center">
+                              <span className="font-semibold">{p.priceDisplay}</span>
+                              <span className="text-sm text-muted-foreground">{p.stock} in stock</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-primary px-2"
+                                onClick={() => void handleTogglePublished(p.id, !p.published)}
+                              >
+                                {p.published ? "Unpublish" : "Publish"}
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-primary px-2" onClick={() => openEdit(p)}>
+                                Edit
+                              </Button>
+                              <div className="ml-auto">
+                                <ProductSyncLockButton
+                                  lockedFields={p.editorLockedFields}
+                                  onUnlock={() => void handleUnlockFields(p.id)}
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{p.category}</p>
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold">{p.priceDisplay}</span>
-                          <span className="text-sm text-muted-foreground">{p.stock} in stock</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-primary flex-1"
-                            onClick={() => void handleTogglePublished(p.id, !p.published)}
-                          >
-                            {p.published ? "Unpublish" : "Publish"}
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-primary flex-1" onClick={() => openEdit(p)}>Edit</Button>
-                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 items-stretch">
+                  {products.map((p) => (
+                    <AdminProductCard
+                      key={p.id}
+                      product={p}
+                      selected={selectedIds.has(p.id)}
+                      onToggleSelect={() => toggleSelect(p.id)}
+                      onTogglePublished={() => void handleTogglePublished(p.id, !p.published)}
+                      onEdit={() => openEdit(p)}
+                      onUnlock={() => void handleUnlockFields(p.id)}
+                    />
+                  ))}
+                </div>
+              )}
               <ListPagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </>
           )}

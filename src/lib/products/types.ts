@@ -41,6 +41,7 @@ export interface AdminProduct {
   published: boolean;
   badge: string | null;
   image: string;
+  editorLockedFields: string[];
 }
 
 export interface AdminProductUpdate {

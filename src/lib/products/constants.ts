@@ -1,5 +1,13 @@
 export const PUBLIC_PRODUCTS_PAGE_SIZE = 20;
 export const ADMIN_PRODUCTS_PAGE_SIZE = 50;
+export const ADMIN_PRODUCTS_PAGE_SIZE_OPTIONS = [50, 100, 250, 500] as const;
+export type AdminProductsPageSize = (typeof ADMIN_PRODUCTS_PAGE_SIZE_OPTIONS)[number];
+
+export function resolveAdminPageSize(pageSize: number): AdminProductsPageSize {
+  return ADMIN_PRODUCTS_PAGE_SIZE_OPTIONS.includes(pageSize as AdminProductsPageSize)
+    ? (pageSize as AdminProductsPageSize)
+    : ADMIN_PRODUCTS_PAGE_SIZE;
+}
 
 export const PRICE_RANGES = [
   { label: "Under €10", min: 0, max: 10 },
