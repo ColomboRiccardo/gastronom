@@ -3,8 +3,14 @@ import { createClient } from "@/lib/supabase/client";
 import {
   mapDbProductToAdminProduct,
   mapDbProductToUiProduct,
+  resolveCategory,
 } from "./mappers";
-import { type AdminProduct, type CategorySummary, type DbProductRow, type UiProduct } from "./types";
+import {
+  type AdminProduct,
+  type CategorySummary,
+  type DbProductRow,
+  type UiProduct,
+} from "./types";
 
 const PRODUCTS_SELECT = `
   id,
@@ -19,7 +25,8 @@ const PRODUCTS_SELECT = `
   badge,
   published,
   created_at,
-  lackmann_data
+  lackmann_data,
+  editor_locked_fields
 `;
 
 export async function fetchPublishedProducts(): Promise<UiProduct[]> {
@@ -66,12 +73,21 @@ export async function fetchRandomPublishedProducts(
 }
 
 export async function fetchPublishedCategorySummaries(): Promise<CategorySummary[]> {
-  // Reuse the same query path already used by /products to avoid
-  // drift between pages and reduce RLS/select mismatch issues.
-  const published = await fetchPublishedProducts();
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("lackmann_data, category_id")
+    .eq("published", true);
+
+  if (error) {
+    throw new Error(`Failed to fetch category summaries: ${error.message}`);
+  }
+
   const counts = new Map<string, number>();
-  for (const row of published) {
-    const name = row.category;
+  for (const row of data || []) {
+    const name = resolveCategory(
+      row as Pick<DbProductRow, "lackmann_data" | "category_id">,
+    );
     counts.set(name, (counts.get(name) || 0) + 1);
   }
 
@@ -95,38 +111,8 @@ export async function fetchAllProductsForAdmin(): Promise<AdminProduct[] | null>
   return ((data || []) as DbProductRow[]).map(mapDbProductToAdminProduct);
 }
 
-export async function updateProductPublished(
-  productId: number,
-  published: boolean,
-): Promise<boolean> {
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("products")
-    .update({ published })
-    .eq("id", productId);
-
-  if (error) {
-    console.error("Failed to update product published state:", error);
-    return false;
-  }
-  return true;
-}
-
-export async function bulkUpdatePublished(
-  productIds: number[],
-  published: boolean,
-): Promise<boolean> {
-  if (productIds.length === 0) return true;
-
-  const supabase = createClient();
-  const { error } = await supabase
-    .from("products")
-    .update({ published })
-    .in("id", productIds);
-
-  if (error) {
-    console.error("Failed to bulk update product published state:", error);
-    return false;
-  }
-  return true;
-}
+export {
+  bulkUpdatePublished,
+  saveAdminProductEdits,
+  updateProductPublished,
+} from "./admin-client";

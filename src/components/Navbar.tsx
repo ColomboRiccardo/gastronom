@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, X, ShoppingCart, UserCircle, LogIn } from "lucide-react";
+import { Menu, X, UserCircle, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
+import CartDropdown from "@/components/CartDropdown";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage, LANGUAGES } from "@/context/LanguageContext";
 import {
@@ -16,7 +16,6 @@ import {
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const { totalItems } = useCart();
   const { isAuthenticated, user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "manager";
   const { language, setLanguage, t } = useLanguage();
@@ -24,12 +23,10 @@ const Navbar = () => {
   const currentLang = LANGUAGES.find((l) => l.code === language)!;
 
   const navLinks = [
-    { label: t("nav.home"), href: "/", isRoute: true },
     { label: t("nav.products"), href: "/products", isRoute: true },
-    { label: t("nav.categories"), href: "/#categories" },
+    { label: t("nav.categories"), href: "/categories", isRoute: true },
     { label: t("nav.about"), href: "/about", isRoute: true },
     { label: t("nav.blog"), href: "/blog", isRoute: true },
-    { label: t("nav.contact"), href: "/#contact" },
   ];
 
   return (
@@ -100,14 +97,7 @@ const Navbar = () => {
               </Link>
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="relative" asChild>
-            <Link href="/cart">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
-                {totalItems}
-              </span>
-            </Link>
-          </Button>
+          <CartDropdown />
 
           <button
             className="md:hidden text-foreground"

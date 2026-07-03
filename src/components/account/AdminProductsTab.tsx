@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,10 @@ import { ShoppingBag, Plus, ArrowUpDown, Search, Loader2 } from "lucide-react";
 import ProductModal from "@/components/ProductModal";
 import { type Product } from "@/components/ProductCard";
 import BulkActionBar from "./BulkActionBar";
+import ListPagination from "@/components/ListPagination";
 import { toast } from "sonner";
-import {
-  bulkUpdatePublished,
-  fetchAllProductsForAdmin,
-  updateProductPublished,
-} from "@/lib/products/queries";
+import { bulkUpdatePublished, updateProductPublished } from "@/lib/products/admin-client";
+import { type AdminProductsSortKey } from "@/lib/products/constants";
 import { type AdminProduct } from "@/lib/products/types";
 
 const stockColor = (status: string) => {
@@ -34,8 +32,6 @@ const publishedColor = (published: boolean) =>
     ? "bg-green-100 text-green-800 border-green-200"
     : "bg-muted text-muted-foreground";
 
-type SortKey = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "stock-asc" | "stock-desc" | "category-asc" | "category-desc";
-
 const toProduct = (p: AdminProduct): Product => ({
   id: p.id,
   name: p.name,
@@ -44,69 +40,85 @@ const toProduct = (p: AdminProduct): Product => ({
   priceNum: p.price,
   image: p.image,
   category: p.category,
+  badge: p.badge ?? undefined,
 });
 
 const AdminProductsTab = () => {
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+
   const [statusFilter, setStatusFilter] = useState("all");
   const [publishedFilter, setPublishedFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<SortKey>("name-asc");
+  const [sortBy, setSortBy] = useState<AdminProductsSortKey>("name-asc");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedAdminProduct, setSelectedAdminProduct] = useState<AdminProduct | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
-  const loadProducts = async () => {
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    void fetch("/api/admin/products?categoriesOnly=true")
+      .then((res) => res.json())
+      .then((data: { categories?: string[] }) => {
+        setCategories(data.categories ?? []);
+      })
+      .catch(() => setCategories([]));
+  }, []);
+
+  const loadProducts = useCallback(async () => {
     setLoading(true);
-    const data = await fetchAllProductsForAdmin();
-    if (data === null) {
-      toast.error("Could not load products from Supabase");
-      setProducts([]);
-    } else {
-      setProducts(data);
+    const params = new URLSearchParams({
+      page: String(page),
+      category: categoryFilter,
+      published: publishedFilter,
+      status: statusFilter,
+      sort: sortBy,
+    });
+    if (debouncedSearch.trim()) {
+      params.set("search", debouncedSearch.trim());
     }
-    setLoading(false);
-  };
+
+    try {
+      const res = await fetch(`/api/admin/products?${params.toString()}`);
+      if (!res.ok) {
+        toast.error("Could not load products");
+        setProducts([]);
+        return;
+      }
+      const data = await res.json();
+      setProducts(data.items ?? []);
+      setTotalCount(data.totalCount ?? 0);
+      setTotalPages(data.totalPages ?? 1);
+      setPage(data.page ?? 1);
+    } catch {
+      toast.error("Could not load products");
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, categoryFilter, publishedFilter, statusFilter, sortBy, debouncedSearch]);
 
   useEffect(() => {
     void loadProducts();
-  }, []);
+  }, [loadProducts]);
 
-  const categories = useMemo(
-    () => [...new Set(products.map((p) => p.category))].sort((a, b) => a.localeCompare(b)),
-    [products],
-  );
-
-  const results = useMemo(() => {
-    let list = [...products];
-    if (statusFilter !== "all") {
-      list = list.filter((p) => p.status.toLowerCase().replace(/\s/g, "-") === statusFilter);
+  const resetToFirstPage = () => {
+    if (page !== 1) {
+      setPage(1);
     }
-    if (publishedFilter === "published") {
-      list = list.filter((p) => p.published);
-    } else if (publishedFilter === "draft") {
-      list = list.filter((p) => !p.published);
-    }
-    if (categoryFilter !== "all") list = list.filter((p) => p.category === categoryFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-    }
-    const [key, dir] = sortBy.split("-") as [string, string];
-    list.sort((a, b) => {
-      let cmp = 0;
-      switch (key) {
-        case "name": cmp = a.name.localeCompare(b.name); break;
-        case "price": cmp = a.price - b.price; break;
-        case "stock": cmp = a.stock - b.stock; break;
-        case "category": cmp = a.category.localeCompare(b.category); break;
-      }
-      return dir === "desc" ? -cmp : cmp;
-    });
-    return list;
-  }, [products, statusFilter, publishedFilter, categoryFilter, sortBy, search]);
+  };
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
@@ -121,6 +133,7 @@ const AdminProductsTab = () => {
   };
 
   const openEdit = (p: AdminProduct) => {
+    setSelectedAdminProduct(p);
     setSelectedProduct(toProduct(p));
     setModalOpen(true);
   };
@@ -132,6 +145,7 @@ const AdminProductsTab = () => {
         prev.map((p) => (p.id === productId ? { ...p, published } : p)),
       );
       toast.success(published ? "Product published" : "Product unpublished");
+      void loadProducts();
     } else {
       toast.error("Failed to update product visibility");
     }
@@ -146,12 +160,13 @@ const AdminProductsTab = () => {
       );
       toast.success(`${ids.length} products ${published ? "published" : "unpublished"}`);
       setSelectedIds(new Set());
+      void loadProducts();
     } else {
       toast.error("Failed to update selected products");
     }
   };
 
-  const allSelected = results.length > 0 && results.every((p) => selectedIds.has(p.id));
+  const allSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
 
   return (
     <>
@@ -163,7 +178,7 @@ const AdminProductsTab = () => {
                 <ShoppingBag className="w-5 h-5 text-primary" />
                 Product Catalog
                 <span className="text-sm font-body font-normal text-muted-foreground ml-2">
-                  ({results.length} products)
+                  ({totalCount} products)
                 </span>
               </CardTitle>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2" disabled>
@@ -174,16 +189,36 @@ const AdminProductsTab = () => {
             <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                <Input
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    resetToFirstPage();
+                  }}
+                  className="pl-9"
+                />
               </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select
+                value={categoryFilter}
+                onValueChange={(v) => {
+                  setCategoryFilter(v);
+                  resetToFirstPage();
+                }}
+              >
                 <SelectTrigger className="w-[180px]"><SelectValue placeholder="Category" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   {categories.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
                 </SelectContent>
               </Select>
-              <Select value={publishedFilter} onValueChange={setPublishedFilter}>
+              <Select
+                value={publishedFilter}
+                onValueChange={(v) => {
+                  setPublishedFilter(v);
+                  resetToFirstPage();
+                }}
+              >
                 <SelectTrigger className="w-[160px]"><SelectValue placeholder="Visibility" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Visibility</SelectItem>
@@ -191,7 +226,13 @@ const AdminProductsTab = () => {
                   <SelectItem value="draft">Draft</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select
+                value={statusFilter}
+                onValueChange={(v) => {
+                  setStatusFilter(v);
+                  resetToFirstPage();
+                }}
+              >
                 <SelectTrigger className="w-[160px]"><SelectValue placeholder="Stock Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
@@ -200,7 +241,13 @@ const AdminProductsTab = () => {
                   <SelectItem value="out-of-stock">Out of Stock</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
+              <Select
+                value={sortBy}
+                onValueChange={(v) => {
+                  setSortBy(v as AdminProductsSortKey);
+                  resetToFirstPage();
+                }}
+              >
                 <SelectTrigger className="w-[190px]">
                   <div className="flex items-center gap-2"><ArrowUpDown className="w-3.5 h-3.5" /><SelectValue placeholder="Sort by" /></div>
                 </SelectTrigger>
@@ -221,19 +268,12 @@ const AdminProductsTab = () => {
         <CardContent>
           <BulkActionBar
             selectedCount={selectedIds.size}
-            totalCount={results.length}
-            onSelectAll={() => setSelectedIds(new Set(results.map((p) => p.id)))}
+            totalCount={products.length}
+            onSelectAll={() => setSelectedIds(new Set(products.map((p) => p.id)))}
             onClearSelection={() => setSelectedIds(new Set())}
             actions={[
-              {
-                label: "Publish",
-                onClick: () => void bulkPublish(true),
-              },
-              {
-                label: "Unpublish",
-                variant: "outline",
-                onClick: () => void bulkPublish(false),
-              },
+              { label: "Publish", onClick: () => void bulkPublish(true) },
+              { label: "Unpublish", variant: "outline", onClick: () => void bulkPublish(false) },
             ]}
           />
 
@@ -242,7 +282,7 @@ const AdminProductsTab = () => {
               <Loader2 className="w-5 h-5 animate-spin" />
               <span>Loading products...</span>
             </div>
-          ) : results.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p className="font-medium">No products found</p>
               <p className="text-sm mt-1">Try adjusting your filters or search term.</p>
@@ -254,7 +294,14 @@ const AdminProductsTab = () => {
                   <TableHeader>
                     <TableRow className="border-border">
                       <TableHead className="w-10">
-                        <Checkbox checked={allSelected} onCheckedChange={() => allSelected ? setSelectedIds(new Set()) : setSelectedIds(new Set(results.map((p) => p.id)))} />
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={() =>
+                            allSelected
+                              ? setSelectedIds(new Set())
+                              : setSelectedIds(new Set(products.map((p) => p.id)))
+                          }
+                        />
                       </TableHead>
                       {["Product", "Category", "Price", "Stock", "Status", "Published", ""].map((h) => (
                         <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
@@ -262,7 +309,7 @@ const AdminProductsTab = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map((p) => (
+                    {products.map((p) => (
                       <TableRow key={p.id} className="border-border">
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
@@ -294,7 +341,7 @@ const AdminProductsTab = () => {
                 </Table>
               </div>
               <div className="md:hidden space-y-4">
-                {results.map((p) => (
+                {products.map((p) => (
                   <div key={p.id} className="border border-border rounded-lg p-4 space-y-2">
                     <div className="flex items-start gap-3">
                       <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} className="mt-1" />
@@ -329,12 +376,24 @@ const AdminProductsTab = () => {
                   </div>
                 ))}
               </div>
+              <ListPagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </>
           )}
         </CardContent>
       </Card>
 
-      <ProductModal product={selectedProduct} open={modalOpen} onOpenChange={setModalOpen} mode="admin" />
+      <ProductModal
+        product={selectedProduct}
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setSelectedAdminProduct(null);
+        }}
+        mode="admin"
+        adminStock={selectedAdminProduct?.stock ?? 0}
+        adminBadge={selectedAdminProduct?.badge ?? null}
+        onAdminSaved={() => void loadProducts()}
+      />
     </>
   );
 };

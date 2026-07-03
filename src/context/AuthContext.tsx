@@ -1,18 +1,19 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
+import { type AppUser } from "@/lib/auth/types";
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
@@ -22,67 +23,80 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-async function fetchProfile(supabaseUser: SupabaseUser): Promise<User> {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("name, role")
-    .eq("id", supabaseUser.id)
-    .single();
-
-  return {
-    id: supabaseUser.id,
-    email: supabaseUser.email ?? "",
-    name: data?.name ?? supabaseUser.email?.split("@")[0] ?? "",
-    role: data?.role ?? "customer",
-  };
+async function fetchCurrentUser(): Promise<AppUser | null> {
+  const res = await fetch("/api/auth/me");
+  if (!res.ok) return null;
+  const data = (await res.json()) as { user: AppUser | null };
+  return data.user;
 }
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+export const AuthProvider = ({
+  children,
+  initialUser,
+}: {
+  children: ReactNode;
+  initialUser: AppUser | null;
+}) => {
+  const [user, setUser] = useState<AppUser | null>(initialUser);
+  const [isLoading, setIsLoading] = useState(false);
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getUser().then(async ({ data: { user: supabaseUser } }) => {
-      if (supabaseUser) {
-        const profile = await fetchProfile(supabaseUser);
-        setUser(profile);
+    let mounted = true;
+
+    const refreshUser = async () => {
+      try {
+        const currentUser = await fetchCurrentUser();
+        if (mounted) setUser(currentUser);
+      } catch (error) {
+        console.error("Failed to refresh auth state:", error);
+        if (mounted) setUser(null);
       }
-      setIsLoading(false);
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (
+        event === "SIGNED_IN" ||
+        event === "SIGNED_OUT" ||
+        event === "TOKEN_REFRESHED" ||
+        event === "USER_UPDATED"
+      ) {
+        void refreshUser();
+      }
     });
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === "SIGNED_IN" && session?.user) {
-          const profile = await fetchProfile(session.user);
-          setUser(profile);
-        } else if (event === "SIGNED_OUT") {
-          setUser(null);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const login = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { ok: false, error: error.message };
-    return { ok: true };
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
-  const signup = useCallback(async (name: string, email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
-    });
-    if (error) return { ok: false, error: error.message };
-    return { ok: true };
-  }, [supabase]);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { ok: false, error: error.message };
+
+      const currentUser = await fetchCurrentUser();
+      setUser(currentUser);
+      return { ok: true };
+    },
+    [supabase],
+  );
+
+  const signup = useCallback(
+    async (name: string, email: string, password: string) => {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } },
+      });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+    [supabase],
+  );
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
@@ -90,7 +104,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [supabase]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated: !!user, isLoading, login, signup, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

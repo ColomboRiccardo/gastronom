@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart } from "lucide-react";
-import { useCart } from "@/context/CartContext";
+import { Heart } from "lucide-react";
+import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import ProductModal from "@/components/ProductModal";
@@ -22,7 +21,6 @@ export interface Product {
 }
 
 const ProductCard = ({ product }: { product: Product }) => {
-  const { addItem } = useCart();
   const { toggleItem, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -44,10 +42,10 @@ const ProductCard = ({ product }: { product: Product }) => {
   return (
     <>
       <div
-        className="group bg-card rounded-lg overflow-hidden border border-border hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+        className="group h-full flex flex-col bg-card rounded-lg overflow-hidden border border-border hover:shadow-lg transition-shadow duration-300 cursor-pointer"
         onClick={() => setModalOpen(true)}
       >
-        <div className="relative aspect-square overflow-hidden">
+        <div className="relative aspect-square overflow-hidden shrink-0">
           <img
             src={product.image}
             alt={product.name}
@@ -59,7 +57,7 @@ const ProductCard = ({ product }: { product: Product }) => {
               {product.badge}
             </span>
           )}
-          <span className="absolute top-3 right-3 bg-accent/90 text-accent-foreground text-xs font-medium font-body px-2 py-1 rounded">
+          <span className="absolute top-3 right-3 max-w-[45%] truncate bg-accent/90 text-accent-foreground text-xs font-medium font-body px-2 py-1 rounded">
             {product.category}
           </span>
           {/* Wishlist heart */}
@@ -73,19 +71,16 @@ const ProductCard = ({ product }: { product: Product }) => {
             />
           </button>
         </div>
-        <div className="p-4">
-          <h3 className="font-display text-lg font-semibold text-foreground mb-1">{product.name}</h3>
-          <p className="font-body text-sm text-muted-foreground mb-3">{product.description}</p>
-          <div className="flex items-center justify-between">
-            <span className="font-display text-xl font-bold text-primary">{product.price}</span>
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1"
-              onClick={(e) => { e.stopPropagation(); addItem(product); }}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              Add
-            </Button>
+        <div className="flex flex-col flex-1 p-4">
+          <h3 className="font-display text-lg font-semibold text-foreground mb-1 line-clamp-2 min-h-[3.5rem]">
+            {product.name}
+          </h3>
+          <p className="font-body text-sm text-muted-foreground mb-3 line-clamp-2 min-h-[2.5rem] flex-1">
+            {product.description || "\u00A0"}
+          </p>
+          <div className="flex items-center justify-between gap-2 mt-auto pt-1">
+            <span className="font-display text-xl font-bold text-primary shrink-0">{product.price}</span>
+            <CartQuantityControl product={product} size="sm" />
           </div>
         </div>
       </div>

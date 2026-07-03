@@ -1,36 +1,13 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import ProductCard, { type Product } from "@/components/ProductCard";
-import { fetchRandomPublishedProducts } from "@/lib/products/queries";
+import ProductCard from "@/components/ProductCard";
+import { type UiProduct } from "@/lib/products/types";
 
-const FEATURED_COUNT = 8;
+interface FeaturedProductsProps {
+  products: UiProduct[];
+}
 
-const FeaturedProducts = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadFeatured = async () => {
-      try {
-        const randomProducts = await fetchRandomPublishedProducts(FEATURED_COUNT);
-        if (!cancelled) {
-          setProducts(randomProducts);
-        }
-      } catch (error) {
-        console.error("Failed to load featured products:", error);
-      }
-    };
-
-    void loadFeatured();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
   return (
     <section id="products" className="py-20 bg-muted/50">
       <div className="container mx-auto px-4">
@@ -44,7 +21,7 @@ const FeaturedProducts = () => {
         </div>
 
         {products.length > 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto items-stretch">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export type Language = "en" | "fr" | "it" | "ru";
 
@@ -32,6 +32,7 @@ const translations: Record<Language, Record<string, string>> = {
     "cart.title": "Cart",
     "cart.empty": "Your cart is empty",
     "cart.checkout": "Checkout",
+    "cart.view_cart": "View Cart",
     "cart.total": "Total",
     "cart.subtotal": "Subtotal",
     "cart.continue_shopping": "Continue Shopping",
@@ -80,6 +81,7 @@ const translations: Record<Language, Record<string, string>> = {
     "cart.title": "Panier",
     "cart.empty": "Votre panier est vide",
     "cart.checkout": "Commander",
+    "cart.view_cart": "Voir le panier",
     "cart.total": "Total",
     "cart.subtotal": "Sous-total",
     "cart.continue_shopping": "Continuer vos achats",
@@ -128,6 +130,7 @@ const translations: Record<Language, Record<string, string>> = {
     "cart.title": "Carrello",
     "cart.empty": "Il tuo carrello è vuoto",
     "cart.checkout": "Checkout",
+    "cart.view_cart": "Vai al carrello",
     "cart.total": "Totale",
     "cart.subtotal": "Subtotale",
     "cart.continue_shopping": "Continua lo shopping",
@@ -176,6 +179,7 @@ const translations: Record<Language, Record<string, string>> = {
     "cart.title": "Корзина",
     "cart.empty": "Ваша корзина пуста",
     "cart.checkout": "Оформить заказ",
+    "cart.view_cart": "Перейти в корзину",
     "cart.total": "Итого",
     "cart.subtotal": "Подитог",
     "cart.continue_shopping": "Продолжить покупки",
@@ -222,15 +226,14 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("app-language");
-      if (saved && ["en", "fr", "it", "ru"].includes(saved)) {
-        return saved as Language;
-      }
+  const [language, setLanguageState] = useState<Language>("en");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("app-language");
+    if (saved && ["en", "fr", "it", "ru"].includes(saved)) {
+      setLanguageState(saved as Language);
     }
-    return "en";
-  });
+  }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);

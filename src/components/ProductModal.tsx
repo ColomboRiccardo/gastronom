@@ -6,62 +6,94 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Plus, Minus, Pencil, Save, X, Package, Heart } from "lucide-react";
-import { useCart } from "@/context/CartContext";
+import { Pencil, Save, X, Heart } from "lucide-react";
+import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { type Product } from "@/components/ProductCard";
+import { saveAdminProductEdits } from "@/lib/products/admin-client";
 
 interface ProductModalProps {
   product: Product | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode?: "customer" | "admin";
+  adminStock?: number;
+  adminBadge?: string | null;
+  onAdminSaved?: () => void;
 }
 
-const ProductModal = ({ product, open, onOpenChange, mode = "customer" }: ProductModalProps) => {
-  const { addItem, items, updateQuantity } = useCart();
+const ProductModal = ({
+  product,
+  open,
+  onOpenChange,
+  mode = "customer",
+  adminStock = 0,
+  adminBadge = null,
+  onAdminSaved,
+}: ProductModalProps) => {
   const { toggleItem, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const [quantity, setQuantity] = useState(1);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Admin edit state
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editPrice, setEditPrice] = useState("");
-  const [editWeight, setEditWeight] = useState("");
   const [editStock, setEditStock] = useState("");
-  const [editCategory, setEditCategory] = useState("");
+  const [editBadge, setEditBadge] = useState("");
 
   if (!product) return null;
-
-  const cartItem = items.find((i) => i.product.id === product.id);
-
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addItem(product);
-    }
-    setQuantity(1);
-  };
 
   const handleStartEdit = () => {
     setEditName(product.name);
     setEditDescription(product.description);
     setEditPrice(product.priceNum.toFixed(2));
-    setEditWeight(product.description.match(/\d+\s*(g|ml|kg|L|pcs?)/i)?.[0] || "");
-    setEditStock("48");
-    setEditCategory(product.category);
+    setEditStock(String(adminStock));
+    setEditBadge(adminBadge ?? product.badge ?? "");
     setIsEditing(true);
   };
 
-  const handleSaveEdit = () => {
-    // In a real app this would persist changes
+  const handleSaveEdit = async () => {
+    const price = Number.parseFloat(editPrice);
+    const stock = Number.parseInt(editStock, 10);
+
+    if (!editName.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+    if (Number.isNaN(price) || price < 0) {
+      toast.error("Enter a valid price");
+      return;
+    }
+    if (Number.isNaN(stock) || stock < 0) {
+      toast.error("Enter a valid stock amount");
+      return;
+    }
+
+    setIsSaving(true);
+    const ok = await saveAdminProductEdits(product.id, {
+      name: editName,
+      description: editDescription,
+      price,
+      stock,
+      badge: editBadge.trim() || null,
+    });
+    setIsSaving(false);
+
+    if (!ok) {
+      toast.error("Failed to save product changes");
+      return;
+    }
+
+    toast.success("Product updated — sync will not overwrite these fields");
     setIsEditing(false);
+    onAdminSaved?.();
+    onOpenChange(false);
   };
 
   const handleCancelEdit = () => {
@@ -69,7 +101,7 @@ const ProductModal = ({ product, open, onOpenChange, mode = "customer" }: Produc
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setQuantity(1); setIsEditing(false); } }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setIsEditing(false); }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-0">
         {/* Image */}
         <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-lg">
@@ -138,29 +170,22 @@ const ProductModal = ({ product, open, onOpenChange, mode = "customer" }: Produc
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">Price (€)</label>
-                  <Input value={editPrice} onChange={(e) => setEditPrice(e.target.value)} type="number" step="0.01" />
+                  <Input value={editPrice} onChange={(e) => setEditPrice(e.target.value)} type="number" step="0.01" min="0" />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">Weight / Volume</label>
-                  <Input value={editWeight} onChange={(e) => setEditWeight(e.target.value)} placeholder="e.g. 700ml" />
+                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">Stock</label>
+                  <Input value={editStock} onChange={(e) => setEditStock(e.target.value)} type="number" min="0" step="1" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">Category</label>
-                  <Input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} />
+                  <Input value={product.category} disabled />
                 </div>
                 <div>
-                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">Stock</label>
-                  <Input value={editStock} onChange={(e) => setEditStock(e.target.value)} type="number" />
+                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">Badge</label>
+                  <Input value={editBadge} onChange={(e) => setEditBadge(e.target.value)} placeholder="e.g. New, Popular" />
                 </div>
-              </div>
-              <div>
-                <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">Product Image</label>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Package className="w-4 h-4" />
-                  Upload New Image
-                </Button>
               </div>
             </div>
           ) : (
@@ -177,42 +202,10 @@ const ProductModal = ({ product, open, onOpenChange, mode = "customer" }: Produc
                   <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">Price</p>
                   <span className="font-display text-3xl font-bold text-primary">{product.price}</span>
                 </div>
-                {cartItem && (
-                  <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                    {cartItem.quantity} in cart
-                  </Badge>
-                )}
               </div>
 
               {mode === "customer" && (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center border border-border rounded-md">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-10 w-10 p-0"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                    <span className="w-12 text-center font-semibold text-foreground">{quantity}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-10 w-10 p-0"
-                      onClick={() => setQuantity(quantity + 1)}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <Button
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-2 h-10"
-                    onClick={handleAddToCart}
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    Add to Cart — €{(product.priceNum * quantity).toFixed(2)}
-                  </Button>
-                </div>
+                <CartQuantityControl product={product} size="md" className="w-full" />
               )}
 
               {mode === "admin" && (
@@ -231,11 +224,15 @@ const ProductModal = ({ product, open, onOpenChange, mode = "customer" }: Produc
           {/* Admin edit actions */}
           {isEditing && (
             <div className="flex gap-3">
-              <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-2" onClick={handleSaveEdit}>
+              <Button
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+                onClick={() => void handleSaveEdit()}
+                disabled={isSaving}
+              >
                 <Save className="w-4 h-4" />
-                Save Changes
+                {isSaving ? "Saving..." : "Save Changes"}
               </Button>
-              <Button variant="outline" className="gap-2" onClick={handleCancelEdit}>
+              <Button variant="outline" className="gap-2" onClick={handleCancelEdit} disabled={isSaving}>
                 <X className="w-4 h-4" />
                 Cancel
               </Button>

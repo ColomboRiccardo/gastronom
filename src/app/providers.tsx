@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { AuthProvider } from "@/context/AuthContext";
+import { type AppUser } from "@/lib/auth/types";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -10,7 +11,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  initialUser,
+}: {
+  children: React.ReactNode;
+  initialUser: AppUser | null;
+}) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -19,7 +26,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <Toaster />
         <Sonner />
         <LanguageProvider>
-          <AuthProvider>
+          <AuthProvider initialUser={initialUser}>
             <CartProvider>
               <WishlistProvider>
                 {children}

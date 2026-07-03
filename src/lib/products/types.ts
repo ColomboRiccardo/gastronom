@@ -16,6 +16,7 @@ export interface DbProductRow {
   lackmann_data: {
     maingroup?: string;
   } | null;
+  editor_locked_fields?: string[];
 }
 
 export interface UiProduct extends Product {
@@ -38,5 +39,14 @@ export interface AdminProduct {
   stock: number;
   status: string;
   published: boolean;
+  badge: string | null;
   image: string;
+}
+
+export interface AdminProductUpdate {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  badge: string | null;
 }

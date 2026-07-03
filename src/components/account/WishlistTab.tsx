@@ -2,13 +2,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
-import { useCart } from "@/context/CartContext";
-import { Heart, ShoppingCart, Trash2 } from "lucide-react";
+import { Heart, Trash2 } from "lucide-react";
 
 const WishlistTab = () => {
   const { items, removeItem, clearWishlist } = useWishlist();
-  const { addItem } = useCart();
 
   if (items.length === 0) {
     return (
@@ -60,14 +59,7 @@ const WishlistTab = () => {
                   <span className="font-display text-lg font-bold text-primary">{product.price}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5"
-                    onClick={() => addItem(product)}
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    Add to Cart
-                  </Button>
+                  <CartQuantityControl product={product} size="sm" className="flex-1" />
                   <Button
                     variant="outline"
                     size="sm"

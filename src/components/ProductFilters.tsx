@@ -5,15 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
-
-const PRICE_RANGES = [
-  { label: "Under €10", min: 0, max: 10 },
-  { label: "€10 – €25", min: 10, max: 25 },
-  { label: "€25 – €50", min: 25, max: 50 },
-  { label: "Over €50", min: 50, max: Infinity },
-];
-
-export type SortOption = "price-asc" | "price-desc" | "name-asc" | "newest";
+import {
+  PRICE_RANGES,
+  type SortOption,
+} from "@/lib/products/constants";
 
 interface ProductFiltersProps {
   selectedCategories: string[];
@@ -92,7 +87,7 @@ const ProductFilters = ({
       {/* Categories */}
       <div>
         <h3 className="font-display text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">Categories</h3>
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
           {categoryOptions.map((cat) => (
             <label key={cat} className="flex items-center gap-2.5 cursor-pointer group">
               <Checkbox
@@ -156,24 +151,26 @@ const ProductFilters = ({
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="lg:hidden bg-card border border-border rounded-lg p-5 mb-6">
+        <div className="lg:hidden bg-card border border-border rounded-lg p-5 mb-6 max-h-[70vh] overflow-y-auto">
           {filterContent}
         </div>
       )}
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:block w-64 shrink-0">
-        <div className="bg-card border border-border rounded-lg p-5 sticky top-24">
-          <div className="flex items-center justify-between mb-5">
+        <div className="bg-card border border-border rounded-lg p-5 sticky top-24 max-h-[calc(100vh-7rem)] flex flex-col">
+          <div className="flex items-center justify-between mb-5 shrink-0">
             <h2 className="font-display text-lg font-semibold text-foreground">Filters</h2>
             <span className="font-body text-xs text-muted-foreground">{resultCount} products</span>
           </div>
-          {filterContent}
+          <div className="overflow-y-auto min-h-0 flex-1 pr-1">
+            {filterContent}
+          </div>
         </div>
       </aside>
     </>
   );
 };
 
-export { PRICE_RANGES };
+export { PRICE_RANGES, type SortOption } from "@/lib/products/constants";
 export default ProductFilters;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import Providers from "./providers";
+import { getAuthenticatedUser } from "@/lib/auth/server";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -30,15 +31,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getAuthenticatedUser();
+
   return (
     <html lang="en" className={`${playfair.variable} ${sourceSans.variable}`}>
       <body>
-        <Providers>{children}</Providers>
+        <Providers initialUser={user}>{children}</Providers>
       </body>
     </html>
   );

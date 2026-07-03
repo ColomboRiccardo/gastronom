@@ -1,15 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { User, MapPin } from "lucide-react";
+import { type AppUser } from "@/lib/auth/types";
 
-const mockUser = {
-  name: "Maria Ivanova",
-  email: "maria.ivanova@email.com",
-  phone: "+39 345 678 9012",
-  address: "Via Roma 42, 17025 Loano (SV), Liguria, Italia",
-};
+interface ProfileTabProps {
+  user: AppUser;
+}
 
-const ProfileTab = () => (
+const emptyLabel = "Not set";
+
+const ProfileTab = ({ user }: ProfileTabProps) => (
   <div className="grid md:grid-cols-2 gap-6">
     <Card className="border-border">
       <CardHeader>
@@ -20,16 +20,22 @@ const ProfileTab = () => (
       </CardHeader>
       <CardContent className="space-y-4">
         {[
-          { label: "Full Name", value: mockUser.name },
-          { label: "Email", value: mockUser.email },
-          { label: "Phone", value: mockUser.phone },
+          { label: "Full Name", value: user.name || emptyLabel },
+          { label: "Email", value: user.email || emptyLabel },
+          { label: "Phone", value: user.phone || emptyLabel },
         ].map((field) => (
           <div key={field.label}>
-            <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{field.label}</label>
+            <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              {field.label}
+            </label>
             <p className="text-foreground font-medium mt-1">{field.value}</p>
           </div>
         ))}
-        <Button variant="outline" className="mt-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+        <Button
+          variant="outline"
+          className="mt-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          disabled
+        >
           Edit Profile
         </Button>
       </CardContent>
@@ -44,10 +50,16 @@ const ProfileTab = () => (
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Default Address</label>
-          <p className="text-foreground font-medium mt-1">{mockUser.address}</p>
+          <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+            Default Address
+          </label>
+          <p className="text-foreground font-medium mt-1">{user.address || emptyLabel}</p>
         </div>
-        <Button variant="outline" className="mt-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+        <Button
+          variant="outline"
+          className="mt-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          disabled
+        >
           Manage Addresses
         </Button>
       </CardContent>

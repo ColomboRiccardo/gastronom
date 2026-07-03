@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ClipboardList, ArrowUpDown, Search, Loader2 } from "lucide-react";
+import { ClipboardList, ArrowUpDown, Search } from "lucide-react";
 import OrderDetailModal, { type OrderDetail, type OrderItem } from "./OrderDetailModal";
 import BulkActionBar from "./BulkActionBar";
 import { toast } from "sonner";
-import { fetchAllOrders, updateOrderStatus, deleteOrder } from "@/lib/orders";
+import { deleteOrder, updateOrderStatus } from "@/lib/orders";
+
+interface AdminOrdersTabProps {
+  initialOrders: OrderDetail[];
+}
 
 const statusColor = (status: string) => {
   switch (status) {
@@ -29,23 +34,19 @@ type SortKey = "date-desc" | "date-asc" | "customer-asc" | "customer-desc" | "to
 const parseDateForSort = (d: string) => new Date(d).getTime();
 const parseTotal = (t: string) => parseFloat(t.replace("€", ""));
 
-const AdminOrdersTab = () => {
-  const [orders, setOrders] = useState<OrderDetail[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch real orders from Supabase on mount
-  useEffect(() => {
-    fetchAllOrders().then((data) => {
-      setOrders(data);
-      setLoading(false);
-    });
-  }, []);
+const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
+  const router = useRouter();
+  const [orders, setOrders] = useState<OrderDetail[]>(initialOrders);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setOrders(initialOrders);
+  }, [initialOrders]);
 
   const results = useMemo(() => {
     let list = [...orders];
@@ -84,6 +85,7 @@ const AdminOrdersTab = () => {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
       setSelectedOrder((prev) => prev && prev.id === orderId ? { ...prev, status: newStatus } : prev);
       toast.success(`Order ${orderId} set to ${newStatus}`);
+      router.refresh();
     } else {
       toast.error(`Failed to update ${orderId}`);
     }
@@ -94,6 +96,7 @@ const AdminOrdersTab = () => {
     if (ok) {
       setOrders((prev) => prev.filter((o) => o.id !== orderId));
       toast.success(`Order ${orderId} deleted`);
+      router.refresh();
     } else {
       toast.error(`Failed to delete ${orderId}`);
     }
@@ -111,6 +114,7 @@ const AdminOrdersTab = () => {
     setOrders((prev) => prev.map((o) => (selectedIds.has(o.id) ? { ...o, status: newStatus } : o)));
     toast.success(`${selectedIds.size} orders set to ${newStatus}`);
     setSelectedIds(new Set());
+    router.refresh();
   };
 
   const bulkDelete = async () => {
@@ -119,6 +123,7 @@ const AdminOrdersTab = () => {
     setOrders((prev) => prev.filter((o) => !selectedIds.has(o.id)));
     toast.success(`${selectedIds.size} orders deleted`);
     setSelectedIds(new Set());
+    router.refresh();
   };
 
   const allSelected = results.length > 0 && results.every((o) => selectedIds.has(o.id));
@@ -167,12 +172,7 @@ const AdminOrdersTab = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (<>
-            <BulkActionBar
+          <BulkActionBar
               selectedCount={selectedIds.size}
               totalCount={results.length}
               onSelectAll={() => setSelectedIds(new Set(results.map((o) => o.id)))}
@@ -255,7 +255,6 @@ const AdminOrdersTab = () => {
                 </div>
               </>
             )}
-          </>)}
         </CardContent>
       </Card>
 

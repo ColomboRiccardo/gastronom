@@ -7,6 +7,13 @@ const EUR_FORMATTER = new Intl.NumberFormat("en-IE", {
 
 const FALLBACK_IMAGE = "/cat-gifts.jpg";
 const FALLBACK_CATEGORY = "Other";
+const LOW_STOCK_THRESHOLD = 10;
+
+export function deriveStockStatus(stock: number): string {
+  if (stock <= 0) return "Out of Stock";
+  if (stock < LOW_STOCK_THRESHOLD) return "Low Stock";
+  return "In Stock";
+}
 
 /** Placeholder until per-category images are added in Supabase. */
 export const PLACEHOLDER_CATEGORY_IMAGE = FALLBACK_IMAGE;
@@ -40,6 +47,10 @@ export function mapDbProductToUiProduct(row: DbProductRow): UiProduct {
   };
 }
 
+export function formatPrice(price: number): string {
+  return EUR_FORMATTER.format(price);
+}
+
 export function mapDbProductToAdminProduct(row: DbProductRow): AdminProduct {
   const price = Number(row.price);
 
@@ -53,6 +64,7 @@ export function mapDbProductToAdminProduct(row: DbProductRow): AdminProduct {
     stock: row.stock,
     status: row.status,
     published: row.published,
+    badge: row.badge,
     image: row.image_url || FALLBACK_IMAGE,
   };
 }
