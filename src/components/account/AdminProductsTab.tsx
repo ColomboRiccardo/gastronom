@@ -18,12 +18,17 @@ import ListPagination from "@/components/ListPagination";
 import { toast } from "sonner";
 import { bulkUpdatePublished, unlockProductFields, updateProductPublished } from "@/lib/products/admin-client";
 import {
+  matchesAdminProductFilters,
+  patchAdminProduct,
+  upsertAdminProductInList,
+} from "@/lib/products/admin-patch";
+import {
   ADMIN_PRODUCTS_PAGE_SIZE,
   ADMIN_PRODUCTS_PAGE_SIZE_OPTIONS,
   type AdminProductsPageSize,
   type AdminProductsSortKey,
 } from "@/lib/products/constants";
-import { type AdminProduct } from "@/lib/products/types";
+import { type AdminProduct, type AdminProductUpdate } from "@/lib/products/types";
 
 const stockColor = (status: string) => {
   switch (status) {
@@ -151,22 +156,31 @@ const AdminProductsTab = () => {
     setModalOpen(true);
   };
 
+  const filterState = {
+    search: debouncedSearch,
+    category: categoryFilter,
+    published: publishedFilter,
+    status: statusFilter,
+  };
+
+  const applyProductUpdate = (productId: number, updater: (product: AdminProduct) => AdminProduct) => {
+    setProducts((prev) => {
+      const current = prev.find((p) => p.id === productId);
+      if (!current) return prev;
+      const updated = updater(current);
+      return upsertAdminProductInList(prev, updated, filterState);
+    });
+  };
+
   const handleTogglePublished = async (productId: number, published: boolean) => {
     const ok = await updateProductPublished(productId, published);
     if (ok) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === productId
-            ? {
-                ...p,
-                published,
-                editorLockedFields: [...new Set([...p.editorLockedFields, "published"])],
-              }
-            : p,
-        ),
-      );
+      applyProductUpdate(productId, (p) => ({
+        ...p,
+        published,
+        editorLockedFields: [...new Set([...p.editorLockedFields, "published"])],
+      }));
       toast.success(published ? "Product published" : "Product unpublished");
-      void loadProducts();
     } else {
       toast.error("Failed to update product visibility");
     }
@@ -175,14 +189,17 @@ const AdminProductsTab = () => {
   const handleUnlockFields = async (productId: number) => {
     const ok = await unlockProductFields(productId);
     if (ok) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === productId ? { ...p, editorLockedFields: [] } : p)),
-      );
+      applyProductUpdate(productId, (p) => ({ ...p, editorLockedFields: [] }));
       toast.success("Sync protection removed — next Lackmann sync can update these fields");
-      void loadProducts();
     } else {
       toast.error("Failed to unlock product fields");
     }
+  };
+
+  const handleAdminSaved = (update: AdminProductUpdate) => {
+    if (!selectedAdminProduct) return;
+    const updated = patchAdminProduct(selectedAdminProduct, update);
+    setProducts((prev) => upsertAdminProductInList(prev, updated, filterState));
   };
 
   const bulkPublish = async (published: boolean) => {
@@ -196,19 +213,20 @@ const AdminProductsTab = () => {
       const ok = await bulkUpdatePublished(ids, published);
       if (ok) {
         setProducts((prev) =>
-          prev.map((p) =>
-            selectedIds.has(p.id)
-              ? {
-                  ...p,
-                  published,
-                  editorLockedFields: [...new Set([...p.editorLockedFields, "published"])],
-                }
-              : p,
-          ),
+          prev
+            .map((p) =>
+              selectedIds.has(p.id)
+                ? {
+                    ...p,
+                    published,
+                    editorLockedFields: [...new Set([...p.editorLockedFields, "published"])],
+                  }
+                : p,
+            )
+            .filter((p) => matchesAdminProductFilters(p, filterState)),
         );
         toast.success(`${ids.length} products ${published ? "published" : "unpublished"}`);
         setSelectedIds(new Set());
-        void loadProducts();
       } else {
         toast.error("Failed to update selected products");
       }
@@ -542,7 +560,7 @@ const AdminProductsTab = () => {
         mode="admin"
         adminStock={selectedAdminProduct?.stock ?? 0}
         adminBadge={selectedAdminProduct?.badge ?? null}
-        onAdminSaved={() => void loadProducts()}
+        onAdminSaved={handleAdminSaved}
       />
     </>
   );

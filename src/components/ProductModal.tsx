@@ -13,6 +13,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { type Product } from "@/components/ProductCard";
+import { type AdminProductUpdate } from "@/lib/products/types";
 import { saveAdminProductEdits } from "@/lib/products/admin-client";
 
 interface ProductModalProps {
@@ -22,7 +23,7 @@ interface ProductModalProps {
   mode?: "customer" | "admin";
   adminStock?: number;
   adminBadge?: string | null;
-  onAdminSaved?: () => void;
+  onAdminSaved?: (update: AdminProductUpdate) => void;
 }
 
 const ProductModal = ({
@@ -92,7 +93,13 @@ const ProductModal = ({
 
     toast.success("Product updated — sync will not overwrite these fields");
     setIsEditing(false);
-    onAdminSaved?.();
+    onAdminSaved?.({
+      name: editName,
+      description: editDescription,
+      price,
+      stock,
+      badge: editBadge.trim() || null,
+    });
     onOpenChange(false);
   };
 
