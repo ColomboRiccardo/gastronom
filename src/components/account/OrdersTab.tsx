@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Package } from "lucide-react";
 import OrderDetailModal, { type OrderDetail } from "./OrderDetailModal";
+import { formatOrderItemsSummary } from "@/lib/orders/format-items-summary";
 
 interface OrdersTabProps {
   initialOrders: OrderDetail[];
@@ -67,7 +68,9 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order) => (
+                    {orders.map((order) => {
+                      const itemsSummary = formatOrderItemsSummary(order.items);
+                      return (
                       <TableRow
                         key={order.id}
                         className="border-border cursor-pointer hover:bg-secondary/30"
@@ -77,8 +80,13 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                           {order.id}
                         </TableCell>
                         <TableCell className="text-muted-foreground">{order.date}</TableCell>
-                        <TableCell className="max-w-[200px]">
-                          <span className="text-sm">{order.items.map((i) => i.name).join(", ")}</span>
+                        <TableCell className="max-w-[280px]">
+                          <p className="text-sm font-medium">{itemsSummary.countLabel}</p>
+                          {itemsSummary.preview && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                              {itemsSummary.preview}
+                            </p>
+                          )}
                         </TableCell>
                         <TableCell className="font-semibold">{order.total}</TableCell>
                         <TableCell>
@@ -100,12 +108,15 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    );
+                    })}
                   </TableBody>
                 </Table>
               </div>
               <div className="md:hidden space-y-4">
-                {orders.map((order) => (
+                {orders.map((order) => {
+                  const itemsSummary = formatOrderItemsSummary(order.items);
+                  return (
                   <div
                     key={order.id}
                     className="border border-border rounded-lg p-4 space-y-2 cursor-pointer hover:bg-secondary/30 transition-colors"
@@ -118,10 +129,14 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{order.date}</p>
-                    <p className="text-sm">{order.items.map((i) => i.name).join(", ")}</p>
+                    <p className="text-sm font-medium">{itemsSummary.countLabel}</p>
+                    {itemsSummary.preview && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{itemsSummary.preview}</p>
+                    )}
                     <p className="font-semibold">{order.total}</p>
                   </div>
-                ))}
+                );
+                })}
               </div>
             </>
           )}

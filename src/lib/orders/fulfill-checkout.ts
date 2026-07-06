@@ -7,14 +7,14 @@ export type FulfillCheckoutResult =
   | { ok: true; orderId: number; alreadyFulfilled?: boolean }
   | { ok: false; error: string };
 
-function resolvePaymentIntentId(session: Stripe.Checkout.Session): string {
+function resolvePaymentIntentId(session: Stripe.Checkout.Session): string | null {
   if (typeof session.payment_intent === "string") {
     return session.payment_intent;
   }
   if (session.payment_intent && typeof session.payment_intent === "object") {
     return session.payment_intent.id;
   }
-  return session.id;
+  return null;
 }
 
 function resolveShippingAddress(session: Stripe.Checkout.Session): string | null {
@@ -45,11 +45,53 @@ async function listSessionLineItems(sessionId: string) {
   return lineItems.data;
 }
 
+async function findExistingOrder(
+  supabase: ReturnType<typeof createAdminClient>,
+  sessionId: string,
+  paymentIntentId: string | null,
+) {
+  const { data: bySession, error: sessionError } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("stripe_checkout_session_id", sessionId)
+    .maybeSingle();
+
+  if (sessionError) {
+    return { error: sessionError.message as string };
+  }
+  if (bySession) {
+    return { orderId: bySession.id as number };
+  }
+
+  const legacyKeys = [sessionId, paymentIntentId].filter(
+    (value): value is string => Boolean(value),
+  );
+
+  for (const key of legacyKeys) {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("payment_intent_id", key)
+      .maybeSingle();
+
+    if (error) {
+      return { error: error.message };
+    }
+    if (data) {
+      return { orderId: data.id as number };
+    }
+  }
+
+  return { orderId: null };
+}
+
 /** Create order + line items for a paid Checkout session (idempotent). */
 export async function fulfillCheckoutSession(
   sessionId: string,
 ): Promise<FulfillCheckoutResult> {
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ["payment_intent"],
+  });
 
   if (session.payment_status !== "paid") {
     return { ok: false, error: `Payment status is ${session.payment_status}` };
@@ -71,19 +113,13 @@ export async function fulfillCheckoutSession(
     return { ok: false, error: message };
   }
 
-  const { data: existing, error: existingError } = await supabase
-    .from("orders")
-    .select("id")
-    .eq("payment_intent_id", paymentIntentId)
-    .maybeSingle();
-
-  if (existingError) {
-    console.error("Fulfill checkout: idempotency check failed:", existingError.message);
-    return { ok: false, error: existingError.message };
+  const existing = await findExistingOrder(supabase, sessionId, paymentIntentId);
+  if ("error" in existing && existing.error) {
+    console.error("Fulfill checkout: idempotency check failed:", existing.error);
+    return { ok: false, error: existing.error };
   }
-
-  if (existing) {
-    return { ok: true, orderId: existing.id, alreadyFulfilled: true };
+  if (existing.orderId) {
+    return { ok: true, orderId: existing.orderId, alreadyFulfilled: true };
   }
 
   const lineItems = await listSessionLineItems(sessionId);
@@ -100,15 +136,27 @@ export async function fulfillCheckoutSession(
       status: "Received",
       total: (session.amount_total || 0) / 100,
       shipping_address: shippingAddress,
+      stripe_checkout_session_id: sessionId,
       payment_intent_id: paymentIntentId,
       payment_method: session.payment_method_types?.[0] || "card",
     })
     .select("id")
     .single();
 
-  if (orderError || !order) {
-    console.error("Fulfill checkout: failed to create order:", orderError?.message);
-    return { ok: false, error: orderError?.message || "Failed to create order" };
+  if (orderError) {
+    if (orderError.code === "23505") {
+      const raced = await findExistingOrder(supabase, sessionId, paymentIntentId);
+      if (raced.orderId) {
+        return { ok: true, orderId: raced.orderId, alreadyFulfilled: true };
+      }
+    }
+
+    console.error("Fulfill checkout: failed to create order:", orderError.message);
+    return { ok: false, error: orderError.message };
+  }
+
+  if (!order) {
+    return { ok: false, error: "Failed to create order" };
   }
 
   const orderItems = lineItems.map((item) => ({

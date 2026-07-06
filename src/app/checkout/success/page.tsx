@@ -21,6 +21,13 @@ function CheckoutSuccessContent() {
       return;
     }
 
+    const fulfillKey = `checkout-fulfill:${sessionId}`;
+    if (typeof window !== "undefined" && sessionStorage.getItem(fulfillKey) === "done") {
+      clearCart();
+      setFulfillState("ok");
+      return;
+    }
+
     let cancelled = false;
 
     const fulfillOrder = async () => {
@@ -34,6 +41,7 @@ function CheckoutSuccessContent() {
         if (cancelled) return;
 
         if (res.ok) {
+          sessionStorage.setItem(fulfillKey, "done");
           clearCart();
           setFulfillState("ok");
         } else {

@@ -124,17 +124,17 @@ function StatusPipeline({ current }: { current: string }) {
   }
 
   return (
-    <div className="flex items-center w-full gap-0">
+    <div className="flex flex-row items-center w-full min-w-0 gap-0 py-2">
       {STATUSES.map((s, i) => {
         const reached = i <= activeIdx;
         const meta = statusMeta[s];
         const Icon = meta.icon;
         return (
-          <div key={s} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-1">
+          <div key={s} className="flex items-center flex-1 min-w-0 last:flex-none">
+            <div className="flex flex-col items-center gap-1 min-w-0 flex-1">
               <div
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors",
+                  "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors shrink-0",
                   reached
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-secondary text-muted-foreground"
@@ -142,12 +142,22 @@ function StatusPipeline({ current }: { current: string }) {
               >
                 <Icon className="w-4 h-4" />
               </div>
-              <span className={cn("text-[10px] font-medium whitespace-nowrap", reached ? "text-foreground" : "text-muted-foreground")}>
+              <span
+                className={cn(
+                  "text-[10px] font-medium text-center leading-tight px-0.5",
+                  reached ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
                 {s}
               </span>
             </div>
             {i < STATUSES.length - 1 && (
-              <div className={cn("flex-1 h-0.5 mx-1 mt-[-18px]", i < activeIdx ? "bg-primary" : "bg-border")} />
+              <div
+                className={cn(
+                  "h-0.5 mx-1 mt-[-18px] flex-1 min-w-2",
+                  i < activeIdx ? "bg-primary" : "bg-border",
+                )}
+              />
             )}
           </div>
         );
@@ -322,10 +332,10 @@ const OrderDetailModal = ({
         }
       }}
     >
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl flex items-center gap-3">
-            <span className="font-mono text-primary">{order.id}</span>
+          <DialogTitle className="font-display text-xl flex flex-wrap items-center gap-2 pr-8">
+            <span className="font-mono text-primary break-all">{order.id}</span>
             <Badge variant="outline" className={statusColor(order.status)}>
               {order.status}
             </Badge>
@@ -333,7 +343,7 @@ const OrderDetailModal = ({
         </DialogHeader>
 
         {/* Status pipeline */}
-        <div className="py-2">
+        <div className="py-2 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Order Progress</p>
           <StatusPipeline current={order.status} />
         </div>
@@ -389,13 +399,13 @@ const OrderDetailModal = ({
               displayItems.map((item, i) => (
                 <div
                   key={`${item.name}-${i}`}
-                  className="flex justify-between items-center py-2 px-3 rounded-md bg-secondary/40 border border-border"
+                  className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center py-2 px-3 rounded-md bg-secondary/40 border border-border min-w-0"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Package className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium truncate">{item.name}</span>
+                    <span className="text-sm font-medium break-words">{item.name}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm shrink-0">
+                  <div className="flex flex-wrap items-center justify-end gap-2 text-sm shrink-0 sm:pl-3">
                     {editingItems ? (
                       <>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(i, -1)}>

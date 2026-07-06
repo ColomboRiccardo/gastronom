@@ -19,6 +19,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { type AppUser } from "@/lib/auth/types";
 import { type OrderDetail } from "@/components/account/OrderDetailModal";
+import { type AdminDashboardData } from "@/lib/orders/dashboard-types";
 import ProfileTab from "@/components/account/ProfileTab";
 import OrdersTab from "@/components/account/OrdersTab";
 import SettingsTab from "@/components/account/SettingsTab";
@@ -34,12 +35,14 @@ interface AccountPageClientProps {
   user: AppUser;
   userOrders: OrderDetail[];
   adminOrders: OrderDetail[] | null;
+  dashboardData: AdminDashboardData | null;
 }
 
 const AccountPageClient = ({
   user,
   userOrders,
   adminOrders,
+  dashboardData,
 }: AccountPageClientProps) => {
   const isAdmin = user.role === "admin" || user.role === "manager";
 
@@ -183,10 +186,10 @@ const AccountPageClient = ({
             <WishlistTab />
           </TabsContent>
 
-          {isAdmin && adminOrders && (
+          {isAdmin && adminOrders && dashboardData && (
             <>
               <TabsContent value="admin-dashboard">
-                <AdminDashboardTab />
+                <AdminDashboardTab data={dashboardData} />
               </TabsContent>
               <TabsContent value="admin-orders">
                 <AdminOrdersTab initialOrders={adminOrders} />
