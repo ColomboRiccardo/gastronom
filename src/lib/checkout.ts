@@ -2,10 +2,8 @@ import { type CartItem } from "@/context/CartContext";
 
 export function buildCheckoutLineItems(items: CartItem[]) {
   return items.map((item) => ({
-    name: item.product.name,
-    priceNum: item.product.priceNum,
+    productId: item.product.id,
     quantity: item.quantity,
-    image: item.product.image.startsWith("http") ? item.product.image : undefined,
   }));
 }
 

@@ -45,6 +45,53 @@ async function listSessionLineItems(sessionId: string) {
   return lineItems.data;
 }
 
+interface SnapshotItem {
+  product_id: number;
+  product_name: string;
+  qty: number;
+  unit_price: number;
+}
+
+async function getSnapshotItemsForSession(
+  supabase: ReturnType<typeof createAdminClient>,
+  sessionId: string,
+) {
+  const { data, error } = await supabase
+    .from("checkout_snapshots")
+    .select("id, items")
+    .eq("stripe_checkout_session_id", sessionId)
+    .maybeSingle();
+
+  if (error) {
+    return { error: error.message, items: null as SnapshotItem[] | null, snapshotId: null as string | null };
+  }
+
+  if (!data || !Array.isArray(data.items)) {
+    return { error: null, items: null as SnapshotItem[] | null, snapshotId: null as string | null };
+  }
+
+  const items: SnapshotItem[] = [];
+  for (const item of data.items as Array<Record<string, unknown>>) {
+    const productId = Number(item.product_id);
+    const qty = Number(item.qty);
+    const unitPrice = Number(item.unit_price);
+    const productName = typeof item.product_name === "string" ? item.product_name : "Unknown product";
+
+    if (!Number.isFinite(productId) || !Number.isFinite(qty) || !Number.isFinite(unitPrice)) {
+      continue;
+    }
+
+    items.push({
+      product_id: productId,
+      product_name: productName,
+      qty,
+      unit_price: unitPrice,
+    });
+  }
+
+  return { error: null, items, snapshotId: data.id as string };
+}
+
 async function findExistingOrder(
   supabase: ReturnType<typeof createAdminClient>,
   sessionId: string,
@@ -127,6 +174,12 @@ export async function fulfillCheckoutSession(
     return { ok: false, error: "Checkout session has no line items" };
   }
 
+  const snapshotResult = await getSnapshotItemsForSession(supabase, sessionId);
+  if (snapshotResult.error) {
+    console.error("Fulfill checkout: failed loading checkout snapshot:", snapshotResult.error);
+    return { ok: false, error: snapshotResult.error };
+  }
+
   const shippingAddress = resolveShippingAddress(session);
 
   const { data: order, error: orderError } = await supabase
@@ -159,18 +212,33 @@ export async function fulfillCheckoutSession(
     return { ok: false, error: "Failed to create order" };
   }
 
-  const orderItems = lineItems.map((item) => ({
-    order_id: order.id,
-    product_name: item.description || "Unknown product",
-    qty: item.quantity || 1,
-    unit_price: (item.price?.unit_amount || 0) / 100,
-  }));
+  const orderItems = snapshotResult.items?.length
+    ? snapshotResult.items.map((item) => ({
+        order_id: order.id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        qty: item.qty,
+        unit_price: item.unit_price,
+      }))
+    : lineItems.map((item) => ({
+        order_id: order.id,
+        product_name: item.description || "Unknown product",
+        qty: item.quantity || 1,
+        unit_price: (item.price?.unit_amount || 0) / 100,
+      }));
 
   const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
 
   if (itemsError) {
     console.error("Fulfill checkout: failed to create order items:", itemsError.message);
     return { ok: false, error: itemsError.message };
+  }
+
+  if (snapshotResult.snapshotId) {
+    await supabase
+      .from("checkout_snapshots")
+      .update({ fulfilled_at: new Date().toISOString() })
+      .eq("id", snapshotResult.snapshotId);
   }
 
   await supabase.from("cart_items").delete().eq("user_id", userId);

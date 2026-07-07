@@ -2,6 +2,7 @@
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   User,
@@ -15,11 +16,14 @@ import {
   Heart,
   FileText,
   DatabaseBackup,
+  LogOut,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { type AppUser } from "@/lib/auth/types";
 import { type OrderDetail } from "@/components/account/OrderDetailModal";
 import { type AdminDashboardData } from "@/lib/orders/dashboard-types";
+import { useAuth } from "@/context/AuthContext";
 import ProfileTab from "@/components/account/ProfileTab";
 import OrdersTab from "@/components/account/OrdersTab";
 import SettingsTab from "@/components/account/SettingsTab";
@@ -44,7 +48,15 @@ const AccountPageClient = ({
   adminOrders,
   dashboardData,
 }: AccountPageClientProps) => {
+  const router = useRouter();
+  const { logout } = useAuth();
   const isAdmin = user.role === "admin" || user.role === "manager";
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -85,6 +97,15 @@ const AccountPageClient = ({
                   </span>
                 )}
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="mt-2 h-8 px-2 text-[hsl(var(--gold-light))] hover:text-primary-foreground hover:bg-white/10 gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>
