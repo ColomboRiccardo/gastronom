@@ -32,7 +32,10 @@ export default function SignupPage() {
     setLoading(true);
     const result = await signup(name, email, password);
     setLoading(false);
-    if (result.ok) router.push("/account");
+    if (result.ok) {
+      router.replace("/");
+      router.refresh();
+    }
     else setError(result.error || "Something went wrong.");
   };
 

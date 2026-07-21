@@ -10,7 +10,10 @@ export async function fetchUserOrdersForAccount(userId: string): Promise<OrderDe
     .from("orders")
     .select(`
       *,
-      order_items ( product_name, qty, unit_price )
+      order_items ( product_id, product_name, qty, unit_price ),
+      modification_proposal,
+      modification_message,
+      modification_sent_at
     `)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -30,8 +33,11 @@ export async function fetchAllOrdersForAdmin(): Promise<OrderDetail[]> {
     .from("orders")
     .select(`
       *,
-      order_items ( product_name, qty, unit_price ),
-      profiles ( name, email )
+      order_items ( product_id, product_name, qty, unit_price ),
+      modification_proposal,
+      modification_message,
+      modification_sent_at,
+      profiles ( name, email, phone )
     `)
     .order("created_at", { ascending: false });
 

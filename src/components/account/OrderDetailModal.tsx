@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -35,6 +36,9 @@ import {
   Plus,
   Minus,
   Search,
+  RefreshCw,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +47,7 @@ import { cn } from "@/lib/utils";
 /* ------------------------------------------------------------------ */
 
 export interface OrderItem {
+  productId?: number;
   name: string;
   qty: number;
   price: string;
@@ -52,11 +57,22 @@ export interface OrderDetail {
   id: string;
   date: string;
   customer?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   items: OrderItem[];
+  modificationProposal?: OrderItem[];
+  modificationMessage?: string;
+  modificationSentAt?: string;
   total: string;
   status: string;
   shippingAddress?: string;
   paymentMethod?: string;
+}
+
+interface ProductOption {
+  id: number;
+  name: string;
+  price: number;
 }
 
 interface Props {
@@ -66,35 +82,13 @@ interface Props {
   isAdmin?: boolean;
   onStatusChange?: (orderId: string, newStatus: string) => void;
   onDelete?: (orderId: string) => void;
-  onItemsChange?: (orderId: string, items: OrderItem[], newTotal: string) => void;
+  onProposeModification?: (
+    orderId: string,
+    items: OrderItem[],
+    newTotal: string,
+    message: string,
+  ) => Promise<{ ok: boolean; whatsappUrl?: string | null; error?: string }>;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Available products for adding                                      */
-/* ------------------------------------------------------------------ */
-
-const AVAILABLE_PRODUCTS = [
-  { name: "Beluga Noble Vodka", price: 38.9 },
-  { name: "Stolichnaya Vodka", price: 18.9 },
-  { name: "Zubrowka Bison Grass", price: 22.5 },
-  { name: "Nemiroff Honey Pepper", price: 16.9 },
-  { name: "Red Salmon Caviar", price: 24.5 },
-  { name: "Black Sturgeon Caviar", price: 89.0 },
-  { name: "Pike Roe Spread", price: 8.9 },
-  { name: "Pickled Cucumbers", price: 4.9 },
-  { name: "Sauerkraut", price: 3.9 },
-  { name: "Pickled Tomatoes", price: 5.5 },
-  { name: "Marinated Mushrooms", price: 7.9 },
-  { name: "Doctor's Kolbasa", price: 7.5 },
-  { name: "Salo with Garlic", price: 6.5 },
-  { name: "Moskovskaya Kolbasa", price: 9.9 },
-  { name: "Hunting Sausages", price: 5.9 },
-  { name: "Vobla Dried Fish", price: 9.9 },
-  { name: "Dried Squid Strips", price: 4.5 },
-  { name: "Smoked Sprats", price: 3.9 },
-  { name: "Matryoshka Set", price: 29.0 },
-  { name: "Zhostovo Tray", price: 45.0 },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Status pipeline                                                    */
@@ -105,6 +99,7 @@ const STATUSES = ["Received", "Processing", "Shipped", "Delivered"] as const;
 const statusMeta: Record<string, { icon: React.ElementType; color: string }> = {
   Received: { icon: Clock, color: "text-muted-foreground" },
   Processing: { icon: Package, color: "text-yellow-600" },
+  Modification: { icon: RefreshCw, color: "text-orange-600" },
   Shipped: { icon: Truck, color: "text-blue-600" },
   Delivered: { icon: CheckCircle2, color: "text-green-600" },
   Cancelled: { icon: X, color: "text-destructive" },
@@ -112,6 +107,7 @@ const statusMeta: Record<string, { icon: React.ElementType; color: string }> = {
 
 function StatusPipeline({ current }: { current: string }) {
   const isCancelled = current === "Cancelled";
+  const isModification = current === "Modification";
   const activeIdx = STATUSES.indexOf(current as (typeof STATUSES)[number]);
 
   if (isCancelled) {
@@ -119,6 +115,17 @@ function StatusPipeline({ current }: { current: string }) {
       <div className="flex items-center gap-2 py-3 px-2 rounded-lg bg-destructive/5 border border-destructive/20">
         <AlertTriangle className="w-4 h-4 text-destructive" />
         <span className="text-sm font-semibold text-destructive">Order Cancelled</span>
+      </div>
+    );
+  }
+
+  if (isModification) {
+    return (
+      <div className="flex items-center gap-2 py-3 px-2 rounded-lg bg-orange-50 border border-orange-200">
+        <RefreshCw className="w-4 h-4 text-orange-600" />
+        <span className="text-sm font-semibold text-orange-800">
+          Awaiting customer response to proposed changes
+        </span>
       </div>
     );
   }
@@ -175,6 +182,7 @@ const statusColor = (status: string) => {
     case "Delivered": return "bg-green-100 text-green-800 border-green-200";
     case "Shipped": return "bg-blue-100 text-blue-800 border-blue-200";
     case "Processing": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "Modification": return "bg-orange-100 text-orange-800 border-orange-200";
     case "Received": return "bg-muted text-muted-foreground border-border";
     case "Cancelled": return "bg-red-100 text-red-800 border-red-200";
     default: return "bg-muted text-muted-foreground";
@@ -191,15 +199,21 @@ const calcTotal = (items: OrderItem[]) =>
 /*  Add Product Popover                                                */
 /* ------------------------------------------------------------------ */
 
-function AddProductPopover({ onAdd }: { onAdd: (name: string, price: number) => void }) {
+function AddProductPopover({
+  products,
+  onAdd,
+}: {
+  products: ProductOption[];
+  onAdd: (product: ProductOption) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return AVAILABLE_PRODUCTS;
+    if (!search.trim()) return products;
     const q = search.toLowerCase();
-    return AVAILABLE_PRODUCTS.filter((p) => p.name.toLowerCase().includes(q));
-  }, [search]);
+    return products.filter((p) => p.name.toLowerCase().includes(q));
+  }, [products, search]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -209,7 +223,7 @@ function AddProductPopover({ onAdd }: { onAdd: (name: string, price: number) => 
           Add Product
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2" align="start">
+      <PopoverContent className="w-72 p-2" align="start">
         <div className="relative mb-2">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
@@ -225,10 +239,10 @@ function AddProductPopover({ onAdd }: { onAdd: (name: string, price: number) => 
           ) : (
             filtered.map((p) => (
               <button
-                key={p.name}
+                key={p.id}
                 className="w-full flex justify-between items-center px-2 py-1.5 text-sm rounded-md hover:bg-secondary/60 transition-colors text-left"
                 onClick={() => {
-                  onAdd(p.name, p.price);
+                  onAdd(p);
                   setOpen(false);
                   setSearch("");
                 }}
@@ -255,31 +269,91 @@ const OrderDetailModal = ({
   isAdmin = false,
   onStatusChange,
   onDelete,
-  onItemsChange,
+  onProposeModification,
 }: Props) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingItems, setEditingItems] = useState(false);
   const [localItems, setLocalItems] = useState<OrderItem[]>([]);
+  const [modificationMessage, setModificationMessage] = useState("");
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [sendingProposal, setSendingProposal] = useState(false);
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
+  const [replaceOpenIndex, setReplaceOpenIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!open || !isAdmin || !editingItems) return;
+
+    let cancelled = false;
+    setProductsLoading(true);
+
+    fetch("/api/admin/products/options")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.products)) {
+          setProducts(data.products);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setProducts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setProductsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, isAdmin, editingItems]);
 
   if (!order) return null;
 
-  const displayItems = editingItems ? localItems : order.items;
+  const hasProposal = Boolean(order.modificationProposal?.length);
+  const displayItems =
+    !editingItems && order.status === "Modification" && hasProposal
+      ? order.modificationProposal!
+      : editingItems
+        ? localItems
+        : order.items;
+
   const displayTotal = editingItems ? calcTotal(localItems) : order.total;
 
   const startEditing = () => {
-    setLocalItems([...order.items]);
+    const base =
+      order.status === "Modification" && order.modificationProposal?.length
+        ? order.modificationProposal
+        : order.items;
+    setLocalItems(base.map((item) => ({ ...item })));
+    setModificationMessage(order.modificationMessage ?? "");
+    setWhatsappUrl(null);
     setEditingItems(true);
   };
 
   const cancelEditing = () => {
     setEditingItems(false);
     setLocalItems([]);
+    setModificationMessage("");
+    setReplaceOpenIndex(null);
   };
 
-  const saveEditing = () => {
+  const sendProposal = async () => {
+    if (!onProposeModification || localItems.length === 0) return;
+
+    setSendingProposal(true);
     const newTotal = calcTotal(localItems);
-    onItemsChange?.(order.id, localItems, newTotal);
-    setEditingItems(false);
+    const result = await onProposeModification(
+      order.id,
+      localItems,
+      newTotal,
+      modificationMessage.trim(),
+    );
+    setSendingProposal(false);
+
+    if (result.ok) {
+      setWhatsappUrl(result.whatsappUrl ?? null);
+      setEditingItems(false);
+      setReplaceOpenIndex(null);
+    }
   };
 
   const updateQty = (index: number, delta: number) => {
@@ -297,17 +371,35 @@ const OrderDetailModal = ({
 
   const removeItem = (index: number) => {
     setLocalItems((prev) => prev.filter((_, i) => i !== index));
+    setReplaceOpenIndex(null);
   };
 
-  const addProduct = (name: string, price: number) => {
+  const replaceItem = (index: number, product: ProductOption) => {
     setLocalItems((prev) => {
-      const existing = prev.findIndex((it) => it.name === name);
+      const next = [...prev];
+      next[index] = {
+        productId: product.id,
+        name: product.name,
+        qty: next[index].qty,
+        price: formatPrice(product.price),
+      };
+      return next;
+    });
+    setReplaceOpenIndex(null);
+  };
+
+  const addProduct = (product: ProductOption) => {
+    setLocalItems((prev) => {
+      const existing = prev.findIndex((it) => it.productId === product.id || it.name === product.name);
       if (existing >= 0) {
         const next = [...prev];
         next[existing] = { ...next[existing], qty: next[existing].qty + 1 };
         return next;
       }
-      return [...prev, { name, qty: 1, price: formatPrice(price) }];
+      return [
+        ...prev,
+        { productId: product.id, name: product.name, qty: 1, price: formatPrice(product.price) },
+      ];
     });
   };
 
@@ -329,6 +421,8 @@ const OrderDetailModal = ({
         if (!v) {
           setConfirmDelete(false);
           setEditingItems(false);
+          setReplaceOpenIndex(null);
+          setWhatsappUrl(null);
         }
       }}
     >
@@ -342,15 +436,25 @@ const OrderDetailModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Status pipeline */}
         <div className="py-2 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Order Progress</p>
           <StatusPipeline current={order.status} />
         </div>
 
+        {order.status === "Modification" && order.modificationMessage && !editingItems && (
+          <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-900">
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1">Message to customer</p>
+            <p>{order.modificationMessage}</p>
+            {order.modificationSentAt && (
+              <p className="text-xs text-orange-700 mt-1">
+                Sent {new Date(order.modificationSentAt).toLocaleString("en-GB")}
+              </p>
+            )}
+          </div>
+        )}
+
         <Separator />
 
-        {/* Order info */}
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
             <p className="text-muted-foreground text-xs">Date</p>
@@ -378,19 +482,35 @@ const OrderDetailModal = ({
 
         <Separator />
 
-        {/* Items list */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Items {editingItems && <span className="text-primary ml-1">(Editing)</span>}
+              {order.status === "Modification" && hasProposal && !editingItems
+                ? "Proposed items"
+                : "Items"}
+              {editingItems && <span className="text-primary ml-1">(Editing)</span>}
             </p>
-            {isAdmin && !editingItems && (
+            {isAdmin && !editingItems && order.status !== "Delivered" && order.status !== "Cancelled" && (
               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-primary" onClick={startEditing}>
                 <Edit className="w-3 h-3" />
-                Edit Items
+                Propose changes
               </Button>
             )}
           </div>
+
+          {order.status === "Modification" && hasProposal && !editingItems && (
+            <div className="mb-3 rounded-md border border-dashed border-border p-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Original order</p>
+              <div className="space-y-1">
+                {order.items.map((item, i) => (
+                  <div key={`orig-${item.name}-${i}`} className="flex justify-between text-sm text-muted-foreground">
+                    <span>{item.name} ×{item.qty}</span>
+                    <span>{item.price}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             {displayItems.length === 0 ? (
@@ -398,16 +518,47 @@ const OrderDetailModal = ({
             ) : (
               displayItems.map((item, i) => (
                 <div
-                  key={`${item.name}-${i}`}
+                  key={`${item.productId ?? item.name}-${i}`}
                   className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center py-2 px-3 rounded-md bg-secondary/40 border border-border min-w-0"
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Package className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium break-words">{item.name}</span>
+                    {editingItems && replaceOpenIndex === i ? (
+                      <Select
+                        value={item.productId ? String(item.productId) : undefined}
+                        onValueChange={(value) => {
+                          const product = products.find((p) => String(p.id) === value);
+                          if (product) replaceItem(i, product);
+                        }}
+                      >
+                        <SelectTrigger className="h-8 flex-1 min-w-0 text-sm">
+                          <SelectValue placeholder="Select product..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          {products.map((p) => (
+                            <SelectItem key={p.id} value={String(p.id)}>
+                              {p.name} — {formatPrice(p.price)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm font-medium break-words">{item.name}</span>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center justify-end gap-2 text-sm shrink-0 sm:pl-3">
                     {editingItems ? (
                       <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setReplaceOpenIndex(replaceOpenIndex === i ? null : i)}
+                          disabled={productsLoading}
+                        >
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Replace
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(i, -1)}>
                           <Minus className="w-3 h-3" />
                         </Button>
@@ -432,20 +583,39 @@ const OrderDetailModal = ({
             )}
           </div>
 
-          {/* Add product button when editing */}
           {editingItems && (
             <div className="mt-2">
-              <AddProductPopover onAdd={addProduct} />
+              <AddProductPopover products={products} onAdd={addProduct} />
             </div>
           )}
 
-          {/* Edit actions */}
           {editingItems && (
-            <div className="flex justify-end gap-2 mt-3">
-              <Button variant="ghost" size="sm" onClick={cancelEditing}>Cancel</Button>
-              <Button size="sm" onClick={saveEditing} disabled={displayItems.length === 0}>
-                Save Changes
-              </Button>
+            <div className="mt-3 space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  Note to customer (optional)
+                </p>
+                <Textarea
+                  placeholder="e.g. Beluga caviar is out of stock, we suggest red salmon caviar instead."
+                  value={modificationMessage}
+                  onChange={(e) => setModificationMessage(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={cancelEditing} disabled={sendingProposal}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={sendProposal}
+                  disabled={displayItems.length === 0 || sendingProposal}
+                  className="gap-1.5"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  {sendingProposal ? "Sending..." : "Send proposal via email"}
+                </Button>
+              </div>
             </div>
           )}
 
@@ -455,7 +625,6 @@ const OrderDetailModal = ({
           </div>
         </div>
 
-        {/* Admin actions */}
         {isAdmin && !editingItems && (
           <>
             <Separator />
@@ -472,6 +641,7 @@ const OrderDetailModal = ({
                   <SelectContent>
                     <SelectItem value="Received">Received</SelectItem>
                     <SelectItem value="Processing">Processing</SelectItem>
+                    <SelectItem value="Modification">Modification</SelectItem>
                     <SelectItem value="Shipped">Shipped</SelectItem>
                     <SelectItem value="Delivered">Delivered</SelectItem>
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
@@ -491,6 +661,21 @@ const OrderDetailModal = ({
                   <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>Cancel</Button>
                 )}
               </div>
+
+              {whatsappUrl && (
+                <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Send same message on WhatsApp
+                  </a>
+                </Button>
+              )}
+
+              {order.status === "Modification" && order.customerPhone && !whatsappUrl && (
+                <p className="text-xs text-muted-foreground">
+                  Customer phone on file: {order.customerPhone}. Use &quot;Propose changes&quot; to generate a WhatsApp link after sending.
+                </p>
+              )}
             </div>
           </>
         )}

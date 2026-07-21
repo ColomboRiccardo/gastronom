@@ -13,7 +13,7 @@ import { ClipboardList, ArrowUpDown, Search } from "lucide-react";
 import OrderDetailModal, { type OrderDetail, type OrderItem } from "./OrderDetailModal";
 import BulkActionBar from "./BulkActionBar";
 import { toast } from "sonner";
-import { deleteOrder, updateOrderStatus } from "@/lib/orders";
+import { deleteOrder, proposeOrderModification, updateOrderStatus } from "@/lib/orders";
 
 interface AdminOrdersTabProps {
   initialOrders: OrderDetail[];
@@ -24,6 +24,7 @@ const statusColor = (status: string) => {
     case "Delivered": return "bg-green-100 text-green-800 border-green-200";
     case "Shipped": return "bg-blue-100 text-blue-800 border-blue-200";
     case "Processing": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "Modification": return "bg-orange-100 text-orange-800 border-orange-200";
     case "Cancelled": return "bg-red-100 text-red-800 border-red-200";
     default: return "bg-muted text-muted-foreground";
   }
@@ -102,10 +103,47 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
     }
   };
 
-  const handleItemsChange = (orderId: string, items: OrderItem[], newTotal: string) => {
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, items, total: newTotal } : o)));
-    setSelectedOrder((prev) => prev && prev.id === orderId ? { ...prev, items, total: newTotal } : prev);
-    toast.success(`Order ${orderId} items updated`);
+  const handleProposeModification = async (
+    orderId: string,
+    items: OrderItem[],
+    newTotal: string,
+    message: string,
+  ) => {
+    const result = await proposeOrderModification(orderId, items, message);
+    if (result.ok) {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? {
+                ...o,
+                status: "Modification",
+                modificationProposal: items,
+                modificationMessage: message || undefined,
+                modificationSentAt: new Date().toISOString(),
+                total: newTotal,
+              }
+            : o,
+        ),
+      );
+      setSelectedOrder((prev) =>
+        prev && prev.id === orderId
+          ? {
+              ...prev,
+              status: "Modification",
+              modificationProposal: items,
+              modificationMessage: message || undefined,
+              modificationSentAt: new Date().toISOString(),
+              total: newTotal,
+            }
+          : prev,
+      );
+      toast.success(`Modification proposal sent for ${orderId}`);
+      router.refresh();
+      return { ok: true, whatsappUrl: result.whatsappUrl };
+    }
+
+    toast.error(result.error || `Failed to send proposal for ${orderId}`);
+    return { ok: false, error: result.error };
   };
 
   const bulkStatusChange = async (newStatus: string) => {
@@ -147,7 +185,9 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
                 <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="received">Received</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="modification">Modification</SelectItem>
                   <SelectItem value="shipped">Shipped</SelectItem>
                   <SelectItem value="delivered">Delivered</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -181,6 +221,7 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
                 label: "Set Status",
                 options: [
                   { value: "Processing", label: "Processing" },
+                  { value: "Modification", label: "Modification" },
                   { value: "Shipped", label: "Shipped" },
                   { value: "Delivered", label: "Delivered" },
                   { value: "Cancelled", label: "Cancelled" },
@@ -265,7 +306,7 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
         isAdmin
         onStatusChange={handleStatusChange}
         onDelete={handleDelete}
-        onItemsChange={handleItemsChange}
+        onProposeModification={handleProposeModification}
       />
     </>
   );
