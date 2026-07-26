@@ -6,18 +6,18 @@
 import { createClient } from "@/lib/supabase/client";
 
 export async function updateOrderStatus(orderId: string, newStatus: string): Promise<boolean> {
-  const supabase = createClient();
-  const numericId = orderId.replace("ORD-", "");
+  const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: newStatus }),
+  });
 
-  const { error } = await supabase
-    .from("orders")
-    .update({ status: newStatus })
-    .eq("id", numericId);
-
-  if (error) {
-    console.error("Failed to update order status:", error);
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    console.error("Failed to update order status:", data.error || response.statusText);
     return false;
   }
+
   return true;
 }
 

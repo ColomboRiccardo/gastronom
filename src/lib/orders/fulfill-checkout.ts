@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 
+import { sendOrderConfirmationEmail } from "@/lib/emails/send-order-confirmation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 
@@ -36,6 +37,10 @@ function resolveShippingAddress(session: Stripe.Checkout.Session): string | null
   ]
     .filter(Boolean)
     .join(", ");
+}
+
+function resolveCustomerEmail(session: Stripe.Checkout.Session): string | null {
+  return session.customer_details?.email ?? session.customer_email ?? null;
 }
 
 async function listSessionLineItems(sessionId: string) {
@@ -99,7 +104,7 @@ async function findExistingOrder(
 ) {
   const { data: bySession, error: sessionError } = await supabase
     .from("orders")
-    .select("id")
+    .select("id, confirmation_email_sent_at")
     .eq("stripe_checkout_session_id", sessionId)
     .maybeSingle();
 
@@ -107,7 +112,10 @@ async function findExistingOrder(
     return { error: sessionError.message as string };
   }
   if (bySession) {
-    return { orderId: bySession.id as number };
+    return {
+      orderId: bySession.id as number,
+      confirmationEmailSentAt: bySession.confirmation_email_sent_at as string | null,
+    };
   }
 
   const legacyKeys = [sessionId, paymentIntentId].filter(
@@ -117,7 +125,7 @@ async function findExistingOrder(
   for (const key of legacyKeys) {
     const { data, error } = await supabase
       .from("orders")
-      .select("id")
+      .select("id, confirmation_email_sent_at")
       .eq("payment_intent_id", key)
       .maybeSingle();
 
@@ -125,11 +133,53 @@ async function findExistingOrder(
       return { error: error.message };
     }
     if (data) {
-      return { orderId: data.id as number };
+      return {
+        orderId: data.id as number,
+        confirmationEmailSentAt: data.confirmation_email_sent_at as string | null,
+      };
     }
   }
 
-  return { orderId: null };
+  return { orderId: null, confirmationEmailSentAt: null };
+}
+
+async function sendConfirmationIfNeeded(
+  supabase: ReturnType<typeof createAdminClient>,
+  params: {
+    orderId: number;
+    confirmationEmailSentAt: string | null;
+    to: string | null;
+    customerName?: string;
+    items: SnapshotItem[];
+    total: number;
+    shippingAddress: string | null;
+    paymentMethod: string;
+  },
+) {
+  if (params.confirmationEmailSentAt || !params.to || params.items.length === 0) {
+    return;
+  }
+
+  const emailResult = await sendOrderConfirmationEmail({
+    to: params.to,
+    customerName: params.customerName,
+    orderId: params.orderId,
+    items: params.items.map((item) => ({
+      product_name: item.product_name,
+      qty: item.qty,
+      unit_price: item.unit_price,
+    })),
+    total: params.total,
+    shippingAddress: params.shippingAddress,
+    paymentMethod: params.paymentMethod,
+  });
+
+  if (emailResult.ok) {
+    await supabase
+      .from("orders")
+      .update({ confirmation_email_sent_at: new Date().toISOString() })
+      .eq("id", params.orderId);
+  }
 }
 
 /** Create order + line items for a paid Checkout session (idempotent). */
@@ -150,6 +200,7 @@ export async function fulfillCheckoutSession(
   }
 
   const paymentIntentId = resolvePaymentIntentId(session);
+  const customerEmail = resolveCustomerEmail(session);
 
   let supabase;
   try {
@@ -160,12 +211,35 @@ export async function fulfillCheckoutSession(
     return { ok: false, error: message };
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const recipientEmail = profile?.email ?? customerEmail;
+  const customerName = profile?.name ?? undefined;
+
   const existing = await findExistingOrder(supabase, sessionId, paymentIntentId);
   if ("error" in existing && existing.error) {
     console.error("Fulfill checkout: idempotency check failed:", existing.error);
     return { ok: false, error: existing.error };
   }
   if (existing.orderId) {
+    const snapshotResult = await getSnapshotItemsForSession(supabase, sessionId);
+    const items = snapshotResult.items ?? [];
+
+    await sendConfirmationIfNeeded(supabase, {
+      orderId: existing.orderId,
+      confirmationEmailSentAt: existing.confirmationEmailSentAt ?? null,
+      to: recipientEmail,
+      customerName,
+      items,
+      total: (session.amount_total || 0) / 100,
+      shippingAddress: resolveShippingAddress(session),
+      paymentMethod: session.payment_method_types?.[0] || "card",
+    });
+
     return { ok: true, orderId: existing.orderId, alreadyFulfilled: true };
   }
 
@@ -181,17 +255,19 @@ export async function fulfillCheckoutSession(
   }
 
   const shippingAddress = resolveShippingAddress(session);
+  const paymentMethod = session.payment_method_types?.[0] || "card";
+  const orderTotal = (session.amount_total || 0) / 100;
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert({
       user_id: userId,
       status: "Received",
-      total: (session.amount_total || 0) / 100,
+      total: orderTotal,
       shipping_address: shippingAddress,
       stripe_checkout_session_id: sessionId,
       payment_intent_id: paymentIntentId,
-      payment_method: session.payment_method_types?.[0] || "card",
+      payment_method: paymentMethod,
     })
     .select("id")
     .single();
@@ -200,6 +276,17 @@ export async function fulfillCheckoutSession(
     if (orderError.code === "23505") {
       const raced = await findExistingOrder(supabase, sessionId, paymentIntentId);
       if (raced.orderId) {
+        const snapshotResult = await getSnapshotItemsForSession(supabase, sessionId);
+        await sendConfirmationIfNeeded(supabase, {
+          orderId: raced.orderId,
+          confirmationEmailSentAt: raced.confirmationEmailSentAt ?? null,
+          to: recipientEmail,
+          customerName,
+          items: snapshotResult.items ?? [],
+          total: orderTotal,
+          shippingAddress,
+          paymentMethod,
+        });
         return { ok: true, orderId: raced.orderId, alreadyFulfilled: true };
       }
     }
@@ -242,6 +329,26 @@ export async function fulfillCheckoutSession(
   }
 
   await supabase.from("cart_items").delete().eq("user_id", userId);
+
+  const emailItems: SnapshotItem[] = snapshotResult.items?.length
+    ? snapshotResult.items
+    : orderItems.map((item) => ({
+        product_id: 0,
+        product_name: item.product_name,
+        qty: item.qty,
+        unit_price: item.unit_price,
+      }));
+
+  await sendConfirmationIfNeeded(supabase, {
+    orderId: order.id,
+    confirmationEmailSentAt: null,
+    to: recipientEmail,
+    customerName,
+    items: emailItems,
+    total: orderTotal,
+    shippingAddress,
+    paymentMethod,
+  });
 
   console.log(`Order ${order.id} fulfilled for user ${userId} (session ${sessionId})`);
   return { ok: true, orderId: order.id };

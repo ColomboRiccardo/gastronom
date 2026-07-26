@@ -115,7 +115,6 @@ export async function POST(
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const emailResult = await sendOrderModificationEmail({
     to: customerEmail,
     customerName: profile?.name ?? undefined,
@@ -123,7 +122,6 @@ export async function POST(
     originalItems,
     proposedItems: body.items,
     message: body.message?.trim(),
-    accountUrl: `${siteUrl}/account`,
   });
 
   if (!emailResult.ok) {
