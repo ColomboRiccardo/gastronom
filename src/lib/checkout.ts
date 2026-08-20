@@ -1,4 +1,5 @@
 import { type CartItem } from "@/context/CartContext";
+import type { ShippingMethodKind } from "@/lib/shipping/config";
 
 export function buildCheckoutLineItems(items: CartItem[]) {
   return items.map((item) => ({
@@ -7,13 +8,23 @@ export function buildCheckoutLineItems(items: CartItem[]) {
   }));
 }
 
+export interface CheckoutShippingPayload {
+  method: ShippingMethodKind;
+  city?: string;
+  postalCode?: string;
+}
+
 export async function startCheckout(
   items: CartItem[],
+  shipping: CheckoutShippingPayload,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const res = await fetch("/api/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items: buildCheckoutLineItems(items) }),
+    body: JSON.stringify({
+      items: buildCheckoutLineItems(items),
+      shipping,
+    }),
   });
 
   const data = (await res.json()) as { url?: string; error?: string };

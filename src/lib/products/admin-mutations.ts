@@ -107,7 +107,7 @@ export async function saveAdminProductEdits(
 
   const { data: existing, error } = await supabase
     .from("products")
-    .select("name, description, price, stock, badge")
+    .select("name, description, price, stock, badge, is_frozen")
     .eq("id", productId)
     .single();
 
@@ -122,6 +122,7 @@ export async function saveAdminProductEdits(
   const description = update.description.trim();
   const price = update.price;
   const badge = update.badge?.trim() || null;
+  const isFrozen = Boolean(update.isFrozen);
 
   const changedFields: string[] = [];
   if (name !== existing.name) changedFields.push("name");
@@ -129,12 +130,13 @@ export async function saveAdminProductEdits(
   if (price !== Number(existing.price)) changedFields.push("price");
   if (stock !== existing.stock) changedFields.push("stock", "status");
   if (badge !== (existing.badge || null)) changedFields.push("badge");
+  if (isFrozen !== Boolean(existing.is_frozen)) changedFields.push("is_frozen");
 
   if (changedFields.length === 0) return true;
 
   return updateProductsWithLocks(
     [productId],
-    { name, description, price, stock, status, badge },
+    { name, description, price, stock, status, badge, is_frozen: isFrozen },
     changedFields,
   );
 }

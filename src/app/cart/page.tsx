@@ -1,35 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Loader2, Minus, Plus, Trash2, ShoppingCart, ArrowLeft, AlertTriangle } from "lucide-react";
+import {
+  Loader2,
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingCart,
+  ArrowLeft,
+  AlertTriangle,
+  Snowflake,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { startCheckout } from "@/lib/checkout";
+import { SHIPPING_RATES, SHOP, type ShippingMethodKind } from "@/lib/shipping/config";
+import { listLocalCities, previewCourierCost, resolveShipping } from "@/lib/shipping/resolve";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice } = useCart();
   const { isAuthenticated } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [method, setMethod] = useState<ShippingMethodKind | "">("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+
+  const localCities = useMemo(() => listLocalCities(), []);
+  const hasFrozenItems = items.some((item) => item.product.isFrozen);
+
+  const shippingPreview = useMemo(() => {
+    if (!method) return null;
+    if (method === "courier" && hasFrozenItems) {
+      return { ok: false as const, error: "Frozen products cannot be shipped by courier." };
+    }
+    return resolveShipping(
+      {
+        method,
+        city: method === "local" ? city : undefined,
+        postalCode: method === "courier" ? postalCode : undefined,
+      },
+      { hasFrozenItems },
+    );
+  }, [method, city, postalCode, hasFrozenItems]);
+
+  const shippingCost =
+    shippingPreview?.ok === true ? shippingPreview.shipping.cost : 0;
+  const grandTotal = totalPrice + (shippingPreview?.ok === true ? shippingCost : 0);
+  const shippingReady = shippingPreview?.ok === true;
+
+  const courierHint = useMemo(() => {
+    if (method !== "courier" || postalCode.replace(/\D/g, "").length !== 5) return null;
+    return previewCourierCost(postalCode);
+  }, [method, postalCode]);
 
   const handleCheckout = async () => {
+    if (!method || !shippingReady || shippingPreview?.ok !== true) {
+      toast.error(shippingPreview && !shippingPreview.ok ? shippingPreview.error : "Select shipping");
+      return;
+    }
+
     setCheckoutLoading(true);
-    const result = await startCheckout(items);
+    const result = await startCheckout(items, {
+      method,
+      city: method === "local" ? city : undefined,
+      postalCode: method === "courier" ? postalCode : undefined,
+    });
     if (!result.ok) {
       toast.error(result.error);
       setCheckoutLoading(false);
     }
   };
 
+  const selectMethod = (next: ShippingMethodKind) => {
+    if (next === "courier" && hasFrozenItems) return;
+    setMethod(next);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Page header */}
       <section className="pt-24 pb-12 bg-muted/50 relative overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
           <p className="font-body text-accent text-sm tracking-[0.2em] uppercase mb-2">
@@ -67,7 +131,6 @@ export default function CartPage() {
             </div>
           ) : (
             <div className="flex flex-col lg:flex-row gap-8">
-              {/* Cart items */}
               <div className="flex-1 space-y-4">
                 {items.map(({ product, quantity }) => (
                   <div
@@ -84,10 +147,15 @@ export default function CartPage() {
                         {product.name}
                       </h3>
                       <p className="font-body text-sm text-muted-foreground">{product.category}</p>
+                      {product.isFrozen && (
+                        <p className="font-body text-xs text-sky-700 flex items-center gap-1 mt-1">
+                          <Snowflake className="h-3 w-3" />
+                          Frozen — pickup or local delivery only
+                        </p>
+                      )}
                       <p className="font-display text-primary font-bold mt-1">{product.price}</p>
                     </div>
 
-                    {/* Quantity controls */}
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -108,7 +176,6 @@ export default function CartPage() {
                       </Button>
                     </div>
 
-                    {/* Line total */}
                     <p className="font-display text-lg font-bold text-foreground w-20 text-right hidden sm:block">
                       €{(product.priceNum * quantity).toFixed(2)}
                     </p>
@@ -143,13 +210,12 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Order summary */}
-              <div className="lg:w-80">
-                <div className="bg-card border border-border rounded-lg p-6 sticky top-24">
-                  <h2 className="font-display text-xl font-bold text-foreground mb-4">
+              <div className="lg:w-96">
+                <div className="bg-card border border-border rounded-lg p-6 sticky top-24 space-y-5">
+                  <h2 className="font-display text-xl font-bold text-foreground">
                     Order Summary
                   </h2>
-                  <div className="space-y-3 mb-4">
+                  <div className="space-y-3">
                     {items.map(({ product, quantity }) => (
                       <div key={product.id} className="flex justify-between font-body text-sm text-muted-foreground">
                         <span className="truncate mr-2">{product.name} × {quantity}</span>
@@ -157,15 +223,149 @@ export default function CartPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="border-t border-border pt-4 mb-6">
-                    <div className="flex justify-between font-display text-lg font-bold text-foreground">
-                      <span>Total</span>
+
+                  <div className="border-t border-border pt-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Shipping
+                    </p>
+
+                    {hasFrozenItems && (
+                      <div className="flex items-start gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                        <Snowflake className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                        <span>
+                          Your cart includes frozen items. National courier is unavailable —
+                          choose pickup or local delivery.
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      {(
+                        [
+                          {
+                            id: "pickup" as const,
+                            label: "Ritiro in negozio",
+                            hint: `Free · ${SHOP.address}`,
+                            price: SHIPPING_RATES.pickup,
+                            disabled: false,
+                          },
+                          {
+                            id: "local" as const,
+                            label: "Consegna locale",
+                            hint: "Selected cities near the shop",
+                            price: SHIPPING_RATES.local,
+                            disabled: false,
+                          },
+                          {
+                            id: "courier" as const,
+                            label: "Spedizione Italia",
+                            hint: hasFrozenItems
+                              ? "Not available with frozen items"
+                              : `From €${SHIPPING_RATES.courierNorth.toFixed(2)} by CAP zone`,
+                            price: null,
+                            disabled: hasFrozenItems,
+                          },
+                        ] as const
+                      ).map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          disabled={option.disabled}
+                          onClick={() => selectMethod(option.id)}
+                          className={cn(
+                            "w-full text-left rounded-md border px-3 py-2.5 transition-colors",
+                            option.disabled && "opacity-50 cursor-not-allowed",
+                            method === option.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:bg-muted/40",
+                          )}
+                        >
+                          <div className="flex justify-between gap-2">
+                            <span className="text-sm font-medium text-foreground">{option.label}</span>
+                            <span className="text-sm font-semibold text-foreground shrink-0">
+                              {option.price === null
+                                ? "—"
+                                : option.price === 0
+                                  ? "Free"
+                                  : `€${option.price.toFixed(2)}`}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{option.hint}</p>
+                        </button>
+                      ))}
+                    </div>
+
+                    {method === "local" && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                          Delivery city
+                        </label>
+                        <Select value={city} onValueChange={setCity}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select city..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {localCities.map((name) => (
+                              <SelectItem key={name} value={name}>
+                                {name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {method === "courier" && !hasFrozenItems && (
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                          CAP (postal code)
+                        </label>
+                        <Input
+                          inputMode="numeric"
+                          maxLength={5}
+                          placeholder="e.g. 17025"
+                          value={postalCode}
+                          onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                        />
+                        {courierHint?.ok && (
+                          <p className="text-xs text-muted-foreground mt-1.5">
+                            {courierHint.displayName}: €{courierHint.cost.toFixed(2)}
+                          </p>
+                        )}
+                        {courierHint && !courierHint.ok && postalCode.length === 5 && (
+                          <p className="text-xs text-destructive mt-1.5">{courierHint.error}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {shippingPreview && !shippingPreview.ok && method && (
+                      <p className="text-xs text-destructive">{shippingPreview.error}</p>
+                    )}
+                  </div>
+
+                  <div className="border-t border-border pt-4 space-y-2">
+                    <div className="flex justify-between font-body text-sm text-muted-foreground">
+                      <span>Subtotal</span>
                       <span>€{totalPrice.toFixed(2)}</span>
                     </div>
-                    <p className="font-body text-xs text-muted-foreground mt-1">Shipping calculated at checkout</p>
+                    <div className="flex justify-between font-body text-sm text-muted-foreground">
+                      <span>Shipping</span>
+                      <span>
+                        {shippingReady
+                          ? shippingCost === 0
+                            ? "Free"
+                            : `€${shippingCost.toFixed(2)}`
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-display text-lg font-bold text-foreground">
+                      <span>Total</span>
+                      <span>€{grandTotal.toFixed(2)}</span>
+                    </div>
                   </div>
+
                   {!isAuthenticated && (
-                    <div className="flex items-start gap-2 bg-accent/10 border border-accent/30 rounded-md px-3 py-2.5 mb-4">
+                    <div className="flex items-start gap-2 bg-accent/10 border border-accent/30 rounded-md px-3 py-2.5">
                       <AlertTriangle className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                       <div>
                         <p className="text-sm font-medium text-foreground">Sign in required</p>
@@ -179,13 +379,16 @@ export default function CartPage() {
                       </div>
                     </div>
                   )}
+
                   <Button
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-body font-medium"
-                    disabled={!isAuthenticated || checkoutLoading}
+                    disabled={!isAuthenticated || checkoutLoading || !shippingReady}
                     onClick={handleCheckout}
                   >
                     {checkoutLoading ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...
+                      </>
                     ) : (
                       "Proceed to Checkout"
                     )}

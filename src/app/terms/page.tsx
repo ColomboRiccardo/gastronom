@@ -46,8 +46,14 @@ export default function TermsPage() {
 
       <LegalSection title="5. Delivery">
         <p>
-          Shipping options, costs, and restrictions (for example frozen goods) will be shown or
-          communicated during checkout as the service matures. Delivery times are estimates.
+          We offer shop pickup (free), local van delivery to selected cities near the shop, and
+          national courier within Italy at flat rates by CAP zone. Available options and prices are
+          shown in your cart before payment. Frozen products cannot be shipped by national courier
+          and must be collected in store or delivered locally where available.
+        </p>
+        <p>
+          Delivery times are estimates. Exact pickup address and opening hours are confirmed on your
+          order confirmation.
         </p>
       </LegalSection>
 

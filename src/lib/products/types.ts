@@ -12,6 +12,7 @@ export interface DbProductRow {
   image_url: string | null;
   badge: string | null;
   published: boolean;
+  is_frozen?: boolean;
   created_at: string;
   lackmann_data: {
     maingroup?: string;
@@ -41,6 +42,7 @@ export interface AdminProduct {
   published: boolean;
   badge: string | null;
   image: string;
+  isFrozen: boolean;
   editorLockedFields: string[];
 }
 
@@ -50,4 +52,5 @@ export interface AdminProductUpdate {
   price: number;
   stock: number;
   badge: string | null;
+  isFrozen: boolean;
 }

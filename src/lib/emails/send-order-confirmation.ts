@@ -19,14 +19,35 @@ interface SendOrderConfirmationEmailParams {
   items: OrderEmailItem[];
   total: number;
   shippingAddress?: string | null;
+  shippingMethod?: string | null;
+  shippingCost?: number | null;
   paymentMethod?: string | null;
 }
 
 export async function sendOrderConfirmationEmail(params: SendOrderConfirmationEmailParams) {
-  const { to, customerName, orderId, items, total, shippingAddress, paymentMethod } = params;
+  const {
+    to,
+    customerName,
+    orderId,
+    items,
+    total,
+    shippingAddress,
+    shippingMethod,
+    shippingCost,
+    paymentMethod,
+  } = params;
   const accountUrl = getAccountUrl();
 
   const details: string[] = [];
+  if (shippingMethod) {
+    const costLabel =
+      shippingCost == null
+        ? ""
+        : shippingCost === 0
+          ? " (free)"
+          : ` — ${formatMoney(shippingCost)}`;
+    details.push(`<p><strong>Shipping:</strong> ${shippingMethod}${costLabel}</p>`);
+  }
   if (shippingAddress) {
     details.push(`<p><strong>Shipping address:</strong><br>${shippingAddress}</p>`);
   }

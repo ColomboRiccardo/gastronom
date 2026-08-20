@@ -53,6 +53,7 @@ const toProduct = (p: AdminProduct): Product => ({
   image: p.image,
   category: p.category,
   badge: p.badge ?? undefined,
+  isFrozen: p.isFrozen,
 });
 
 type AdminViewMode = "table" | "grid";
@@ -560,6 +561,7 @@ const AdminProductsTab = () => {
         mode="admin"
         adminStock={selectedAdminProduct?.stock ?? 0}
         adminBadge={selectedAdminProduct?.badge ?? null}
+        adminIsFrozen={selectedAdminProduct?.isFrozen ?? false}
         onAdminSaved={handleAdminSaved}
       />
     </>

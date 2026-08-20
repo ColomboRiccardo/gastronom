@@ -1,22 +1,53 @@
 import { NextResponse } from "next/server";
+
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { parseCheckoutItems, validateCheckoutItems } from "@/lib/checkout-validation";
+import {
+  cartHasFrozenItems,
+  parseCheckoutItems,
+  validateCheckoutItems,
+} from "@/lib/checkout-validation";
+import {
+  resolveShipping,
+  type ShippingRequest,
+} from "@/lib/shipping/resolve";
+import type { ShippingMethodKind } from "@/lib/shipping/config";
+
+function parseShippingRequest(input: unknown): ShippingRequest | null {
+  if (!input || typeof input !== "object") return null;
+  const raw = input as { method?: unknown; city?: unknown; postalCode?: unknown };
+  const method = raw.method;
+  if (method !== "pickup" && method !== "local" && method !== "courier") {
+    return null;
+  }
+  return {
+    method: method as ShippingMethodKind,
+    city: typeof raw.city === "string" ? raw.city : undefined,
+    postalCode: typeof raw.postalCode === "string" ? raw.postalCode : undefined,
+  };
+}
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { items } = await request.json();
-    const parsedItems = parseCheckoutItems(items);
+    const body = await request.json();
+    const parsedItems = parseCheckoutItems(body.items);
     if (!parsedItems) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+    }
+
+    const shippingRequest = parseShippingRequest(body.shipping);
+    if (!shippingRequest) {
+      return NextResponse.json({ error: "Select a shipping method" }, { status: 400 });
     }
 
     const admin = createAdminClient();
@@ -24,6 +55,13 @@ export async function POST(request: Request) {
     if (!validation.ok) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+
+    const hasFrozenItems = cartHasFrozenItems(validation.items);
+    const shippingResult = resolveShipping(shippingRequest, { hasFrozenItems });
+    if (!shippingResult.ok) {
+      return NextResponse.json({ error: shippingResult.error }, { status: 400 });
+    }
+    const shipping = shippingResult.shipping;
 
     const lineItems = validation.items.map((item) => ({
       price_data: {
@@ -50,7 +88,12 @@ export async function POST(request: Request) {
           product_name: item.name,
           qty: item.quantity,
           unit_price: item.unitPrice,
+          is_frozen: item.isFrozen,
         })),
+        shipping_method: shipping.method,
+        shipping_cost: shipping.cost,
+        shipping_city: shipping.city ?? null,
+        shipping_postal_code: shipping.postalCode ?? null,
       })
       .select("id")
       .single();
@@ -60,22 +103,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to prepare checkout" }, { status: 500 });
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
+    const shippingOption = {
+      shipping_rate_data: {
+        type: "fixed_amount" as const,
+        fixed_amount: {
+          amount: shipping.costCents,
+          currency: "eur",
+        },
+        display_name: shipping.displayName,
+      },
+    };
+
+    const sessionParams = {
+      mode: "payment" as const,
+      payment_method_types: ["card" as const],
       line_items: lineItems,
       customer_email: user.email,
       metadata: {
         user_id: user.id,
         checkout_snapshot_id: snapshot.id,
+        shipping_method: shipping.method,
       },
-      shipping_address_collection: {
-        allowed_countries: ["IT", "DE", "FR", "ES", "AT", "CH", "NL", "BE", "PT", "GR", "PL", "CZ", "RO", "HU", "SE", "DK", "FI", "IE", "BG", "HR", "SK", "SI", "LT", "LV", "EE", "LU", "MT", "CY"],
-      },
-      shipping_options: [{ shipping_rate: "shr_1TJGbUIRoE2UiWe4IyYqrbMg" }],
+      shipping_options: [shippingOption],
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,
-    });
+      phone_number_collection: { enabled: true },
+      ...(shipping.kind !== "pickup"
+        ? {
+            shipping_address_collection: {
+              allowed_countries: ["IT" as const],
+            },
+          }
+        : {}),
+    };
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     const { error: linkSnapshotError } = await admin
       .from("checkout_snapshots")

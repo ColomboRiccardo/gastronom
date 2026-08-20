@@ -18,6 +18,8 @@ export interface Product {
   image: string;
   category: string;
   badge?: string;
+  /** Cold-chain; blocks national courier shipping. */
+  isFrozen?: boolean;
 }
 
 const ProductCard = ({ product }: { product: Product }) => {

@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 
 import { sendOrderConfirmationEmail } from "@/lib/emails/send-order-confirmation";
+import { METHOD_LABELS, SHOP, type ResolvedShippingMethod } from "@/lib/shipping/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 
@@ -43,6 +44,12 @@ function resolveCustomerEmail(session: Stripe.Checkout.Session): string | null {
   return session.customer_details?.email ?? session.customer_email ?? null;
 }
 
+function resolveStripeShippingCost(session: Stripe.Checkout.Session): number | null {
+  const total = session.total_details?.amount_shipping;
+  if (typeof total === "number") return total / 100;
+  return null;
+}
+
 async function listSessionLineItems(sessionId: string) {
   const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
     limit: 100,
@@ -57,22 +64,39 @@ interface SnapshotItem {
   unit_price: number;
 }
 
-async function getSnapshotItemsForSession(
+interface SnapshotShipping {
+  method: string | null;
+  cost: number | null;
+  city: string | null;
+  postalCode: string | null;
+}
+
+async function getSnapshotForSession(
   supabase: ReturnType<typeof createAdminClient>,
   sessionId: string,
 ) {
   const { data, error } = await supabase
     .from("checkout_snapshots")
-    .select("id, items")
+    .select("id, items, shipping_method, shipping_cost, shipping_city, shipping_postal_code")
     .eq("stripe_checkout_session_id", sessionId)
     .maybeSingle();
 
   if (error) {
-    return { error: error.message, items: null as SnapshotItem[] | null, snapshotId: null as string | null };
+    return {
+      error: error.message,
+      items: null as SnapshotItem[] | null,
+      snapshotId: null as string | null,
+      shipping: null as SnapshotShipping | null,
+    };
   }
 
   if (!data || !Array.isArray(data.items)) {
-    return { error: null, items: null as SnapshotItem[] | null, snapshotId: null as string | null };
+    return {
+      error: null,
+      items: null as SnapshotItem[] | null,
+      snapshotId: null as string | null,
+      shipping: null as SnapshotShipping | null,
+    };
   }
 
   const items: SnapshotItem[] = [];
@@ -94,7 +118,50 @@ async function getSnapshotItemsForSession(
     });
   }
 
-  return { error: null, items, snapshotId: data.id as string };
+  const shipping: SnapshotShipping = {
+    method: (data.shipping_method as string | null) ?? null,
+    cost: data.shipping_cost != null ? Number(data.shipping_cost) : null,
+    city: (data.shipping_city as string | null) ?? null,
+    postalCode: (data.shipping_postal_code as string | null) ?? null,
+  };
+
+  return { error: null, items, snapshotId: data.id as string, shipping };
+}
+
+function resolveOrderShipping(
+  session: Stripe.Checkout.Session,
+  snapshotShipping: SnapshotShipping | null,
+) {
+  const method = snapshotShipping?.method
+    ?? (session.metadata?.shipping_method as string | undefined)
+    ?? null;
+
+  const costFromSnapshot =
+    snapshotShipping?.cost != null && Number.isFinite(snapshotShipping.cost)
+      ? snapshotShipping.cost
+      : null;
+  const cost = costFromSnapshot ?? resolveStripeShippingCost(session) ?? 0;
+
+  const stripeAddress = resolveShippingAddress(session);
+  const isPickup = method === "pickup";
+
+  let shippingAddress = stripeAddress;
+  if (isPickup) {
+    shippingAddress = `Pickup — ${SHOP.name}, ${SHOP.address}`;
+  } else if (!shippingAddress && snapshotShipping?.city) {
+    shippingAddress = snapshotShipping.city;
+  }
+
+  const methodLabel =
+    method && method in METHOD_LABELS
+      ? METHOD_LABELS[method as ResolvedShippingMethod]
+      : method;
+
+  return {
+    shippingMethod: methodLabel || method,
+    shippingCost: cost,
+    shippingAddress,
+  };
 }
 
 async function findExistingOrder(
@@ -153,6 +220,8 @@ async function sendConfirmationIfNeeded(
     items: SnapshotItem[];
     total: number;
     shippingAddress: string | null;
+    shippingMethod?: string | null;
+    shippingCost?: number | null;
     paymentMethod: string;
   },
 ) {
@@ -171,6 +240,8 @@ async function sendConfirmationIfNeeded(
     })),
     total: params.total,
     shippingAddress: params.shippingAddress,
+    shippingMethod: params.shippingMethod,
+    shippingCost: params.shippingCost,
     paymentMethod: params.paymentMethod,
   });
 
@@ -226,8 +297,9 @@ export async function fulfillCheckoutSession(
     return { ok: false, error: existing.error };
   }
   if (existing.orderId) {
-    const snapshotResult = await getSnapshotItemsForSession(supabase, sessionId);
+    const snapshotResult = await getSnapshotForSession(supabase, sessionId);
     const items = snapshotResult.items ?? [];
+    const shipping = resolveOrderShipping(session, snapshotResult.shipping);
 
     await sendConfirmationIfNeeded(supabase, {
       orderId: existing.orderId,
@@ -236,7 +308,9 @@ export async function fulfillCheckoutSession(
       customerName,
       items,
       total: (session.amount_total || 0) / 100,
-      shippingAddress: resolveShippingAddress(session),
+      shippingAddress: shipping.shippingAddress,
+      shippingMethod: shipping.shippingMethod,
+      shippingCost: shipping.shippingCost,
       paymentMethod: session.payment_method_types?.[0] || "card",
     });
 
@@ -248,13 +322,13 @@ export async function fulfillCheckoutSession(
     return { ok: false, error: "Checkout session has no line items" };
   }
 
-  const snapshotResult = await getSnapshotItemsForSession(supabase, sessionId);
+  const snapshotResult = await getSnapshotForSession(supabase, sessionId);
   if (snapshotResult.error) {
     console.error("Fulfill checkout: failed loading checkout snapshot:", snapshotResult.error);
     return { ok: false, error: snapshotResult.error };
   }
 
-  const shippingAddress = resolveShippingAddress(session);
+  const shipping = resolveOrderShipping(session, snapshotResult.shipping);
   const paymentMethod = session.payment_method_types?.[0] || "card";
   const orderTotal = (session.amount_total || 0) / 100;
 
@@ -264,7 +338,9 @@ export async function fulfillCheckoutSession(
       user_id: userId,
       status: "Received",
       total: orderTotal,
-      shipping_address: shippingAddress,
+      shipping_address: shipping.shippingAddress,
+      shipping_method: shipping.shippingMethod,
+      shipping_cost: shipping.shippingCost,
       stripe_checkout_session_id: sessionId,
       payment_intent_id: paymentIntentId,
       payment_method: paymentMethod,
@@ -276,15 +352,18 @@ export async function fulfillCheckoutSession(
     if (orderError.code === "23505") {
       const raced = await findExistingOrder(supabase, sessionId, paymentIntentId);
       if (raced.orderId) {
-        const snapshotResult = await getSnapshotItemsForSession(supabase, sessionId);
+        const racedSnapshot = await getSnapshotForSession(supabase, sessionId);
+        const racedShipping = resolveOrderShipping(session, racedSnapshot.shipping);
         await sendConfirmationIfNeeded(supabase, {
           orderId: raced.orderId,
           confirmationEmailSentAt: raced.confirmationEmailSentAt ?? null,
           to: recipientEmail,
           customerName,
-          items: snapshotResult.items ?? [],
+          items: racedSnapshot.items ?? [],
           total: orderTotal,
-          shippingAddress,
+          shippingAddress: racedShipping.shippingAddress,
+          shippingMethod: racedShipping.shippingMethod,
+          shippingCost: racedShipping.shippingCost,
           paymentMethod,
         });
         return { ok: true, orderId: raced.orderId, alreadyFulfilled: true };
@@ -346,7 +425,9 @@ export async function fulfillCheckoutSession(
     customerName,
     items: emailItems,
     total: orderTotal,
-    shippingAddress,
+    shippingAddress: shipping.shippingAddress,
+    shippingMethod: shipping.shippingMethod,
+    shippingCost: shipping.shippingCost,
     paymentMethod,
   });
 

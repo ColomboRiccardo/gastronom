@@ -23,6 +23,7 @@ function changedLockFields(
   if (update.price !== product.price) changed.push("price");
   if (stock !== product.stock) changed.push("stock", "status");
   if (badge !== product.badge) changed.push("badge");
+  if (Boolean(update.isFrozen) !== product.isFrozen) changed.push("is_frozen");
 
   return changed;
 }
@@ -36,6 +37,7 @@ export function patchAdminProduct(
   const description = update.description.trim();
   const price = update.price;
   const badge = update.badge?.trim() || null;
+  const isFrozen = Boolean(update.isFrozen);
   const lockFields = changedLockFields(product, update);
 
   return {
@@ -47,6 +49,7 @@ export function patchAdminProduct(
     stock,
     status: deriveStockStatus(stock),
     badge,
+    isFrozen,
     editorLockedFields:
       lockFields.length > 0
         ? mergeEditorLocks(product.editorLockedFields, lockFields)

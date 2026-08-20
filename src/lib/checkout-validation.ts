@@ -11,6 +11,7 @@ export interface ValidatedCheckoutItem {
   quantity: number;
   unitPrice: number;
   imageUrl: string | null;
+  isFrozen: boolean;
 }
 
 interface ProductRow {
@@ -21,6 +22,7 @@ interface ProductRow {
   status: string;
   image_url: string | null;
   published: boolean;
+  is_frozen: boolean | null;
 }
 
 export function parseCheckoutItems(input: unknown): CheckoutRequestItem[] | null {
@@ -59,7 +61,7 @@ export async function validateCheckoutItems(
   const uniqueProductIds = Array.from(new Set(items.map((item) => item.productId)));
   const { data, error } = await supabase
     .from("products")
-    .select("id,name,price,stock,status,image_url,published")
+    .select("id,name,price,stock,status,image_url,published,is_frozen")
     .in("id", uniqueProductIds);
 
   if (error) {
@@ -95,8 +97,13 @@ export async function validateCheckoutItems(
       quantity: item.quantity,
       unitPrice: Number(product.price),
       imageUrl: product.image_url,
+      isFrozen: Boolean(product.is_frozen),
     });
   }
 
   return { ok: true, items: validated };
+}
+
+export function cartHasFrozenItems(items: ValidatedCheckoutItem[]): boolean {
+  return items.some((item) => item.isFrozen);
 }

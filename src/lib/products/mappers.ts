@@ -43,6 +43,7 @@ export function mapDbProductToUiProduct(row: DbProductRow): UiProduct {
     image: row.image_url || FALLBACK_IMAGE,
     category: resolveCategoryRow(row),
     badge: row.badge || undefined,
+    isFrozen: Boolean(row.is_frozen),
     createdAt: row.created_at,
   };
 }
@@ -66,6 +67,7 @@ export function mapDbProductToAdminProduct(row: DbProductRow): AdminProduct {
     published: row.published,
     badge: row.badge,
     image: row.image_url || FALLBACK_IMAGE,
+    isFrozen: Boolean(row.is_frozen),
     editorLockedFields: row.editor_locked_fields ?? [],
   };
 }

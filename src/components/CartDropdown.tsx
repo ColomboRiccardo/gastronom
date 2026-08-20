@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,30 +12,12 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { startCheckout } from "@/lib/checkout";
-import { toast } from "sonner";
 
 const CartDropdown = () => {
   const { items, totalItems, totalPrice } = useCart();
   const { isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-
-  const handleCheckout = async () => {
-    if (!isAuthenticated) {
-      toast.error("Sign in required to checkout");
-      return;
-    }
-    if (items.length === 0) return;
-
-    setCheckoutLoading(true);
-    const result = await startCheckout(items);
-    if (!result.ok) {
-      toast.error(result.error);
-      setCheckoutLoading(false);
-    }
-  };
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -115,18 +97,11 @@ const CartDropdown = () => {
                   <Link href="/cart">{t("cart.view_cart")}</Link>
                 </Button>
                 <Button
+                  asChild
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-body"
-                  disabled={!isAuthenticated || checkoutLoading}
-                  onClick={() => void handleCheckout()}
+                  onClick={() => setOpen(false)}
                 >
-                  {checkoutLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    t("cart.checkout")
-                  )}
+                  <Link href="/cart">{t("cart.checkout")}</Link>
                 </Button>
               </div>
             </div>

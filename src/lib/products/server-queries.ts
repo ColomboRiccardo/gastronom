@@ -35,6 +35,7 @@ const PUBLISHED_PRODUCTS_SELECT = `
   image_url,
   badge,
   published,
+  is_frozen,
   created_at,
   lackmann_data,
   editor_locked_fields

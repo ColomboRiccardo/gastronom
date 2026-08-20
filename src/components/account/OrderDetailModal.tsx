@@ -66,6 +66,8 @@ export interface OrderDetail {
   total: string;
   status: string;
   shippingAddress?: string;
+  shippingMethod?: string;
+  shippingCost?: string;
   paymentMethod?: string;
 }
 
@@ -470,6 +472,15 @@ const OrderDetailModal = ({
             <div>
               <p className="text-muted-foreground text-xs">Payment</p>
               <p className="font-medium">{order.paymentMethod}</p>
+            </div>
+          )}
+          {order.shippingMethod && (
+            <div>
+              <p className="text-muted-foreground text-xs">Shipping</p>
+              <p className="font-medium">
+                {order.shippingMethod}
+                {order.shippingCost ? ` · ${order.shippingCost}` : ""}
+              </p>
             </div>
           )}
           {order.shippingAddress && (

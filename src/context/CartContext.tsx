@@ -52,8 +52,8 @@ async function fetchCartFromDb(userId: string): Promise<CartItem[]> {
     .from("cart_items")
     .select(`
       qty,
-      products (
-        id, name, slug, description, category_id, price, stock, status, image_url, badge
+        products (
+        id, name, slug, description, category_id, price, stock, status, image_url, badge, is_frozen
       )
     `)
     .eq("user_id", userId);
@@ -73,6 +73,7 @@ async function fetchCartFromDb(userId: string): Promise<CartItem[]> {
         image: row.products.image_url || "",
         category: row.products.category_id?.toString() || "",
         badge: row.products.badge || undefined,
+        isFrozen: Boolean(row.products.is_frozen),
       } as Product,
       quantity: row.qty,
     }));

@@ -43,6 +43,9 @@ export function transformOrder(row: any): OrderDetail {
     total: `€${Number(row.total).toFixed(2)}`,
     status: row.status,
     shippingAddress: row.shipping_address || undefined,
+    shippingMethod: row.shipping_method || undefined,
+    shippingCost:
+      row.shipping_cost != null ? `€${Number(row.shipping_cost).toFixed(2)}` : undefined,
     paymentMethod: row.payment_method || undefined,
   };
 }

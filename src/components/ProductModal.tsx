@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { type Product } from "@/components/ProductCard";
 import { type AdminProductUpdate } from "@/lib/products/types";
 import { saveAdminProductEdits } from "@/lib/products/admin-client";
+import { Switch } from "@/components/ui/switch";
 
 interface ProductModalProps {
   product: Product | null;
@@ -23,6 +24,7 @@ interface ProductModalProps {
   mode?: "customer" | "admin";
   adminStock?: number;
   adminBadge?: string | null;
+  adminIsFrozen?: boolean;
   onAdminSaved?: (update: AdminProductUpdate) => void;
 }
 
@@ -33,6 +35,7 @@ const ProductModal = ({
   mode = "customer",
   adminStock = 0,
   adminBadge = null,
+  adminIsFrozen = false,
   onAdminSaved,
 }: ProductModalProps) => {
   const { toggleItem, isInWishlist } = useWishlist();
@@ -47,6 +50,7 @@ const ProductModal = ({
   const [editPrice, setEditPrice] = useState("");
   const [editStock, setEditStock] = useState("");
   const [editBadge, setEditBadge] = useState("");
+  const [editIsFrozen, setEditIsFrozen] = useState(false);
 
   if (!product) return null;
 
@@ -56,6 +60,7 @@ const ProductModal = ({
     setEditPrice(product.priceNum.toFixed(2));
     setEditStock(String(adminStock));
     setEditBadge(adminBadge ?? product.badge ?? "");
+    setEditIsFrozen(adminIsFrozen || Boolean(product.isFrozen));
     setIsEditing(true);
   };
 
@@ -83,6 +88,7 @@ const ProductModal = ({
       price,
       stock,
       badge: editBadge.trim() || null,
+      isFrozen: editIsFrozen,
     });
     setIsSaving(false);
 
@@ -99,6 +105,7 @@ const ProductModal = ({
       price,
       stock,
       badge: editBadge.trim() || null,
+      isFrozen: editIsFrozen,
     });
     onOpenChange(false);
   };
@@ -193,6 +200,13 @@ const ProductModal = ({
                   <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">Badge</label>
                   <Input value={editBadge} onChange={(e) => setEditBadge(e.target.value)} placeholder="e.g. New, Popular" />
                 </div>
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-border px-3 py-2.5">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Frozen / no courier</p>
+                  <p className="text-xs text-muted-foreground">Pickup or local delivery only</p>
+                </div>
+                <Switch checked={editIsFrozen} onCheckedChange={setEditIsFrozen} />
               </div>
             </div>
           ) : (
