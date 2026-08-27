@@ -14,6 +14,7 @@ import OrderDetailModal, { type OrderDetail, type OrderItem } from "./OrderDetai
 import BulkActionBar from "./BulkActionBar";
 import { toast } from "sonner";
 import { deleteOrder, proposeOrderModification, updateOrderStatus } from "@/lib/orders";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface AdminOrdersTabProps {
   initialOrders: OrderDetail[];
@@ -37,6 +38,7 @@ const parseTotal = (t: string) => parseFloat(t.replace("€", ""));
 
 const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<OrderDetail[]>(initialOrders);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
@@ -173,18 +175,18 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
           <div className="flex flex-col gap-4">
             <CardTitle className="font-display text-xl flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-primary" />
-              All Orders
-              <span className="text-sm font-body font-normal text-muted-foreground ml-2">({results.length} results)</span>
+              {t("account.all_orders")}
+              <span className="text-sm font-body font-normal text-muted-foreground ml-2">({results.length} {t("products.results")})</span>
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search by order ID or customer..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                <Input placeholder={t("orders.search_placeholder")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder={t("orders.status_filter")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="all">{t("orders.all_statuses")}</SelectItem>
                   <SelectItem value="received">Received</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
                   <SelectItem value="modification">Modification</SelectItem>
@@ -195,7 +197,7 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
               </Select>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
                 <SelectTrigger className="w-[200px]">
-                  <div className="flex items-center gap-2"><ArrowUpDown className="w-3.5 h-3.5" /><SelectValue placeholder="Sort by" /></div>
+                  <div className="flex items-center gap-2"><ArrowUpDown className="w-3.5 h-3.5" /><SelectValue placeholder={t("orders.sort_by")} /></div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="date-desc">Date (Newest)</SelectItem>
@@ -248,8 +250,16 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
                             onCheckedChange={() => allSelected ? setSelectedIds(new Set()) : setSelectedIds(new Set(results.map((o) => o.id)))}
                           />
                         </TableHead>
-                        {["Order", "Date", "Customer", "Items", "Total", "Status", ""].map((h) => (
-                          <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
+                        {[
+                          t("orders.order"),
+                          t("orders.date"),
+                          t("orders.customer"),
+                          t("orders.items"),
+                          t("orders.total"),
+                          t("orders.status"),
+                          "",
+                        ].map((h, i) => (
+                          <TableHead key={h || `col-${i}`} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
                         ))}
                       </TableRow>
                     </TableHeader>
@@ -266,7 +276,7 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
                           <TableCell className="font-semibold">{order.total}</TableCell>
                           <TableCell><Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge></TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openOrder(order); }}>View</Button>
+                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openOrder(order); }}>{t("orders.view")}</Button>
                           </TableCell>
                         </TableRow>
                       ))}

@@ -28,6 +28,7 @@ import {
   Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -80,12 +81,26 @@ const statusMeta: Record<string, { icon: React.ElementType; color: string }> = {
   Cancelled: { icon: X, color: "text-destructive" },
 };
 
+function orderStatusLabel(status: string, t: (key: string) => string) {
+  const map: Record<string, string> = {
+    Received: "status.received",
+    Processing: "status.processing",
+    Modification: "status.modification",
+    Shipped: "status.shipped",
+    Delivered: "status.delivered",
+    Cancelled: "status.cancelled",
+  };
+  return map[status] ? t(map[status]) : status;
+}
+
 function MiniStatusPipeline({ current }: { current: string }) {
+  const { t } = useLanguage();
+
   if (current === "Cancelled") {
     return (
       <div className="flex items-center gap-1.5">
         <AlertTriangle className="w-3 h-3 text-destructive" />
-        <span className="text-xs font-medium text-destructive">Cancelled</span>
+        <span className="text-xs font-medium text-destructive">{t("status.cancelled")}</span>
       </div>
     );
   }
@@ -105,7 +120,7 @@ function MiniStatusPipeline({ current }: { current: string }) {
                 "w-5 h-5 rounded-full flex items-center justify-center",
                 reached ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
               )}
-              title={s}
+              title={orderStatusLabel(s, t)}
             >
               <Icon className="w-2.5 h-2.5" />
             </div>
@@ -146,6 +161,7 @@ const orderStatusColor = (status: string) => {
 /* ------------------------------------------------------------------ */
 
 const CustomerDetailModal = ({ customer, open, onOpenChange, onEditCustomer, onCloseAccount }: Props) => {
+  const { t } = useLanguage();
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   if (!customer) return null;
@@ -159,6 +175,8 @@ const CustomerDetailModal = ({ customer, open, onOpenChange, onEditCustomer, onC
   };
 
   const orders = customer.orderHistory || [];
+  const customerStatusLabel =
+    customer.status === "Active" ? t("customers.active") : t("customers.inactive");
 
   return (
     <Dialog
@@ -173,60 +191,60 @@ const CustomerDetailModal = ({ customer, open, onOpenChange, onEditCustomer, onC
           <DialogTitle className="font-display text-xl flex items-center gap-3">
             {customer.name}
             <Badge variant="outline" className={statusColor(customer.status)}>
-              {customer.status}
+              {customerStatusLabel}
             </Badge>
           </DialogTitle>
         </DialogHeader>
 
-        {/* Contact info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div className="flex items-start gap-2">
             <Mail className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="text-xs text-muted-foreground">{t("customers.email")}</p>
               <p className="font-medium">{customer.email}</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <Phone className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Phone</p>
+              <p className="text-xs text-muted-foreground">{t("profile.phone")}</p>
               <p className="font-medium">{customer.phone}</p>
             </div>
           </div>
           <div className="flex items-start gap-2 sm:col-span-2">
             <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Address</p>
+              <p className="text-xs text-muted-foreground">{t("profile.address")}</p>
               <p className="font-medium">{customer.address}</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <CreditCard className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Payment</p>
+              <p className="text-xs text-muted-foreground">{t("orders.payment")}</p>
               <p className="font-medium">{customer.paymentMethod}</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <ShoppingBag className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Lifetime</p>
-              <p className="font-medium">{customer.orders} orders · {customer.totalSpentDisplay}</p>
+              <p className="text-xs text-muted-foreground">{t("customers.lifetime")}</p>
+              <p className="font-medium">
+                {t("customers.orders_count").replaceAll("{count}", String(customer.orders))} · {customer.totalSpentDisplay}
+              </p>
             </div>
           </div>
         </div>
 
         <Separator />
 
-        {/* Order History */}
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Order History ({orders.length})
+            {t("customers.order_history").replaceAll("{count}", String(orders.length))}
           </p>
 
           {orders.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No order data available</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{t("customers.no_order_data")}</p>
           ) : (
             <div className="space-y-2">
               {orders.map((order) => {
@@ -257,7 +275,7 @@ const CustomerDetailModal = ({ customer, open, onOpenChange, onEditCustomer, onC
                         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                           <span>{order.date}</span>
                           <Badge variant="outline" className={cn("text-[10px] py-0", orderStatusColor(order.status))}>
-                            {order.status}
+                            {orderStatusLabel(order.status, t)}
                           </Badge>
                         </div>
                         {order.items.map((item, j) => (
@@ -273,7 +291,7 @@ const CustomerDetailModal = ({ customer, open, onOpenChange, onEditCustomer, onC
                           </div>
                         ))}
                         <div className="flex justify-between items-center pt-1 border-t border-border text-sm">
-                          <span className="font-medium">Total</span>
+                          <span className="font-medium">{t("orders.total")}</span>
                           <span className="font-semibold text-primary">{order.total}</span>
                         </div>
                       </div>
@@ -287,7 +305,6 @@ const CustomerDetailModal = ({ customer, open, onOpenChange, onEditCustomer, onC
 
         <Separator />
 
-        {/* Actions */}
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
@@ -296,7 +313,7 @@ const CustomerDetailModal = ({ customer, open, onOpenChange, onEditCustomer, onC
             onClick={() => onEditCustomer?.(customer.id)}
           >
             <Pencil className="w-3.5 h-3.5" />
-            Edit Customer
+            {t("customers.edit")}
           </Button>
           <Button
             variant="outline"
@@ -305,7 +322,7 @@ const CustomerDetailModal = ({ customer, open, onOpenChange, onEditCustomer, onC
             onClick={() => onCloseAccount?.(customer.id)}
           >
             <Ban className="w-3.5 h-3.5" />
-            Close Account
+            {t("customers.close_account")}
           </Button>
         </div>
       </DialogContent>

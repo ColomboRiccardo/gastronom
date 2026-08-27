@@ -24,6 +24,7 @@ import { type AppUser } from "@/lib/auth/types";
 import { type OrderDetail } from "@/components/account/OrderDetailModal";
 import { type AdminDashboardData } from "@/lib/orders/dashboard-types";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import ProfileTab from "@/components/account/ProfileTab";
 import OrdersTab from "@/components/account/OrdersTab";
 import SettingsTab from "@/components/account/SettingsTab";
@@ -50,6 +51,7 @@ const AccountPageClient = ({
 }: AccountPageClientProps) => {
   const router = useRouter();
   const { logout } = useAuth();
+  const { t } = useLanguage();
   const isAdmin = user.role === "admin" || user.role === "manager";
 
   const handleLogout = async () => {
@@ -120,28 +122,28 @@ const AccountPageClient = ({
                 className="font-body data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 text-sm"
               >
                 <User className="w-4 h-4" />
-                Profile
+                {t("account.profile")}
               </TabsTrigger>
               <TabsTrigger
                 value="orders"
                 className="font-body data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 text-sm"
               >
                 <Package className="w-4 h-4" />
-                Orders
+                {t("account.orders")}
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
                 className="font-body data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 text-sm"
               >
                 <Settings className="w-4 h-4" />
-                Settings
+                {t("account.settings")}
               </TabsTrigger>
               <TabsTrigger
                 value="wishlist"
                 className="font-body data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 text-sm"
               >
                 <Heart className="w-4 h-4" />
-                Wishlist
+                {t("account.wishlist")}
               </TabsTrigger>
 
               {isAdmin && (
@@ -152,42 +154,42 @@ const AccountPageClient = ({
                     className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm"
                   >
                     <LayoutDashboard className="w-4 h-4" />
-                    Dashboard
+                    {t("account.dashboard")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="admin-orders"
                     className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm"
                   >
                     <ClipboardList className="w-4 h-4" />
-                    All Orders
+                    {t("account.all_orders")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="admin-products"
                     className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm"
                   >
                     <ShoppingBag className="w-4 h-4" />
-                    Products
+                    {t("account.products")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="admin-customers"
                     className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm"
                   >
                     <Users className="w-4 h-4" />
-                    Customers
+                    {t("account.customers")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="admin-articles"
                     className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm"
                   >
                     <FileText className="w-4 h-4" />
-                    Articles
+                    {t("account.articles")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="admin-management"
                     className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm"
                   >
                     <DatabaseBackup className="w-4 h-4" />
-                    Management
+                    {t("account.management")}
                   </TabsTrigger>
                 </>
               )}

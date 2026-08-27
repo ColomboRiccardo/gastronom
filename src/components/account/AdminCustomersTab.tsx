@@ -12,6 +12,7 @@ import { Users, ArrowUpDown, Search } from "lucide-react";
 import CustomerDetailModal, { type CustomerDetail, type CustomerOrder } from "./CustomerDetailModal";
 import BulkActionBar from "./BulkActionBar";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 /* ------------------------------------------------------------------ */
 /*  Mock order history keyed by customer name                          */
@@ -63,6 +64,7 @@ const initialCustomers: CustomerDetail[] = [
 type SortKey = "name-asc" | "name-desc" | "orders-desc" | "orders-asc" | "spent-desc" | "spent-asc" | "last-order-desc" | "last-order-asc";
 
 const AdminCustomersTab = () => {
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState(initialCustomers);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortKey>("name-asc");
@@ -111,15 +113,23 @@ const AdminCustomersTab = () => {
 
   const bulkStatusChange = (newStatus: string) => {
     setCustomers((prev) => prev.map((c) => (selectedIds.has(c.id) ? { ...c, status: newStatus } : c)));
-    toast.success(`${selectedIds.size} customers set to ${newStatus}`);
+    const statusLabel = newStatus === "Active" ? t("customers.active") : t("customers.inactive");
+    toast.success(
+      t("customers.toast_status_set")
+        .replaceAll("{count}", String(selectedIds.size))
+        .replaceAll("{status}", statusLabel)
+    );
     setSelectedIds(new Set());
   };
 
   const bulkDelete = () => {
     setCustomers((prev) => prev.filter((c) => !selectedIds.has(c.id)));
-    toast.success(`${selectedIds.size} customers removed`);
+    toast.success(t("customers.toast_removed").replaceAll("{count}", String(selectedIds.size)));
     setSelectedIds(new Set());
   };
+
+  const statusLabel = (status: string) =>
+    status === "Active" ? t("customers.active") : t("customers.inactive");
 
   const allSelected = results.length > 0 && results.every((c) => selectedIds.has(c.id));
 
@@ -130,35 +140,35 @@ const AdminCustomersTab = () => {
           <div className="flex flex-col gap-4">
             <CardTitle className="font-display text-xl flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
-              Customers
-              <span className="text-sm font-body font-normal text-muted-foreground ml-2">({results.length} customers)</span>
+              {t("account.customers")}
+              <span className="text-sm font-body font-normal text-muted-foreground ml-2">({results.length})</span>
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                <Input placeholder={t("customers.search_placeholder")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger className="w-[150px]"><SelectValue placeholder={t("customers.status")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="all">{t("orders.all_statuses")}</SelectItem>
+                  <SelectItem value="active">{t("customers.active")}</SelectItem>
+                  <SelectItem value="inactive">{t("customers.inactive")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
                 <SelectTrigger className="w-[200px]">
-                  <div className="flex items-center gap-2"><ArrowUpDown className="w-3.5 h-3.5" /><SelectValue placeholder="Sort by" /></div>
+                  <div className="flex items-center gap-2"><ArrowUpDown className="w-3.5 h-3.5" /><SelectValue placeholder={t("orders.sort_by")} /></div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                  <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                  <SelectItem value="orders-desc">Orders (Most)</SelectItem>
-                  <SelectItem value="orders-asc">Orders (Least)</SelectItem>
-                  <SelectItem value="spent-desc">Spent (High-Low)</SelectItem>
-                  <SelectItem value="spent-asc">Spent (Low-High)</SelectItem>
-                  <SelectItem value="last-order-desc">Last Order (Recent)</SelectItem>
-                  <SelectItem value="last-order-asc">Last Order (Oldest)</SelectItem>
+                  <SelectItem value="name-asc">{t("customers.sort_name_asc")}</SelectItem>
+                  <SelectItem value="name-desc">{t("customers.sort_name_desc")}</SelectItem>
+                  <SelectItem value="orders-desc">{t("customers.sort_orders_most")}</SelectItem>
+                  <SelectItem value="orders-asc">{t("customers.sort_orders_least")}</SelectItem>
+                  <SelectItem value="spent-desc">{t("customers.sort_spent_high")}</SelectItem>
+                  <SelectItem value="spent-asc">{t("customers.sort_spent_low")}</SelectItem>
+                  <SelectItem value="last-order-desc">{t("customers.sort_last_recent")}</SelectItem>
+                  <SelectItem value="last-order-asc">{t("customers.sort_last_oldest")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -171,10 +181,10 @@ const AdminCustomersTab = () => {
             onSelectAll={() => setSelectedIds(new Set(results.map((c) => c.id)))}
             onClearSelection={() => setSelectedIds(new Set())}
             statusAction={{
-              label: "Set Status",
+              label: t("customers.set_status"),
               options: [
-                { value: "Active", label: "Active" },
-                { value: "Inactive", label: "Inactive" },
+                { value: "Active", label: t("customers.active") },
+                { value: "Inactive", label: t("customers.inactive") },
               ],
               onSelect: bulkStatusChange,
             }}
@@ -183,8 +193,8 @@ const AdminCustomersTab = () => {
 
           {results.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="font-medium">No customers found</p>
-              <p className="text-sm mt-1">Try adjusting your filters or search term.</p>
+              <p className="font-medium">{t("customers.no_results")}</p>
+              <p className="text-sm mt-1">{t("customers.no_results_hint")}</p>
             </div>
           ) : (
             <>
@@ -195,8 +205,16 @@ const AdminCustomersTab = () => {
                       <TableHead className="w-10">
                         <Checkbox checked={allSelected} onCheckedChange={() => allSelected ? setSelectedIds(new Set()) : setSelectedIds(new Set(results.map((c) => c.id)))} />
                       </TableHead>
-                      {["Customer", "Email", "Orders", "Total Spent", "Last Order", "Status", ""].map((h) => (
-                        <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
+                      {[
+                        t("customers.customer"),
+                        t("customers.email"),
+                        t("customers.orders"),
+                        t("customers.total_spent"),
+                        t("customers.last_order"),
+                        t("customers.status"),
+                        "",
+                      ].map((h, i) => (
+                        <TableHead key={h || `col-${i}`} className="font-semibold text-xs uppercase tracking-wider">{h}</TableHead>
                       ))}
                     </TableRow>
                   </TableHeader>
@@ -213,11 +231,11 @@ const AdminCustomersTab = () => {
                         <TableCell className="text-muted-foreground">{c.lastOrderDisplay}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={c.status === "Active" ? "bg-green-100 text-green-800 border-green-200" : "bg-muted text-muted-foreground"}>
-                            {c.status}
+                            {statusLabel(c.status)}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openCustomer(c); }}>View</Button>
+                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openCustomer(c); }}>{t("orders.view")}</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -237,11 +255,11 @@ const AdminCustomersTab = () => {
                             <p className="text-sm text-muted-foreground">{c.email}</p>
                           </div>
                           <Badge variant="outline" className={c.status === "Active" ? "bg-green-100 text-green-800 border-green-200" : "bg-muted text-muted-foreground"}>
-                            {c.status}
+                            {statusLabel(c.status)}
                           </Badge>
                         </div>
                         <div className="flex justify-between text-sm mt-1">
-                          <span className="text-muted-foreground">{c.orders} orders</span>
+                          <span className="text-muted-foreground">{t("customers.orders_count").replaceAll("{count}", String(c.orders))}</span>
                           <span className="font-semibold">{c.totalSpentDisplay}</span>
                         </div>
                       </div>
@@ -258,10 +276,10 @@ const AdminCustomersTab = () => {
         customer={selectedCustomer}
         open={modalOpen}
         onOpenChange={setModalOpen}
-        onEditCustomer={(id) => toast.info(`Edit customer #${id}`)}
+        onEditCustomer={(id) => toast.info(t("customers.toast_edit").replaceAll("{id}", String(id)))}
         onCloseAccount={(id) => {
           setCustomers((prev) => prev.map((c) => c.id === id ? { ...c, status: "Inactive" } : c));
-          toast.success("Account closed");
+          toast.success(t("customers.toast_account_closed"));
           setModalOpen(false);
         }}
       />

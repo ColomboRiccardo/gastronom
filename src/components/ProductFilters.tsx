@@ -9,6 +9,7 @@ import {
   PRICE_RANGES,
   type SortOption,
 } from "@/lib/products/constants";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ProductFiltersProps {
   selectedCategories: string[];
@@ -31,6 +32,7 @@ const ProductFilters = ({
   onSortChange,
   resultCount,
 }: ProductFiltersProps) => {
+  const { t } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const categoryOptions = categories ?? [];
 
@@ -49,15 +51,18 @@ const ProductFilters = ({
     onPriceRangeChange(null);
   };
 
+  const resultsLabel = `${resultCount} ${t("products.results")}`;
+
   const filterContent = (
     <div className="space-y-6">
-      {/* Active filters */}
       {hasFilters && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="font-body text-xs uppercase tracking-widest text-muted-foreground">Active Filters</span>
+            <span className="font-body text-xs uppercase tracking-widest text-muted-foreground">
+              {t("products.active_filters")}
+            </span>
             <Button variant="ghost" size="sm" className="text-xs text-primary h-auto p-0" onClick={clearAll}>
-              Clear all
+              {t("products.clear_all")}
             </Button>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -84,9 +89,10 @@ const ProductFilters = ({
         </div>
       )}
 
-      {/* Categories */}
       <div>
-        <h3 className="font-display text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">Categories</h3>
+        <h3 className="font-display text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">
+          {t("products.category")}
+        </h3>
         <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
           {categoryOptions.map((cat) => (
             <label key={cat} className="flex items-center gap-2.5 cursor-pointer group">
@@ -102,9 +108,10 @@ const ProductFilters = ({
         </div>
       </div>
 
-      {/* Price range */}
       <div>
-        <h3 className="font-display text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">Price Range</h3>
+        <h3 className="font-display text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">
+          {t("products.price_range")}
+        </h3>
         <div className="space-y-2">
           {PRICE_RANGES.map((range, idx) => (
             <label key={range.label} className="flex items-center gap-2.5 cursor-pointer group">
@@ -120,18 +127,19 @@ const ProductFilters = ({
         </div>
       </div>
 
-      {/* Sort */}
       <div>
-        <h3 className="font-display text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">Sort By</h3>
+        <h3 className="font-display text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">
+          {t("products.sort")}
+        </h3>
         <Select value={sort} onValueChange={(v) => onSortChange(v as SortOption)}>
           <SelectTrigger className="font-body">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest</SelectItem>
-            <SelectItem value="price-asc">Price: Low to High</SelectItem>
-            <SelectItem value="price-desc">Price: High to Low</SelectItem>
-            <SelectItem value="name-asc">Name: A to Z</SelectItem>
+            <SelectItem value="newest">{t("products.sort_newest")}</SelectItem>
+            <SelectItem value="price-asc">{t("products.sort_price_asc")}</SelectItem>
+            <SelectItem value="price-desc">{t("products.sort_price_desc")}</SelectItem>
+            <SelectItem value="name-asc">{t("products.sort_name")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -140,28 +148,25 @@ const ProductFilters = ({
 
   return (
     <>
-      {/* Mobile toggle */}
       <div className="lg:hidden mb-4 flex items-center justify-between">
-        <span className="font-body text-sm text-muted-foreground">{resultCount} products</span>
+        <span className="font-body text-sm text-muted-foreground">{resultsLabel}</span>
         <Button variant="outline" size="sm" className="gap-2 font-body" onClick={() => setMobileOpen(!mobileOpen)}>
           <SlidersHorizontal className="h-4 w-4" />
-          Filters
+          {mobileOpen ? t("products.hide_filters") : t("products.show_filters")}
         </Button>
       </div>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="lg:hidden bg-card border border-border rounded-lg p-5 mb-6 max-h-[70vh] overflow-y-auto">
           {filterContent}
         </div>
       )}
 
-      {/* Desktop sidebar */}
       <aside className="hidden lg:block w-64 shrink-0">
         <div className="bg-card border border-border rounded-lg p-5 sticky top-24 max-h-[calc(100vh-7rem)] flex flex-col">
           <div className="flex items-center justify-between mb-5 shrink-0">
-            <h2 className="font-display text-lg font-semibold text-foreground">Filters</h2>
-            <span className="font-body text-xs text-muted-foreground">{resultCount} products</span>
+            <h2 className="font-display text-lg font-semibold text-foreground">{t("products.filters")}</h2>
+            <span className="font-body text-xs text-muted-foreground">{resultsLabel}</span>
           </div>
           <div className="overflow-y-auto min-h-0 flex-1 pr-1">
             {filterContent}

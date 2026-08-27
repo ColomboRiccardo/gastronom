@@ -1,6 +1,12 @@
+"use client";
+
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/context/LanguageContext";
 
 const HeroSection = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Background image */}
@@ -16,7 +22,7 @@ const HeroSection = () => {
       {/* Content */}
       <div className="relative z-10 text-center px-4 max-w-3xl mx-auto">
         <p className="font-body text-gold-light text-sm tracking-[0.3em] uppercase mb-4 animate-fade-in opacity-0" style={{ animationDelay: "0.2s" }}>
-          Eastern European Delicatessen • Liguria, Italia
+          {t("hero.eyebrow")}
         </p>
         <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-6 animate-fade-in-up opacity-0" style={{ animationDelay: "0.4s" }}>
           Гастроном
@@ -25,14 +31,14 @@ const HeroSection = () => {
           Gastronom
         </p>
         <p className="font-body text-primary-foreground/70 text-base md:text-lg max-w-lg mx-auto mb-8 animate-fade-in-up opacity-0" style={{ animationDelay: "0.8s" }}>
-          Authentic flavours from Eastern Europe, nestled by the Ligurian Sea. Vodka, caviar, pickles, and more — a taste of home.
+          {t("hero.tagline")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up opacity-0" style={{ animationDelay: "1s" }}>
-          <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-body text-base px-8">
-            Shop Now
+          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-body text-base px-8">
+            <Link href="/products">{t("hero.shop_now")}</Link>
           </Button>
-          <Button size="lg" variant="ghost" className="border border-white/40 text-white !bg-transparent hover:!bg-white/10 font-body text-base px-8">
-            Our Story
+          <Button asChild size="lg" variant="ghost" className="border border-white/40 text-white !bg-transparent hover:!bg-white/10 font-body text-base px-8">
+            <Link href="/about">{t("hero.our_story")}</Link>
           </Button>
         </div>
       </div>

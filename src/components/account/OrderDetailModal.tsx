@@ -41,6 +41,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/context/LanguageContext";
 
 /* ------------------------------------------------------------------ */
 /*  Shared types                                                       */
@@ -273,6 +274,7 @@ const OrderDetailModal = ({
   onDelete,
   onProposeModification,
 }: Props) => {
+  const { t } = useLanguage();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingItems, setEditingItems] = useState(false);
   const [localItems, setLocalItems] = useState<OrderItem[]>([]);
@@ -439,7 +441,7 @@ const OrderDetailModal = ({
         </DialogHeader>
 
         <div className="py-2 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Order Progress</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{t("orders.progress")}</p>
           <StatusPipeline current={order.status} />
         </div>
 
@@ -459,24 +461,24 @@ const OrderDetailModal = ({
 
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-muted-foreground text-xs">Date</p>
+            <p className="text-muted-foreground text-xs">{t("orders.date")}</p>
             <p className="font-medium">{order.date}</p>
           </div>
           {order.customer && (
             <div>
-              <p className="text-muted-foreground text-xs">Customer</p>
+              <p className="text-muted-foreground text-xs">{t("orders.customer")}</p>
               <p className="font-medium">{order.customer}</p>
             </div>
           )}
           {order.paymentMethod && (
             <div>
-              <p className="text-muted-foreground text-xs">Payment</p>
+              <p className="text-muted-foreground text-xs">{t("orders.payment")}</p>
               <p className="font-medium">{order.paymentMethod}</p>
             </div>
           )}
           {order.shippingMethod && (
             <div>
-              <p className="text-muted-foreground text-xs">Shipping</p>
+              <p className="text-muted-foreground text-xs">{t("orders.shipping")}</p>
               <p className="font-medium">
                 {order.shippingMethod}
                 {order.shippingCost ? ` · ${order.shippingCost}` : ""}
@@ -485,7 +487,7 @@ const OrderDetailModal = ({
           )}
           {order.shippingAddress && (
             <div className="col-span-2">
-              <p className="text-muted-foreground text-xs">Shipping Address</p>
+              <p className="text-muted-foreground text-xs">{t("orders.shipping_address")}</p>
               <p className="font-medium">{order.shippingAddress}</p>
             </div>
           )}
@@ -497,21 +499,21 @@ const OrderDetailModal = ({
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {order.status === "Modification" && hasProposal && !editingItems
-                ? "Proposed items"
-                : "Items"}
-              {editingItems && <span className="text-primary ml-1">(Editing)</span>}
+                ? t("orders.proposed_items")
+                : t("orders.items")}
+              {editingItems && <span className="text-primary ml-1">({t("orders.editing")})</span>}
             </p>
             {isAdmin && !editingItems && order.status !== "Delivered" && order.status !== "Cancelled" && (
               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-primary" onClick={startEditing}>
                 <Edit className="w-3 h-3" />
-                Propose changes
+                {t("orders.propose_changes")}
               </Button>
             )}
           </div>
 
           {order.status === "Modification" && hasProposal && !editingItems && (
             <div className="mb-3 rounded-md border border-dashed border-border p-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Original order</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t("orders.original_order")}</p>
               <div className="space-y-1">
                 {order.items.map((item, i) => (
                   <div key={`orig-${item.name}-${i}`} className="flex justify-between text-sm text-muted-foreground">
@@ -525,7 +527,7 @@ const OrderDetailModal = ({
 
           <div className="space-y-2">
             {displayItems.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No items in this order</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t("orders.no_items")}</p>
             ) : (
               displayItems.map((item, i) => (
                 <div
@@ -615,7 +617,7 @@ const OrderDetailModal = ({
               </div>
               <div className="flex flex-wrap justify-end gap-2">
                 <Button variant="ghost" size="sm" onClick={cancelEditing} disabled={sendingProposal}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   size="sm"
@@ -631,7 +633,7 @@ const OrderDetailModal = ({
           )}
 
           <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
-            <span className="font-semibold">Total</span>
+            <span className="font-semibold">{t("orders.total")}</span>
             <span className="font-display text-lg font-bold text-primary">{displayTotal}</span>
           </div>
         </div>
@@ -640,7 +642,7 @@ const OrderDetailModal = ({
           <>
             <Separator />
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin Actions</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("orders.admin_actions")}</p>
               <div className="flex flex-wrap gap-2">
                 <Select value={order.status} onValueChange={(v) => onStatusChange?.(order.id, v)}>
                   <SelectTrigger className="w-[180px]">
@@ -666,10 +668,10 @@ const OrderDetailModal = ({
                   className="gap-1.5"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  {confirmDelete ? "Confirm Delete" : "Delete Order"}
+                  {confirmDelete ? t("orders.confirm_delete") : t("orders.delete")}
                 </Button>
                 {confirmDelete && (
-                  <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>{t("common.cancel")}</Button>
                 )}
               </div>
 

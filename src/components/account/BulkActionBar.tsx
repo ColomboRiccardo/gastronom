@@ -1,6 +1,9 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckSquare, X, Trash2 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 export interface BulkAction {
   label: string;
@@ -26,6 +29,9 @@ interface BulkActionBarProps {
   disabled?: boolean;
 }
 
+const fill = (template: string, vars: Record<string, string | number>) =>
+  Object.entries(vars).reduce((s, [k, v]) => s.replaceAll(`{${k}}`, String(v)), template);
+
 const BulkActionBar = ({
   selectedCount,
   totalCount,
@@ -36,6 +42,8 @@ const BulkActionBar = ({
   onBulkDelete,
   disabled = false,
 }: BulkActionBarProps) => {
+  const { t } = useLanguage();
+
   if (selectedCount === 0) return null;
 
   return (
@@ -44,18 +52,18 @@ const BulkActionBar = ({
         <CheckSquare className="w-4 h-4 text-primary" />
         <span className="text-sm font-medium">
           <span className="text-primary font-semibold">{selectedCount}</span>
-          <span className="text-muted-foreground"> of {totalCount} selected</span>
+          <span className="text-muted-foreground"> {fill(t("bulk.selected_of"), { total: totalCount })}</span>
         </span>
       </div>
 
       <div className="h-4 w-px bg-border" />
 
       <Button variant="ghost" size="sm" className="text-xs h-7" onClick={onSelectAll} disabled={disabled}>
-        Select All
+        {t("bulk.select_all")}
       </Button>
       <Button variant="ghost" size="sm" className="text-xs h-7 gap-1" onClick={onClearSelection} disabled={disabled}>
         <X className="w-3 h-3" />
-        Clear
+        {t("bulk.clear")}
       </Button>
 
       <div className="h-4 w-px bg-border" />
@@ -95,7 +103,7 @@ const BulkActionBar = ({
           onClick={onBulkDelete}
         >
           <Trash2 className="w-3 h-3" />
-          Delete ({selectedCount})
+          {fill(t("bulk.delete"), { count: selectedCount })}
         </Button>
       )}
     </div>

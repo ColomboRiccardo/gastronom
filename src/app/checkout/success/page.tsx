@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const { clearCart } = useCart();
+  const { t } = useLanguage();
   const [fulfillState, setFulfillState] = useState<"pending" | "ok" | "error">("pending");
 
   useEffect(() => {
@@ -69,11 +71,8 @@ function CheckoutSuccessContent() {
 
       <section className="pt-24 pb-12 bg-muted/50 relative overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
-          <p className="font-body text-accent text-sm tracking-[0.2em] uppercase mb-2">
-            Thank You
-          </p>
           <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">
-            Order Confirmed
+            {t("checkout.success_title")}
           </h1>
         </div>
         <img src="/slavic-border.png" alt="" className="absolute bottom-0 left-0 w-full h-6 object-cover opacity-40 pointer-events-none" />
@@ -85,11 +84,8 @@ function CheckoutSuccessContent() {
             <>
               <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-6" />
               <h2 className="font-display text-2xl font-bold text-foreground mb-3">
-                Finalizing your order...
+                {t("checkout.processing_order")}
               </h2>
-              <p className="font-body text-muted-foreground">
-                Please wait a moment while we save your order.
-              </p>
             </>
           )}
 
@@ -99,10 +95,10 @@ function CheckoutSuccessContent() {
                 <CheckCircle2 className="w-10 h-10 text-green-600" />
               </div>
               <h2 className="font-display text-2xl font-bold text-foreground mb-3">
-                Payment Successful!
+                {t("checkout.success_title")}
               </h2>
               <p className="font-body text-muted-foreground mb-8">
-                Your order has been received and is being prepared. You will receive a confirmation email shortly with your order details.
+                {t("checkout.success_body")}
               </p>
             </>
           )}
@@ -112,11 +108,8 @@ function CheckoutSuccessContent() {
               <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-6">
                 <AlertTriangle className="w-10 h-10 text-amber-600" />
               </div>
-              <h2 className="font-display text-2xl font-bold text-foreground mb-3">
-                Payment received
-              </h2>
               <p className="font-body text-muted-foreground mb-8">
-                Your payment went through, but we could not save the order automatically. Please contact us with your payment confirmation and we will resolve it.
+                {t("checkout.fulfill_error")}
               </p>
             </>
           )}
@@ -126,13 +119,13 @@ function CheckoutSuccessContent() {
               <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
                 <Link href="/account">
                   <Package className="h-4 w-4" />
-                  View Orders
+                  {t("checkout.view_orders")}
                 </Link>
               </Button>
               <Button asChild variant="outline" className="gap-2">
                 <Link href="/products">
                   <ArrowLeft className="h-4 w-4" />
-                  Continue Shopping
+                  {t("checkout.continue_shopping")}
                 </Link>
               </Button>
             </div>

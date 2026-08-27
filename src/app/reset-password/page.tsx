@@ -10,8 +10,10 @@ import { Lock, ShieldCheck } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ResetPasswordPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,7 +27,7 @@ export default function ResetPasswordPage() {
     setSuccess(false);
 
     if (!password || !confirmPassword) {
-      setError("Please fill in all fields.");
+      setError(t("auth.fill_all"));
       return;
     }
     if (password.length < 6) {
@@ -33,7 +35,7 @@ export default function ResetPasswordPage() {
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("auth.password_mismatch"));
       return;
     }
 
@@ -60,10 +62,11 @@ export default function ResetPasswordPage() {
 
       <section className="pt-24 pb-12 bg-muted/50 relative overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
-          <p className="font-body text-accent text-sm tracking-[0.2em] uppercase mb-2">Account Recovery</p>
-          <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">Set New Password</h1>
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">
+            {t("auth.reset_title")}
+          </h1>
           <p className="font-body text-muted-foreground max-w-lg mx-auto">
-            Choose a strong password to secure your account.
+            {t("auth.reset_subtitle")}
           </p>
         </div>
         <img src="/slavic-border.png" alt="" className="absolute bottom-0 left-0 w-full h-6 object-cover opacity-40 pointer-events-none" />
@@ -76,7 +79,7 @@ export default function ResetPasswordPage() {
               <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
                 <ShieldCheck className="w-7 h-7 text-primary" />
               </div>
-              <CardTitle className="font-display text-2xl">Create new password</CardTitle>
+              <CardTitle className="font-display text-2xl">{t("auth.reset_title")}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -87,11 +90,13 @@ export default function ResetPasswordPage() {
                 )}
                 {success && (
                   <div className="bg-primary/10 border border-primary/20 text-primary text-sm rounded-md px-3 py-2">
-                    Password updated successfully. Redirecting to sign in...
+                    {t("auth.reset_success")}
                   </div>
                 )}
                 <div className="space-y-1.5">
-                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">New Password</label>
+                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    {t("auth.new_password")}
+                  </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -104,7 +109,9 @@ export default function ResetPasswordPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Confirm Password</label>
+                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    {t("auth.confirm_password")}
+                  </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -117,13 +124,12 @@ export default function ResetPasswordPage() {
                   </div>
                 </div>
                 <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
-                  {loading ? "Updating..." : "Update password"}
+                  {loading ? t("auth.updating") : t("auth.update_password")}
                 </Button>
               </form>
               <p className="text-center text-sm text-muted-foreground mt-4">
-                Back to{" "}
                 <Link href="/login" className="text-primary font-semibold hover:underline">
-                  Sign in
+                  {t("auth.back_login")}
                 </Link>
               </p>
             </CardContent>

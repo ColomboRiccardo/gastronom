@@ -11,6 +11,7 @@ import { Pencil, Save, X, Heart } from "lucide-react";
 import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
 import { type Product } from "@/components/ProductCard";
 import { type AdminProductUpdate } from "@/lib/products/types";
@@ -40,6 +41,7 @@ const ProductModal = ({
 }: ProductModalProps) => {
   const { toggleItem, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -137,9 +139,15 @@ const ProductModal = ({
               className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors shadow-sm"
               onClick={() => {
                 if (!isAuthenticated) {
-                  toast("Sign in required", {
-                    description: "Please sign in to add items to your wishlist.",
-                    action: { label: "Sign In", onClick: () => { onOpenChange(false); router.push("/login"); } },
+                  toast(t("product.wishlist_signin_title"), {
+                    description: t("product.wishlist_signin_desc"),
+                    action: {
+                      label: t("product.wishlist_signin_action"),
+                      onClick: () => {
+                        onOpenChange(false);
+                        router.push("/login");
+                      },
+                    },
                   });
                   return;
                 }
@@ -220,7 +228,9 @@ const ProductModal = ({
             <div className="space-y-4">
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">Price</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+                    {mode === "customer" ? t("product.price") : "Price"}
+                  </p>
                   <span className="font-display text-3xl font-bold text-primary">{product.price}</span>
                 </div>
               </div>

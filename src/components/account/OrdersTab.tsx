@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Package } from "lucide-react";
 import OrderDetailModal, { type OrderDetail } from "./OrderDetailModal";
 import { formatOrderItemsSummary } from "@/lib/orders/format-items-summary";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface OrdersTabProps {
   initialOrders: OrderDetail[];
@@ -24,6 +25,7 @@ const statusColor = (status: string) => {
 };
 
 const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<OrderDetail[]>(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,23 +39,30 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
     setModalOpen(true);
   };
 
+  const headers = [
+    t("orders.order"),
+    t("orders.date"),
+    t("orders.items"),
+    t("orders.total"),
+    t("orders.status"),
+    "",
+  ];
+
   return (
     <>
       <Card className="border-border">
         <CardHeader>
           <CardTitle className="font-display text-xl flex items-center gap-2">
             <Package className="w-5 h-5 text-primary" />
-            Order History
+            {t("orders.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {orders.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="font-medium">No orders yet</p>
-              <p className="text-sm mt-1">
-                Your order history will appear here after your first purchase.
-              </p>
+              <p className="font-medium">{t("orders.empty")}</p>
+              <p className="text-sm mt-1">{t("orders.empty_desc")}</p>
             </div>
           ) : (
             <>
@@ -61,8 +70,8 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border">
-                      {["Order", "Date", "Items", "Total", "Status", ""].map((h) => (
-                        <TableHead key={h} className="font-semibold text-xs uppercase tracking-wider">
+                      {headers.map((h, i) => (
+                        <TableHead key={h || `col-${i}`} className="font-semibold text-xs uppercase tracking-wider">
                           {h}
                         </TableHead>
                       ))}
@@ -105,7 +114,7 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                               openOrder(order);
                             }}
                           >
-                            View
+                            {t("orders.view")}
                           </Button>
                         </TableCell>
                       </TableRow>

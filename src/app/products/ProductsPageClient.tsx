@@ -9,6 +9,7 @@ import ProductFilters from "@/components/ProductFilters";
 import ListPagination from "@/components/ListPagination";
 import { type SortOption } from "@/lib/products/constants";
 import { type UiProduct } from "@/lib/products/types";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ProductsPageClientProps {
   products: UiProduct[];
@@ -32,6 +33,7 @@ const ProductsPageClient = ({
   initialSort,
 }: ProductsPageClientProps) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [, startTransition] = useTransition();
 
   const buildQueryString = useCallback(
@@ -90,15 +92,9 @@ const ProductsPageClient = ({
 
       <section className="pt-24 pb-12 bg-muted/50 relative overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
-          <p className="font-body text-accent text-sm tracking-[0.2em] uppercase mb-2">
-            Browse Our Selection
-          </p>
           <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">
-            All Products
+            {t("products.title")}
           </h1>
-          <p className="font-body text-muted-foreground max-w-lg mx-auto">
-            Authentic Eastern European delicacies, spirits & crafts — imported directly for our little shop by the Ligurian sea.
-          </p>
         </div>
         <img
           src="/slavic-border.png"
@@ -124,15 +120,11 @@ const ProductsPageClient = ({
             <div className="flex-1">
               {totalCount === 0 ? (
                 <div className="text-center py-20">
-                  <p className="font-display text-xl text-muted-foreground">No published products yet.</p>
-                  <p className="font-body text-sm text-muted-foreground mt-2">
-                    Publish products from the admin Products tab to make them visible here.
-                  </p>
+                  <p className="font-display text-xl text-muted-foreground">{t("products.no_results")}</p>
                 </div>
               ) : products.length === 0 ? (
                 <div className="text-center py-20">
-                  <p className="font-display text-xl text-muted-foreground">No products match your filters.</p>
-                  <p className="font-body text-sm text-muted-foreground mt-2">Try adjusting your selection.</p>
+                  <p className="font-display text-xl text-muted-foreground">{t("products.no_results")}</p>
                 </div>
               ) : (
                 <>

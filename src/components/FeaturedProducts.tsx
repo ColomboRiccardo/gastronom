@@ -1,6 +1,9 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
+import { useLanguage } from "@/context/LanguageContext";
 import { type UiProduct } from "@/lib/products/types";
 
 interface FeaturedProductsProps {
@@ -8,15 +11,17 @@ interface FeaturedProductsProps {
 }
 
 const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
+  const { t } = useLanguage();
+
   return (
     <section id="products" className="py-20 bg-muted/50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-14">
           <p className="font-body text-accent text-sm tracking-[0.2em] uppercase mb-2">
-            Our Selection
+            {t("home.featured_eyebrow")}
           </p>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">
-            Featured Products
+            {t("home.featured_title")}
           </h2>
         </div>
 
@@ -28,13 +33,13 @@ const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
           </div>
         ) : (
           <div className="text-center text-muted-foreground font-body">
-            Featured products will appear here once products are published.
+            {t("home.featured_empty")}
           </div>
         )}
 
         <div className="text-center mt-12">
           <Button asChild variant="outline" size="lg" className="font-body border-primary text-primary hover:bg-primary hover:text-primary-foreground px-10">
-            <Link href="/products">View All Products</Link>
+            <Link href="/products">{t("home.view_all_products")}</Link>
           </Button>
         </div>
       </div>

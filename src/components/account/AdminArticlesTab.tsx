@@ -11,8 +11,10 @@ import { useBlogStore } from "@/data/blogStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/context/LanguageContext";
 
 const AdminArticlesTab = () => {
+  const { t } = useLanguage();
   const { articles, addArticle, removeArticle } = useBlogStore();
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -37,7 +39,7 @@ const AdminArticlesTab = () => {
       reader.onload = () => {
         const content = reader.result as string;
         useBlogStore.getState().updateArticleContent(articleSlug, content);
-        toast.success(`Content updated for "${articleSlug}"`);
+        toast.success(t("articles.toast_content_updated").replaceAll("{slug}", articleSlug));
       };
       reader.readAsText(file);
     };
@@ -46,7 +48,7 @@ const AdminArticlesTab = () => {
 
   const handleAddArticle = () => {
     if (!newTitle.trim()) {
-      toast.error("Title is required");
+      toast.error(t("articles.toast_title_required"));
       return;
     }
     const slug = newTitle
@@ -57,12 +59,12 @@ const AdminArticlesTab = () => {
     addArticle({
       slug,
       title: newTitle.trim(),
-      excerpt: newExcerpt.trim() || "No description provided.",
+      excerpt: newExcerpt.trim() || t("articles.default_excerpt"),
       content: "",
       date: new Date().toISOString().split("T")[0],
-      author: newAuthor.trim() || "Admin",
-      category: newCategory.trim() || "General",
-      readTime: "3 min",
+      author: newAuthor.trim() || t("articles.default_author"),
+      category: newCategory.trim() || t("articles.default_category"),
+      readTime: t("articles.read_time"),
       image: newImage.trim() || "https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=800&q=80",
     });
 
@@ -72,55 +74,58 @@ const AdminArticlesTab = () => {
     setNewExcerpt("");
     setNewImage("");
     setAddOpen(false);
-    toast.success("Article created — upload a .md file to add content");
+    toast.success(t("articles.toast_created"));
   };
 
   const handleDelete = (slug: string, title: string) => {
     removeArticle(slug);
-    toast.success(`"${title}" deleted`);
+    toast.success(t("articles.toast_deleted").replaceAll("{title}", title));
   };
+
+  const countLabel =
+    filtered.length === 1
+      ? t("articles.count_one").replaceAll("{count}", "1")
+      : t("articles.count_many").replaceAll("{count}", String(filtered.length));
 
   return (
     <Card className="border-border">
       <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
         <CardTitle className="font-display text-xl flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary" />
-          Blog Articles
+          {t("articles.blog_title")}
         </CardTitle>
         <Button size="sm" className="gap-2" onClick={() => setAddOpen(true)}>
-          <Plus className="w-4 h-4" /> New Article
+          <Plus className="w-4 h-4" /> {t("articles.new")}
         </Button>
       </CardHeader>
       <CardContent>
-        {/* Search */}
         <div className="relative mb-4 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search articles..."
+            placeholder={t("articles.search_placeholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 font-body text-sm"
           />
         </div>
 
-        {/* Table */}
         <div className="rounded-md border border-border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="font-body text-xs font-semibold">Title</TableHead>
-                <TableHead className="font-body text-xs font-semibold">Author</TableHead>
-                <TableHead className="font-body text-xs font-semibold">Category</TableHead>
-                <TableHead className="font-body text-xs font-semibold">Date</TableHead>
-                <TableHead className="font-body text-xs font-semibold text-center">Content</TableHead>
-                <TableHead className="font-body text-xs font-semibold text-right">Actions</TableHead>
+                <TableHead className="font-body text-xs font-semibold">{t("articles.title")}</TableHead>
+                <TableHead className="font-body text-xs font-semibold">{t("articles.author")}</TableHead>
+                <TableHead className="font-body text-xs font-semibold">{t("articles.category")}</TableHead>
+                <TableHead className="font-body text-xs font-semibold">{t("articles.date")}</TableHead>
+                <TableHead className="font-body text-xs font-semibold text-center">{t("articles.content")}</TableHead>
+                <TableHead className="font-body text-xs font-semibold text-right">{t("articles.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground font-body">
-                    No articles found
+                    {t("articles.no_results")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -150,7 +155,7 @@ const AdminArticlesTab = () => {
                           onClick={() => handleUploadMd(article.slug)}
                         >
                           <Upload className="w-3.5 h-3.5" />
-                          Upload .md
+                          {t("articles.upload")}
                         </Button>
                         <Button
                           variant="ghost"
@@ -170,43 +175,68 @@ const AdminArticlesTab = () => {
         </div>
 
         <p className="text-xs text-muted-foreground mt-3 font-body">
-          {filtered.length} article{filtered.length !== 1 ? "s" : ""} total - Upload .md files to set article content
+          {countLabel} - {t("articles.upload_hint")}
         </p>
       </CardContent>
 
-      {/* Add Article Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-display">New Article</DialogTitle>
+            <DialogTitle className="font-display">{t("articles.new")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="font-body text-sm">Title *</Label>
-              <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Article title" className="mt-1" />
+              <Label className="font-body text-sm">{t("articles.title")} *</Label>
+              <Input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder={t("articles.placeholder_title")}
+                className="mt-1"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="font-body text-sm">Author</Label>
-                <Input value={newAuthor} onChange={(e) => setNewAuthor(e.target.value)} placeholder="Author name" className="mt-1" />
+                <Label className="font-body text-sm">{t("articles.author")}</Label>
+                <Input
+                  value={newAuthor}
+                  onChange={(e) => setNewAuthor(e.target.value)}
+                  placeholder={t("articles.placeholder_author")}
+                  className="mt-1"
+                />
               </div>
               <div>
-                <Label className="font-body text-sm">Category</Label>
-                <Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="e.g. Food Guide" className="mt-1" />
+                <Label className="font-body text-sm">{t("articles.category")}</Label>
+                <Input
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder={t("articles.placeholder_category")}
+                  className="mt-1"
+                />
               </div>
             </div>
             <div>
-              <Label className="font-body text-sm">Excerpt</Label>
-              <Textarea value={newExcerpt} onChange={(e) => setNewExcerpt(e.target.value)} placeholder="Short description..." className="mt-1" rows={2} />
+              <Label className="font-body text-sm">{t("articles.excerpt")}</Label>
+              <Textarea
+                value={newExcerpt}
+                onChange={(e) => setNewExcerpt(e.target.value)}
+                placeholder={t("articles.excerpt_placeholder")}
+                className="mt-1"
+                rows={2}
+              />
             </div>
             <div>
-              <Label className="font-body text-sm">Cover Image URL</Label>
-              <Input value={newImage} onChange={(e) => setNewImage(e.target.value)} placeholder="https://..." className="mt-1" />
+              <Label className="font-body text-sm">{t("articles.cover_image")}</Label>
+              <Input
+                value={newImage}
+                onChange={(e) => setNewImage(e.target.value)}
+                placeholder="https://..."
+                className="mt-1"
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddArticle}>Create</Button>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>{t("common.cancel")}</Button>
+            <Button onClick={handleAddArticle}>{t("articles.create")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

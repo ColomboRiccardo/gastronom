@@ -73,7 +73,7 @@ const CartQuantityControl = ({ product, size = "sm", className }: CartQuantityCo
         onClick={handleAdd}
       >
         <ShoppingCart className="h-4 w-4" />
-        {size === "sm" ? "Add" : t("products.add_to_cart")}
+        {size === "sm" ? t("products.add") : t("products.add_to_cart")}
       </Button>
     );
   }
@@ -88,7 +88,7 @@ const CartQuantityControl = ({ product, size = "sm", className }: CartQuantityCo
         size="icon"
         className={cn(btnSize, "rounded-r-none shrink-0")}
         onClick={handleDecrease}
-        aria-label="Decrease quantity"
+        aria-label={t("product.decrease_qty")}
       >
         <Minus className={iconSize} />
       </Button>
@@ -112,14 +112,14 @@ const CartQuantityControl = ({ product, size = "sm", className }: CartQuantityCo
           inputSize,
           "text-center border-0 border-x border-border rounded-none px-0 font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
         )}
-        aria-label="Quantity"
+        aria-label={t("product.quantity")}
       />
       <Button
         variant="ghost"
         size="icon"
         className={cn(btnSize, "rounded-l-none shrink-0")}
         onClick={handleIncrease}
-        aria-label="Increase quantity"
+        aria-label={t("product.increase_qty")}
       >
         <Plus className={iconSize} />
       </Button>

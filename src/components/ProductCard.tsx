@@ -6,6 +6,7 @@ import { Heart } from "lucide-react";
 import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import ProductModal from "@/components/ProductModal";
 import { toast } from "sonner";
 
@@ -25,6 +26,7 @@ export interface Product {
 const ProductCard = ({ product }: { product: Product }) => {
   const { toggleItem, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const wishlisted = isInWishlist(product.id);
@@ -32,9 +34,12 @@ const ProductCard = ({ product }: { product: Product }) => {
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      toast("Sign in required", {
-        description: "Please sign in to add items to your wishlist.",
-        action: { label: "Sign In", onClick: () => router.push("/login") },
+      toast(t("product.wishlist_signin_title"), {
+        description: t("product.wishlist_signin_desc"),
+        action: {
+          label: t("product.wishlist_signin_action"),
+          onClick: () => router.push("/login"),
+        },
       });
       return;
     }

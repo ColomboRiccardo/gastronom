@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import CategoryGrid from "@/components/CategoryGrid";
+import { useLanguage } from "@/context/LanguageContext";
 import { type CategorySummary } from "@/lib/products/types";
 
 interface CategoriesSectionProps {
@@ -8,6 +11,7 @@ interface CategoriesSectionProps {
 }
 
 const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
+  const { t } = useLanguage();
   const previewCategories = categories.slice(0, 6);
   const hasMore = categories.length > previewCategories.length;
 
@@ -16,10 +20,10 @@ const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-14">
           <p className="font-body text-accent text-sm tracking-[0.2em] uppercase mb-2">
-            Browse by
+            {t("home.categories_eyebrow")}
           </p>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">
-            Categories
+            {t("home.categories_title")}
           </h2>
         </div>
 
@@ -28,7 +32,7 @@ const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
         {hasMore && (
           <div className="text-center mt-12">
             <Button asChild variant="outline" size="lg" className="font-body border-primary text-primary hover:bg-primary hover:text-primary-foreground px-10">
-              <Link href="/categories">View All Categories</Link>
+              <Link href="/categories">{t("home.view_all_categories")}</Link>
             </Button>
           </div>
         )}

@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { PLACEHOLDER_CATEGORY_IMAGE } from "@/lib/products/mappers";
 import { type CategorySummary } from "@/lib/products/types";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface CategoryGridProps {
   categories: CategorySummary[];
@@ -13,10 +16,12 @@ const CategoryGrid = ({
   className = "",
   columns = "page",
 }: CategoryGridProps) => {
+  const { t } = useLanguage();
+
   if (categories.length === 0) {
     return (
       <p className="text-center text-muted-foreground font-body">
-        Categories will appear here once products are published.
+        {t("categories.empty")}
       </p>
     );
   }
@@ -46,7 +51,8 @@ const CategoryGrid = ({
               {cat.name}
             </h3>
             <p className="font-body text-sm text-primary-foreground/60">
-              {cat.count} {cat.count === 1 ? "product" : "products"}
+              {cat.count}{" "}
+              {cat.count === 1 ? t("products.product_one") : t("products.product_other")}
             </p>
           </div>
         </Link>

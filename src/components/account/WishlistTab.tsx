@@ -4,18 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Heart, Trash2 } from "lucide-react";
 
 const WishlistTab = () => {
   const { items, removeItem, clearWishlist } = useWishlist();
+  const { t } = useLanguage();
 
   if (items.length === 0) {
     return (
       <Card className="border-border">
         <CardContent className="py-16 text-center">
           <Heart className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-          <p className="font-display text-xl font-semibold text-foreground mb-2">Your wishlist is empty</p>
-          <p className="text-sm text-muted-foreground">Browse products and tap the heart icon to save items here.</p>
+          <p className="font-display text-xl font-semibold text-foreground mb-2">{t("wishlist.empty")}</p>
+          <p className="text-sm text-muted-foreground">{t("wishlist.empty_desc")}</p>
         </CardContent>
       </Card>
     );
@@ -27,8 +29,8 @@ const WishlistTab = () => {
         <div className="flex items-center justify-between">
           <CardTitle className="font-display text-xl flex items-center gap-2">
             <Heart className="w-5 h-5 text-primary" />
-            Wishlist
-            <span className="text-sm font-body font-normal text-muted-foreground ml-2">({items.length} items)</span>
+            {t("wishlist.title")}
+            <span className="text-sm font-body font-normal text-muted-foreground ml-2">({items.length})</span>
           </CardTitle>
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive gap-1.5" onClick={clearWishlist}>
             <Trash2 className="w-4 h-4" />
