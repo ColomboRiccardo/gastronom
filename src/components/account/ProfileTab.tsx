@@ -41,7 +41,7 @@ const ProfileTab = ({ user }: ProfileTabProps) => {
             className="mt-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             disabled
           >
-            Edit Profile
+            {t("profile.edit")}
           </Button>
         </CardContent>
       </Card>
@@ -65,7 +65,7 @@ const ProfileTab = ({ user }: ProfileTabProps) => {
             className="mt-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             disabled
           >
-            Manage Addresses
+            {t("profile.manage_addresses")}
           </Button>
         </CardContent>
       </Card>

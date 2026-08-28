@@ -9,6 +9,7 @@ import { Package } from "lucide-react";
 import OrderDetailModal, { type OrderDetail } from "./OrderDetailModal";
 import { formatOrderItemsSummary } from "@/lib/orders/format-items-summary";
 import { useLanguage } from "@/context/LanguageContext";
+import { translateOrderStatus } from "@/lib/i18n/status";
 
 interface OrdersTabProps {
   initialOrders: OrderDetail[];
@@ -79,7 +80,7 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                   </TableHeader>
                   <TableBody>
                     {orders.map((order) => {
-                      const itemsSummary = formatOrderItemsSummary(order.items);
+                      const itemsSummary = formatOrderItemsSummary(order.items, t);
                       return (
                       <TableRow
                         key={order.id}
@@ -101,7 +102,7 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                         <TableCell className="font-semibold">{order.total}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={statusColor(order.status)}>
-                            {order.status}
+                            {translateOrderStatus(order.status, t)}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -125,7 +126,7 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
               </div>
               <div className="md:hidden space-y-4">
                 {orders.map((order) => {
-                  const itemsSummary = formatOrderItemsSummary(order.items);
+                  const itemsSummary = formatOrderItemsSummary(order.items, t);
                   return (
                   <div
                     key={order.id}
@@ -135,7 +136,7 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
                     <div className="flex justify-between items-start">
                       <span className="font-mono text-sm font-semibold text-primary">{order.id}</span>
                       <Badge variant="outline" className={statusColor(order.status)}>
-                        {order.status}
+                        {translateOrderStatus(order.status, t)}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{order.date}</p>

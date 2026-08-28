@@ -29,6 +29,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { startCheckout } from "@/lib/checkout";
 import { SHIPPING_RATES, SHOP, type ShippingMethodKind } from "@/lib/shipping/config";
 import { listLocalCities, previewCourierCost, resolveShipping } from "@/lib/shipping/resolve";
+import { translateShippingMethod } from "@/lib/i18n/status";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -328,7 +329,7 @@ export default function CartPage() {
                         />
                         {courierHint?.ok && (
                           <p className="text-xs text-muted-foreground mt-1.5">
-                            {courierHint.displayName}: €{courierHint.cost.toFixed(2)}
+                            {translateShippingMethod(courierHint.method, t)}: €{courierHint.cost.toFixed(2)}
                           </p>
                         )}
                         {courierHint && !courierHint.ok && postalCode.length === 5 && (

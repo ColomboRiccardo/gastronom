@@ -1,8 +1,11 @@
-import { resend } from "@/lib/resend";
+import { getResend } from "@/lib/resend";
+import { DEFAULT_LANGUAGE, type Language } from "@/lib/i18n/translate";
 
 import {
   FROM_EMAIL,
   FROM_NAME,
+  REPLY_TO,
+  emailTranslator,
   formatMoney,
   getAccountUrl,
   greeting,
@@ -14,6 +17,7 @@ import type { OrderEmailItem, OrderStatusEmailType } from "./types";
 
 interface SendOrderStatusUpdateEmailParams {
   to: string;
+  language?: Language;
   customerName?: string;
   orderId: number;
   status: OrderStatusEmailType;
@@ -21,55 +25,62 @@ interface SendOrderStatusUpdateEmailParams {
   total: number;
 }
 
-const STATUS_COPY: Record<
-  OrderStatusEmailType,
-  { subject: string; heading: string; body: string }
-> = {
-  Processing: {
-    subject: "is being prepared",
-    heading: "Your order is being prepared",
-    body: "Good news — we have started preparing your order.",
-  },
-  Shipped: {
-    subject: "has been shipped",
-    heading: "Your order is on its way",
-    body: "Your order has been shipped and should arrive soon.",
-  },
-  Delivered: {
-    subject: "has been delivered",
-    heading: "Your order has been delivered",
-    body: "Your order has been delivered. We hope you enjoy it!",
-  },
-  Cancelled: {
-    subject: "has been cancelled",
-    heading: "Your order has been cancelled",
-    body: "Your order has been cancelled. If you have questions about refunds, please contact us.",
-  },
+const STATUS_KEYS: Record<OrderStatusEmailType, string> = {
+  Processing: "processing",
+  Shipped: "shipped",
+  Delivered: "delivered",
+  Cancelled: "cancelled",
 };
 
-export async function sendOrderStatusUpdateEmail(params: SendOrderStatusUpdateEmailParams) {
-  const { to, customerName, orderId, status, items, total } = params;
-  const copy = STATUS_COPY[status];
+export function buildOrderStatusUpdateEmail(params: SendOrderStatusUpdateEmailParams) {
+  const {
+    language = DEFAULT_LANGUAGE,
+    customerName,
+    orderId,
+    status,
+    items,
+    total,
+  } = params;
+
+  const t = emailTranslator(language);
+  const slug = STATUS_KEYS[status];
   const accountUrl = getAccountUrl();
 
-  const html = wrapEmailLayout(`
-    <h2 style="margin:0 0 16px;">${copy.heading} — #${orderId}</h2>
-    <p>${greeting(customerName)}</p>
-    <p>${copy.body}</p>
-    ${renderItemsTable(items, "Order summary")}
-    <p style="margin:16px 0;font-size:16px;"><strong>Order total: ${formatMoney(total)}</strong></p>
-    ${renderAccountButton(accountUrl)}
-  `);
+  const subject = t(`email.status_${slug}_subject`, { id: orderId });
+  const heading = t(`email.status_${slug}_heading`);
+  const body = t(`email.status_${slug}_body`);
 
-  const { error } = await resend.emails.send({
+  const html = wrapEmailLayout(
+    `
+    <h2 style="margin:0 0 16px;">${heading} - #${orderId}</h2>
+    <p>${greeting(t, customerName)}</p>
+    <p>${body}</p>
+    ${renderItemsTable(items, t, t("email.order_summary"))}
+    <p style="margin:16px 0;font-size:16px;"><strong>${t("email.order_total", { total: formatMoney(total) })}</strong></p>
+    ${renderAccountButton(accountUrl, t("email.view_order"))}
+  `,
+    t,
+  );
+
+  return { subject, html };
+}
+
+export async function sendOrderStatusUpdateEmail(params: SendOrderStatusUpdateEmailParams) {
+  const { subject, html } = buildOrderStatusUpdateEmail(params);
+
+  const { error } = await getResend().emails.send({
     from: `${FROM_NAME} <${FROM_EMAIL}>`,
-    to,
-    subject: `Order #${orderId} ${copy.subject}`,
+    to: params.to,
+    replyTo: REPLY_TO,
+    subject,
     html,
   });
 
   if (error) {
-    console.error(`Order status email (${status}) failed for order ${orderId}:`, error);
+    console.error(
+      `Order status email (${params.status}) failed for order ${params.orderId}:`,
+      error,
+    );
     return { ok: false as const, error };
   }
 

@@ -1,3 +1,4 @@
+import { readStoredLanguage } from "@/context/LanguageContext";
 import { type CartItem } from "@/context/CartContext";
 import type { ShippingMethodKind } from "@/lib/shipping/config";
 
@@ -24,6 +25,8 @@ export async function startCheckout(
     body: JSON.stringify({
       items: buildCheckoutLineItems(items),
       shipping,
+      // Emails about this order are written in the language chosen here.
+      language: readStoredLanguage(),
     }),
   });
 

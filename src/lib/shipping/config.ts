@@ -12,10 +12,11 @@ export type ResolvedShippingMethod =
 
 export const SHOP = {
   name: "Gastronom",
-  /** Shown on pickup orders and emails — replace with real address. */
+  /** Shown on pickup orders and emails. */
   address: "Via Nuvoloni 13, 18038 Sanremo (IM), Italy",
-  hours: "Mon–Sun 10:00 – 20:00",
-  phone: "+39 0185 123 456",
+  /** Fallback only. The site renders the translated "home.hours_value" instead. */
+  hours: "Mon-Sun 10:00-14:00 / 15:00-20:00",
+  phone: "+39 348 655 6241",
 } as const;
 
 /** Flat rates in EUR. */

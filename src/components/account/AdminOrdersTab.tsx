@@ -13,8 +13,14 @@ import { ClipboardList, ArrowUpDown, Search } from "lucide-react";
 import OrderDetailModal, { type OrderDetail, type OrderItem } from "./OrderDetailModal";
 import BulkActionBar from "./BulkActionBar";
 import { toast } from "sonner";
-import { deleteOrder, proposeOrderModification, updateOrderStatus } from "@/lib/orders";
+import {
+  deleteOrder,
+  proposeOrderModification,
+  resolveOrderModification,
+  updateOrderStatus,
+} from "@/lib/orders";
 import { useLanguage } from "@/context/LanguageContext";
+import { translateOrderStatus } from "@/lib/i18n/status";
 
 interface AdminOrdersTabProps {
   initialOrders: OrderDetail[];
@@ -33,8 +39,11 @@ const statusColor = (status: string) => {
 
 type SortKey = "date-desc" | "date-asc" | "customer-asc" | "customer-desc" | "total-desc" | "total-asc" | "id-asc" | "id-desc";
 
-const parseDateForSort = (d: string) => new Date(d).getTime();
 const parseTotal = (t: string) => parseFloat(t.replace("€", ""));
+
+/** Falls back to the order number when no timestamp came through. */
+const sortableDate = (order: OrderDetail) =>
+  order.createdAt ? new Date(order.createdAt).getTime() : 0;
 
 const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
   const router = useRouter();
@@ -62,7 +71,7 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
     list.sort((a, b) => {
       let cmp = 0;
       switch (key) {
-        case "date": cmp = parseDateForSort(a.date) - parseDateForSort(b.date); break;
+        case "date": cmp = sortableDate(a) - sortableDate(b); break;
         case "customer": cmp = (a.customer ?? "").localeCompare(b.customer ?? ""); break;
         case "total": cmp = parseTotal(a.total) - parseTotal(b.total); break;
         case "id": cmp = a.id.localeCompare(b.id); break;
@@ -87,10 +96,15 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
     if (ok) {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
       setSelectedOrder((prev) => prev && prev.id === orderId ? { ...prev, status: newStatus } : prev);
-      toast.success(`Order ${orderId} set to ${newStatus}`);
+      toast.success(
+        t("orders.toast_status_set", {
+          id: orderId,
+          status: translateOrderStatus(newStatus, t),
+        }),
+      );
       router.refresh();
     } else {
-      toast.error(`Failed to update ${orderId}`);
+      toast.error(t("orders.toast_status_failed", { id: orderId }));
     }
   };
 
@@ -98,61 +112,68 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
     const ok = await deleteOrder(orderId);
     if (ok) {
       setOrders((prev) => prev.filter((o) => o.id !== orderId));
-      toast.success(`Order ${orderId} deleted`);
+      toast.success(t("orders.toast_deleted", { id: orderId }));
       router.refresh();
     } else {
-      toast.error(`Failed to delete ${orderId}`);
+      toast.error(t("orders.toast_delete_failed", { id: orderId }));
     }
   };
 
   const handleProposeModification = async (
     orderId: string,
     items: OrderItem[],
-    newTotal: string,
     message: string,
   ) => {
     const result = await proposeOrderModification(orderId, items, message);
     if (result.ok) {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === orderId
-            ? {
-                ...o,
-                status: "Modification",
-                modificationProposal: items,
-                modificationMessage: message || undefined,
-                modificationSentAt: new Date().toISOString(),
-                total: newTotal,
-              }
-            : o,
-        ),
-      );
-      setSelectedOrder((prev) =>
-        prev && prev.id === orderId
-          ? {
-              ...prev,
-              status: "Modification",
-              modificationProposal: items,
-              modificationMessage: message || undefined,
-              modificationSentAt: new Date().toISOString(),
-              total: newTotal,
-            }
-          : prev,
-      );
-      toast.success(`Modification proposal sent for ${orderId}`);
+      // The order keeps its paid items and total; only the pending proposal changes.
+      const pending = {
+        status: "Modification",
+        modificationProposal: items,
+        modificationMessage: message || undefined,
+        modificationSentAt: new Date().toISOString(),
+        modificationState: "pending" as const,
+      };
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...pending } : o)));
+      setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, ...pending } : prev));
+      toast.success(t("orders.toast_proposal_sent", { id: orderId }));
       router.refresh();
       return { ok: true, whatsappUrl: result.whatsappUrl };
     }
 
-    toast.error(result.error || `Failed to send proposal for ${orderId}`);
+    toast.error(result.error || t("orders.toast_proposal_failed", { id: orderId }));
     return { ok: false, error: result.error };
+  };
+
+  const handleResolveModification = async (orderId: string, action: "accept" | "decline") => {
+    const ok = await resolveOrderModification(orderId, action);
+    if (!ok) {
+      toast.error(t("orders.toast_resolve_failed", { id: orderId }));
+      return false;
+    }
+
+    toast.success(
+      action === "accept"
+        ? t("orders.toast_proposal_accepted", { id: orderId })
+        : t("orders.toast_proposal_declined", { id: orderId }),
+    );
+    // The server rewrote items and total together, so re-read rather than guess.
+    setModalOpen(false);
+    setSelectedOrder(null);
+    router.refresh();
+    return true;
   };
 
   const bulkStatusChange = async (newStatus: string) => {
     const ids = Array.from(selectedIds);
     for (const id of ids) await updateOrderStatus(id, newStatus);
     setOrders((prev) => prev.map((o) => (selectedIds.has(o.id) ? { ...o, status: newStatus } : o)));
-    toast.success(`${selectedIds.size} orders set to ${newStatus}`);
+    toast.success(
+      t("orders.toast_bulk_status", {
+        count: selectedIds.size,
+        status: translateOrderStatus(newStatus, t),
+      }),
+    );
     setSelectedIds(new Set());
     router.refresh();
   };
@@ -161,7 +182,7 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
     const ids = Array.from(selectedIds);
     for (const id of ids) await deleteOrder(id);
     setOrders((prev) => prev.filter((o) => !selectedIds.has(o.id)));
-    toast.success(`${selectedIds.size} orders deleted`);
+    toast.success(t("orders.toast_bulk_deleted", { count: selectedIds.size }));
     setSelectedIds(new Set());
     router.refresh();
   };
@@ -176,7 +197,9 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
             <CardTitle className="font-display text-xl flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-primary" />
               {t("account.all_orders")}
-              <span className="text-sm font-body font-normal text-muted-foreground ml-2">({results.length} {t("products.results")})</span>
+              <span className="text-sm font-body font-normal text-muted-foreground ml-2">
+                ({t("products.results", { count: results.length })})
+              </span>
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 max-w-xs">
@@ -187,12 +210,12 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
                 <SelectTrigger className="w-[160px]"><SelectValue placeholder={t("orders.status_filter")} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("orders.all_statuses")}</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="modification">Modification</SelectItem>
-                  <SelectItem value="shipped">Shipped</SelectItem>
-                  <SelectItem value="delivered">Delivered</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="received">{t("status.received")}</SelectItem>
+                  <SelectItem value="processing">{t("status.processing")}</SelectItem>
+                  <SelectItem value="modification">{t("status.modification")}</SelectItem>
+                  <SelectItem value="shipped">{t("status.shipped")}</SelectItem>
+                  <SelectItem value="delivered">{t("status.delivered")}</SelectItem>
+                  <SelectItem value="cancelled">{t("status.cancelled")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
@@ -200,14 +223,14 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
                   <div className="flex items-center gap-2"><ArrowUpDown className="w-3.5 h-3.5" /><SelectValue placeholder={t("orders.sort_by")} /></div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date-desc">Date (Newest)</SelectItem>
-                  <SelectItem value="date-asc">Date (Oldest)</SelectItem>
-                  <SelectItem value="customer-asc">Customer (A-Z)</SelectItem>
-                  <SelectItem value="customer-desc">Customer (Z-A)</SelectItem>
-                  <SelectItem value="total-desc">Amount (High-Low)</SelectItem>
-                  <SelectItem value="total-asc">Amount (Low-High)</SelectItem>
-                  <SelectItem value="id-asc">Order ID (Asc)</SelectItem>
-                  <SelectItem value="id-desc">Order ID (Desc)</SelectItem>
+                  <SelectItem value="date-desc">{t("orders.sort_date_newest")}</SelectItem>
+                  <SelectItem value="date-asc">{t("orders.sort_date_oldest")}</SelectItem>
+                  <SelectItem value="customer-asc">{t("orders.sort_customer_asc")}</SelectItem>
+                  <SelectItem value="customer-desc">{t("orders.sort_customer_desc")}</SelectItem>
+                  <SelectItem value="total-desc">{t("orders.sort_amount_high")}</SelectItem>
+                  <SelectItem value="total-asc">{t("orders.sort_amount_low")}</SelectItem>
+                  <SelectItem value="id-asc">{t("orders.sort_id_asc")}</SelectItem>
+                  <SelectItem value="id-desc">{t("orders.sort_id_desc")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -220,14 +243,10 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
               onSelectAll={() => setSelectedIds(new Set(results.map((o) => o.id)))}
               onClearSelection={() => setSelectedIds(new Set())}
               statusAction={{
-                label: "Set Status",
-                options: [
-                  { value: "Processing", label: "Processing" },
-                  { value: "Modification", label: "Modification" },
-                  { value: "Shipped", label: "Shipped" },
-                  { value: "Delivered", label: "Delivered" },
-                  { value: "Cancelled", label: "Cancelled" },
-                ],
+                label: t("orders.set_status"),
+                options: ["Processing", "Modification", "Shipped", "Delivered", "Cancelled"].map(
+                  (value) => ({ value, label: translateOrderStatus(value, t) }),
+                ),
                 onSelect: bulkStatusChange,
               }}
               onBulkDelete={bulkDelete}
@@ -235,8 +254,8 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
 
             {results.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p className="font-medium">No orders found</p>
-                <p className="text-sm mt-1">Try adjusting your filters or search term.</p>
+                <p className="font-medium">{t("orders.no_results")}</p>
+                <p className="text-sm mt-1">{t("orders.no_results_hint")}</p>
               </div>
             ) : (
               <>
@@ -274,7 +293,7 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
                           <TableCell className="font-medium">{order.customer}</TableCell>
                           <TableCell>{order.items.length}</TableCell>
                           <TableCell className="font-semibold">{order.total}</TableCell>
-                          <TableCell><Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className={statusColor(order.status)}>{translateOrderStatus(order.status, t)}</Badge></TableCell>
                           <TableCell>
                             <Button variant="ghost" size="sm" className="text-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); openOrder(order); }}>{t("orders.view")}</Button>
                           </TableCell>
@@ -291,12 +310,12 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
                         <div className="flex-1 cursor-pointer" onClick={() => openOrder(order)}>
                           <div className="flex justify-between items-start">
                             <span className="font-mono text-sm font-semibold text-primary">{order.id}</span>
-                            <Badge variant="outline" className={statusColor(order.status)}>{order.status}</Badge>
+                            <Badge variant="outline" className={statusColor(order.status)}>{translateOrderStatus(order.status, t)}</Badge>
                           </div>
                           <p className="text-sm font-medium">{order.customer}</p>
                           <div className="flex justify-between text-sm text-muted-foreground">
                             <span>{order.date}</span>
-                            <span>{order.items.length} items</span>
+                            <span>{t("orders.items_count", { count: order.items.length })}</span>
                           </div>
                           <p className="font-semibold">{order.total}</p>
                         </div>
@@ -317,6 +336,7 @@ const AdminOrdersTab = ({ initialOrders }: AdminOrdersTabProps) => {
         onStatusChange={handleStatusChange}
         onDelete={handleDelete}
         onProposeModification={handleProposeModification}
+        onResolveModification={handleResolveModification}
       />
     </>
   );

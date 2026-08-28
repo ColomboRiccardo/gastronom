@@ -152,6 +152,7 @@ export function previewCourierCost(postalCode: string): {
   ok: true;
   zone: CourierZone;
   cost: number;
+  method: ResolvedShippingMethod;
   displayName: string;
 } | { ok: false; error: string } {
   const result = resolveShipping(
@@ -163,6 +164,7 @@ export function previewCourierCost(postalCode: string): {
     ok: true,
     zone: result.shipping.courierZone!,
     cost: result.shipping.cost,
+    method: result.shipping.method,
     displayName: result.shipping.displayName,
   };
 }

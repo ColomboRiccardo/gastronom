@@ -1,13 +1,16 @@
 import type Stripe from "stripe";
 
 import { sendOrderConfirmationEmail } from "@/lib/emails/send-order-confirmation";
-import { METHOD_LABELS, SHOP, type ResolvedShippingMethod } from "@/lib/shipping/config";
+import { sendNewOrderAlertEmail } from "@/lib/emails/send-new-order-alert";
+import { toLanguage, type Language } from "@/lib/i18n/translate";
+import { SHOP } from "@/lib/shipping/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 
 export type FulfillCheckoutResult =
   | { ok: true; orderId: number; alreadyFulfilled?: boolean }
-  | { ok: false; error: string };
+  /** `terminal` means retrying will never succeed, so callers should stop. */
+  | { ok: false; error: string; terminal?: boolean };
 
 function resolvePaymentIntentId(session: Stripe.Checkout.Session): string | null {
   if (typeof session.payment_intent === "string") {
@@ -77,7 +80,9 @@ async function getSnapshotForSession(
 ) {
   const { data, error } = await supabase
     .from("checkout_snapshots")
-    .select("id, items, shipping_method, shipping_cost, shipping_city, shipping_postal_code")
+    .select(
+      "id, items, shipping_method, shipping_cost, shipping_city, shipping_postal_code, language, fulfilled_at",
+    )
     .eq("stripe_checkout_session_id", sessionId)
     .maybeSingle();
 
@@ -87,6 +92,8 @@ async function getSnapshotForSession(
       items: null as SnapshotItem[] | null,
       snapshotId: null as string | null,
       shipping: null as SnapshotShipping | null,
+      language: null as Language | null,
+      fulfilledAt: null as string | null,
     };
   }
 
@@ -96,6 +103,8 @@ async function getSnapshotForSession(
       items: null as SnapshotItem[] | null,
       snapshotId: null as string | null,
       shipping: null as SnapshotShipping | null,
+      language: null as Language | null,
+      fulfilledAt: null as string | null,
     };
   }
 
@@ -125,7 +134,14 @@ async function getSnapshotForSession(
     postalCode: (data.shipping_postal_code as string | null) ?? null,
   };
 
-  return { error: null, items, snapshotId: data.id as string, shipping };
+  return {
+    error: null,
+    items,
+    snapshotId: data.id as string,
+    shipping,
+    language: data.language ? toLanguage(data.language) : null,
+    fulfilledAt: (data.fulfilled_at as string | null) ?? null,
+  };
 }
 
 function resolveOrderShipping(
@@ -152,13 +168,10 @@ function resolveOrderShipping(
     shippingAddress = snapshotShipping.city;
   }
 
-  const methodLabel =
-    method && method in METHOD_LABELS
-      ? METHOD_LABELS[method as ResolvedShippingMethod]
-      : method;
-
+  // Stored as an identifier ("local", "courier_north"), not a label, so every
+  // reader can render it in its own language.
   return {
-    shippingMethod: methodLabel || method,
+    shippingMethod: method,
     shippingCost: cost,
     shippingAddress,
   };
@@ -171,7 +184,7 @@ async function findExistingOrder(
 ) {
   const { data: bySession, error: sessionError } = await supabase
     .from("orders")
-    .select("id, confirmation_email_sent_at")
+    .select("id, confirmation_email_sent_at, admin_alert_sent_at, language")
     .eq("stripe_checkout_session_id", sessionId)
     .maybeSingle();
 
@@ -182,6 +195,8 @@ async function findExistingOrder(
     return {
       orderId: bySession.id as number,
       confirmationEmailSentAt: bySession.confirmation_email_sent_at as string | null,
+      adminAlertSentAt: bySession.admin_alert_sent_at as string | null,
+      language: bySession.language ? toLanguage(bySession.language) : null,
     };
   }
 
@@ -192,7 +207,7 @@ async function findExistingOrder(
   for (const key of legacyKeys) {
     const { data, error } = await supabase
       .from("orders")
-      .select("id, confirmation_email_sent_at")
+      .select("id, confirmation_email_sent_at, admin_alert_sent_at, language")
       .eq("payment_intent_id", key)
       .maybeSingle();
 
@@ -203,53 +218,95 @@ async function findExistingOrder(
       return {
         orderId: data.id as number,
         confirmationEmailSentAt: data.confirmation_email_sent_at as string | null,
+        adminAlertSentAt: data.admin_alert_sent_at as string | null,
+        language: data.language ? toLanguage(data.language) : null,
       };
     }
   }
 
-  return { orderId: null, confirmationEmailSentAt: null };
+  return {
+    orderId: null,
+    confirmationEmailSentAt: null,
+    adminAlertSentAt: null,
+    language: null,
+  };
 }
 
-async function sendConfirmationIfNeeded(
+interface OrderEmailParams {
+  orderId: number;
+  confirmationEmailSentAt: string | null;
+  adminAlertSentAt: string | null;
+  language: Language;
+  to: string | null;
+  customerName?: string;
+  customerPhone?: string | null;
+  items: SnapshotItem[];
+  total: number;
+  shippingAddress: string | null;
+  shippingMethod?: string | null;
+  shippingCost?: number | null;
+  paymentMethod: string;
+}
+
+/**
+ * The customer confirmation and the internal recap are tracked separately so a
+ * failure in one never suppresses a retry of the other.
+ */
+async function sendOrderEmailsIfNeeded(
   supabase: ReturnType<typeof createAdminClient>,
-  params: {
-    orderId: number;
-    confirmationEmailSentAt: string | null;
-    to: string | null;
-    customerName?: string;
-    items: SnapshotItem[];
-    total: number;
-    shippingAddress: string | null;
-    shippingMethod?: string | null;
-    shippingCost?: number | null;
-    paymentMethod: string;
-  },
+  params: OrderEmailParams,
 ) {
-  if (params.confirmationEmailSentAt || !params.to || params.items.length === 0) {
-    return;
+  if (params.items.length === 0) return;
+
+  const items = params.items.map((item) => ({
+    product_name: item.product_name,
+    qty: item.qty,
+    unit_price: item.unit_price,
+  }));
+
+  if (!params.confirmationEmailSentAt && params.to) {
+    const emailResult = await sendOrderConfirmationEmail({
+      to: params.to,
+      language: params.language,
+      customerName: params.customerName,
+      orderId: params.orderId,
+      items,
+      total: params.total,
+      shippingAddress: params.shippingAddress,
+      shippingMethod: params.shippingMethod,
+      shippingCost: params.shippingCost,
+      paymentMethod: params.paymentMethod,
+    });
+
+    if (emailResult.ok) {
+      await supabase
+        .from("orders")
+        .update({ confirmation_email_sent_at: new Date().toISOString() })
+        .eq("id", params.orderId);
+    }
   }
 
-  const emailResult = await sendOrderConfirmationEmail({
-    to: params.to,
-    customerName: params.customerName,
-    orderId: params.orderId,
-    items: params.items.map((item) => ({
-      product_name: item.product_name,
-      qty: item.qty,
-      unit_price: item.unit_price,
-    })),
-    total: params.total,
-    shippingAddress: params.shippingAddress,
-    shippingMethod: params.shippingMethod,
-    shippingCost: params.shippingCost,
-    paymentMethod: params.paymentMethod,
-  });
+  if (!params.adminAlertSentAt) {
+    const alertResult = await sendNewOrderAlertEmail({
+      orderId: params.orderId,
+      customerName: params.customerName,
+      customerEmail: params.to,
+      customerPhone: params.customerPhone,
+      items,
+      total: params.total,
+      shippingAddress: params.shippingAddress,
+      shippingMethod: params.shippingMethod,
+      shippingCost: params.shippingCost,
+      paymentMethod: params.paymentMethod,
+      placedAt: new Date(),
+    });
 
-  if (emailResult.ok) {
-    await supabase
-      .from("orders")
-      .update({ confirmation_email_sent_at: new Date().toISOString() })
-      .eq("id", params.orderId);
+    if (alertResult.ok) {
+      await supabase
+        .from("orders")
+        .update({ admin_alert_sent_at: new Date().toISOString() })
+        .eq("id", params.orderId);
+    }
   }
 }
 
@@ -284,12 +341,15 @@ export async function fulfillCheckoutSession(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, email")
+    .select("name, email, phone")
     .eq("id", userId)
     .maybeSingle();
 
   const recipientEmail = profile?.email ?? customerEmail;
   const customerName = profile?.name ?? undefined;
+  const customerPhone =
+    profile?.phone ?? session.customer_details?.phone ?? null;
+  const sessionLanguage = toLanguage(session.metadata?.language);
 
   const existing = await findExistingOrder(supabase, sessionId, paymentIntentId);
   if ("error" in existing && existing.error) {
@@ -301,11 +361,14 @@ export async function fulfillCheckoutSession(
     const items = snapshotResult.items ?? [];
     const shipping = resolveOrderShipping(session, snapshotResult.shipping);
 
-    await sendConfirmationIfNeeded(supabase, {
+    await sendOrderEmailsIfNeeded(supabase, {
       orderId: existing.orderId,
       confirmationEmailSentAt: existing.confirmationEmailSentAt ?? null,
+      adminAlertSentAt: existing.adminAlertSentAt ?? null,
+      language: existing.language ?? snapshotResult.language ?? sessionLanguage,
       to: recipientEmail,
       customerName,
+      customerPhone,
       items,
       total: (session.amount_total || 0) / 100,
       shippingAddress: shipping.shippingAddress,
@@ -328,9 +391,24 @@ export async function fulfillCheckoutSession(
     return { ok: false, error: snapshotResult.error };
   }
 
+  // No order for a session that was already fulfilled means staff removed it.
+  // Recreating it here would resurrect the order and send a fresh confirmation
+  // on the next webhook retry or success-page reload.
+  if (snapshotResult.fulfilledAt) {
+    console.warn(
+      `Fulfill checkout: session ${sessionId} was already fulfilled and its order no longer exists; not recreating.`,
+    );
+    return {
+      ok: false,
+      error: "Order for this checkout session was removed",
+      terminal: true,
+    };
+  }
+
   const shipping = resolveOrderShipping(session, snapshotResult.shipping);
   const paymentMethod = session.payment_method_types?.[0] || "card";
   const orderTotal = (session.amount_total || 0) / 100;
+  const orderLanguage = snapshotResult.language ?? sessionLanguage;
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
@@ -338,6 +416,7 @@ export async function fulfillCheckoutSession(
       user_id: userId,
       status: "Received",
       total: orderTotal,
+      language: orderLanguage,
       shipping_address: shipping.shippingAddress,
       shipping_method: shipping.shippingMethod,
       shipping_cost: shipping.shippingCost,
@@ -354,11 +433,14 @@ export async function fulfillCheckoutSession(
       if (raced.orderId) {
         const racedSnapshot = await getSnapshotForSession(supabase, sessionId);
         const racedShipping = resolveOrderShipping(session, racedSnapshot.shipping);
-        await sendConfirmationIfNeeded(supabase, {
+        await sendOrderEmailsIfNeeded(supabase, {
           orderId: raced.orderId,
           confirmationEmailSentAt: raced.confirmationEmailSentAt ?? null,
+          adminAlertSentAt: raced.adminAlertSentAt ?? null,
+          language: raced.language ?? racedSnapshot.language ?? sessionLanguage,
           to: recipientEmail,
           customerName,
+          customerPhone,
           items: racedSnapshot.items ?? [],
           total: orderTotal,
           shippingAddress: racedShipping.shippingAddress,
@@ -418,11 +500,14 @@ export async function fulfillCheckoutSession(
         unit_price: item.unit_price,
       }));
 
-  await sendConfirmationIfNeeded(supabase, {
+  await sendOrderEmailsIfNeeded(supabase, {
     orderId: order.id,
     confirmationEmailSentAt: null,
+    adminAlertSentAt: null,
+    language: orderLanguage,
     to: recipientEmail,
     customerName,
+    customerPhone,
     items: emailItems,
     total: orderTotal,
     shippingAddress: shipping.shippingAddress,

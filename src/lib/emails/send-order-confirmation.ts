@@ -1,8 +1,12 @@
-import { resend } from "@/lib/resend";
+import { getResend } from "@/lib/resend";
+import { translateShippingMethod } from "@/lib/i18n/status";
+import { DEFAULT_LANGUAGE, type Language } from "@/lib/i18n/translate";
 
 import {
   FROM_EMAIL,
   FROM_NAME,
+  REPLY_TO,
+  emailTranslator,
   formatMoney,
   getAccountUrl,
   greeting,
@@ -14,6 +18,7 @@ import type { OrderEmailItem } from "./types";
 
 interface SendOrderConfirmationEmailParams {
   to: string;
+  language?: Language;
   customerName?: string;
   orderId: number;
   items: OrderEmailItem[];
@@ -24,9 +29,10 @@ interface SendOrderConfirmationEmailParams {
   paymentMethod?: string | null;
 }
 
-export async function sendOrderConfirmationEmail(params: SendOrderConfirmationEmailParams) {
+/** Rendering is kept separate from sending so templates can be previewed. */
+export function buildOrderConfirmationEmail(params: SendOrderConfirmationEmailParams) {
   const {
-    to,
+    language = DEFAULT_LANGUAGE,
     customerName,
     orderId,
     items,
@@ -36,6 +42,8 @@ export async function sendOrderConfirmationEmail(params: SendOrderConfirmationEm
     shippingCost,
     paymentMethod,
   } = params;
+
+  const t = emailTranslator(language);
   const accountUrl = getAccountUrl();
 
   const details: string[] = [];
@@ -44,36 +52,49 @@ export async function sendOrderConfirmationEmail(params: SendOrderConfirmationEm
       shippingCost == null
         ? ""
         : shippingCost === 0
-          ? " (free)"
-          : ` — ${formatMoney(shippingCost)}`;
-    details.push(`<p><strong>Shipping:</strong> ${shippingMethod}${costLabel}</p>`);
+          ? ` (${t("email.shipping_free")})`
+          : ` - ${formatMoney(shippingCost)}`;
+    const methodLabel = translateShippingMethod(shippingMethod, t);
+    details.push(`<p><strong>${t("orders.shipping")}:</strong> ${methodLabel}${costLabel}</p>`);
   }
   if (shippingAddress) {
-    details.push(`<p><strong>Shipping address:</strong><br>${shippingAddress}</p>`);
+    details.push(`<p><strong>${t("orders.shipping_address")}:</strong><br>${shippingAddress}</p>`);
   }
   if (paymentMethod) {
-    details.push(`<p><strong>Payment:</strong> ${paymentMethod}</p>`);
+    details.push(`<p><strong>${t("orders.payment")}:</strong> ${paymentMethod}</p>`);
   }
 
-  const html = wrapEmailLayout(`
-    <h2 style="margin:0 0 16px;">Order confirmed — #${orderId}</h2>
-    <p>${greeting(customerName)}</p>
-    <p>Thank you for your order! We have received your payment and will start preparing it shortly.</p>
-    ${renderItemsTable(items)}
-    <p style="margin:16px 0;font-size:16px;"><strong>Order total: ${formatMoney(total)}</strong></p>
-    ${details.join("")}
-    ${renderAccountButton(accountUrl)}
-  `);
+  const subject = t("email.confirm_subject", { id: orderId });
 
-  const { error } = await resend.emails.send({
+  const html = wrapEmailLayout(
+    `
+    <h2 style="margin:0 0 16px;">${subject}</h2>
+    <p>${greeting(t, customerName)}</p>
+    <p>${t("email.confirm_body")}</p>
+    ${renderItemsTable(items, t)}
+    <p style="margin:16px 0;font-size:16px;"><strong>${t("email.order_total", { total: formatMoney(total) })}</strong></p>
+    ${details.join("")}
+    ${renderAccountButton(accountUrl, t("email.view_order"))}
+  `,
+    t,
+  );
+
+  return { subject, html };
+}
+
+export async function sendOrderConfirmationEmail(params: SendOrderConfirmationEmailParams) {
+  const { subject, html } = buildOrderConfirmationEmail(params);
+
+  const { error } = await getResend().emails.send({
     from: `${FROM_NAME} <${FROM_EMAIL}>`,
-    to,
-    subject: `Order confirmed — #${orderId}`,
+    to: params.to,
+    replyTo: REPLY_TO,
+    subject,
     html,
   });
 
   if (error) {
-    console.error(`Order confirmation email failed for order ${orderId}:`, error);
+    console.error(`Order confirmation email failed for order ${params.orderId}:`, error);
     return { ok: false as const, error };
   }
 

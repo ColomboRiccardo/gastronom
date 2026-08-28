@@ -13,6 +13,7 @@ import {
   type ShippingRequest,
 } from "@/lib/shipping/resolve";
 import type { ShippingMethodKind } from "@/lib/shipping/config";
+import { toLanguage } from "@/lib/i18n/translate";
 
 function parseShippingRequest(input: unknown): ShippingRequest | null {
   if (!input || typeof input !== "object") return null;
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: shippingResult.error }, { status: 400 });
     }
     const shipping = shippingResult.shipping;
+    const language = toLanguage(body.language);
 
     const lineItems = validation.items.map((item) => ({
       price_data: {
@@ -94,6 +96,7 @@ export async function POST(request: Request) {
         shipping_cost: shipping.cost,
         shipping_city: shipping.city ?? null,
         shipping_postal_code: shipping.postalCode ?? null,
+        language,
       })
       .select("id")
       .single();
@@ -123,6 +126,7 @@ export async function POST(request: Request) {
         user_id: user.id,
         checkout_snapshot_id: snapshot.id,
         shipping_method: shipping.method,
+        language,
       },
       shipping_options: [shippingOption],
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,

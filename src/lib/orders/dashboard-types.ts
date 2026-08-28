@@ -21,9 +21,10 @@ export interface DashboardStats {
 }
 
 export interface DashboardActivityItem {
-  at: string;
-  timeLabel: string;
-  event: string;
+  /** null for entries that describe the present, such as a stock snapshot. */
+  at: string | null;
+  messageKey: string;
+  params: Record<string, string | number>;
   type: "order" | "status" | "stock" | "customer";
 }
 

@@ -29,6 +29,8 @@ import {
   type AdminProductsSortKey,
 } from "@/lib/products/constants";
 import { type AdminProduct, type AdminProductUpdate } from "@/lib/products/types";
+import { useLanguage } from "@/context/LanguageContext";
+import { translateProductStatus } from "@/lib/i18n/status";
 
 const stockColor = (status: string) => {
   switch (status) {
@@ -58,7 +60,20 @@ const toProduct = (p: AdminProduct): Product => ({
 
 type AdminViewMode = "table" | "grid";
 
+const PRODUCT_COLUMNS = [
+  { id: "product", labelKey: "admin_products.col_product", className: "" },
+  { id: "category", labelKey: "admin_products.col_category", className: "" },
+  { id: "price", labelKey: "admin_products.col_price", className: "" },
+  { id: "stock", labelKey: "admin_products.col_stock", className: "" },
+  { id: "status", labelKey: "admin_products.col_status", className: "" },
+  { id: "published", labelKey: "admin_products.col_published", className: "" },
+  { id: "publish", labelKey: "admin_products.col_publish", className: "w-28 text-left" },
+  { id: "edit", labelKey: "admin_products.col_edit", className: "w-20 text-left" },
+  { id: "lock", labelKey: "admin_products.col_lock", className: "w-12 text-center" },
+] as const;
+
 const AdminProductsTab = () => {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -112,7 +127,7 @@ const AdminProductsTab = () => {
     try {
       const res = await fetch(`/api/admin/products?${params.toString()}`);
       if (!res.ok) {
-        toast.error("Could not load products");
+        toast.error(t("admin_products.toast_load_failed"));
         setProducts([]);
         return;
       }
@@ -122,11 +137,12 @@ const AdminProductsTab = () => {
       setTotalPages(data.totalPages ?? 1);
       setPage(data.page ?? 1);
     } catch {
-      toast.error("Could not load products");
+      toast.error(t("admin_products.toast_load_failed"));
       setProducts([]);
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize, categoryFilter, publishedFilter, statusFilter, sortBy, debouncedSearch]);
 
   useEffect(() => {
@@ -181,9 +197,11 @@ const AdminProductsTab = () => {
         published,
         editorLockedFields: [...new Set([...p.editorLockedFields, "published"])],
       }));
-      toast.success(published ? "Product published" : "Product unpublished");
+      toast.success(
+        published ? t("admin_products.toast_published") : t("admin_products.toast_unpublished"),
+      );
     } else {
-      toast.error("Failed to update product visibility");
+      toast.error(t("admin_products.toast_visibility_failed"));
     }
   };
 
@@ -191,9 +209,9 @@ const AdminProductsTab = () => {
     const ok = await unlockProductFields(productId);
     if (ok) {
       applyProductUpdate(productId, (p) => ({ ...p, editorLockedFields: [] }));
-      toast.success("Sync protection removed — next Lackmann sync can update these fields");
+      toast.success(t("admin_products.toast_unlocked"));
     } else {
-      toast.error("Failed to unlock product fields");
+      toast.error(t("admin_products.toast_unlock_failed"));
     }
   };
 
@@ -226,10 +244,14 @@ const AdminProductsTab = () => {
             )
             .filter((p) => matchesAdminProductFilters(p, filterState)),
         );
-        toast.success(`${ids.length} products ${published ? "published" : "unpublished"}`);
+        toast.success(
+          published
+            ? t("admin_products.toast_bulk_published", { count: ids.length })
+            : t("admin_products.toast_bulk_unpublished", { count: ids.length }),
+        );
         setSelectedIds(new Set());
       } else {
-        toast.error("Failed to update selected products");
+        toast.error(t("admin_products.toast_bulk_failed"));
       }
     } finally {
       setBulkLoading(false);
@@ -246,21 +268,21 @@ const AdminProductsTab = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <CardTitle className="font-display text-xl flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-primary" />
-                Product Catalog
+                {t("admin_products.title")}
                 <span className="text-sm font-body font-normal text-muted-foreground ml-2">
-                  ({totalCount} products)
+                  ({t("admin_products.count", { count: totalCount })})
                 </span>
               </CardTitle>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2" disabled>
                 <Plus className="w-4 h-4" />
-                Add Product
+                {t("admin_products.add")}
               </Button>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
               <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder={t("admin_products.search_placeholder")}
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -276,9 +298,9 @@ const AdminProductsTab = () => {
                   resetToFirstPage();
                 }}
               >
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Category" /></SelectTrigger>
+                <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("admin_products.category_filter")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">{t("admin_products.all_categories")}</SelectItem>
                   {categories.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
                 </SelectContent>
               </Select>
@@ -289,11 +311,11 @@ const AdminProductsTab = () => {
                   resetToFirstPage();
                 }}
               >
-                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Visibility" /></SelectTrigger>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder={t("admin_products.visibility_filter")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Visibility</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="all">{t("admin_products.all_visibility")}</SelectItem>
+                  <SelectItem value="published">{t("product_status.published")}</SelectItem>
+                  <SelectItem value="draft">{t("product_status.draft")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -303,12 +325,12 @@ const AdminProductsTab = () => {
                   resetToFirstPage();
                 }}
               >
-                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Stock Status" /></SelectTrigger>
+                <SelectTrigger className="w-[160px]"><SelectValue placeholder={t("admin_products.stock_filter")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="in-stock">In Stock</SelectItem>
-                  <SelectItem value="low-stock">Low Stock</SelectItem>
-                  <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                  <SelectItem value="all">{t("admin_products.all_statuses")}</SelectItem>
+                  <SelectItem value="in-stock">{t("product_status.in_stock")}</SelectItem>
+                  <SelectItem value="low-stock">{t("product_status.low_stock")}</SelectItem>
+                  <SelectItem value="out-of-stock">{t("product_status.out_of_stock")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -319,17 +341,17 @@ const AdminProductsTab = () => {
                 }}
               >
                 <SelectTrigger className="w-[190px]">
-                  <div className="flex items-center gap-2"><ArrowUpDown className="w-3.5 h-3.5" /><SelectValue placeholder="Sort by" /></div>
+                  <div className="flex items-center gap-2"><ArrowUpDown className="w-3.5 h-3.5" /><SelectValue placeholder={t("orders.sort_by")} /></div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                  <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                  <SelectItem value="price-desc">Price (High-Low)</SelectItem>
-                  <SelectItem value="price-asc">Price (Low-High)</SelectItem>
-                  <SelectItem value="stock-desc">Stock (High-Low)</SelectItem>
-                  <SelectItem value="stock-asc">Stock (Low-High)</SelectItem>
-                  <SelectItem value="category-asc">Category (A-Z)</SelectItem>
-                  <SelectItem value="category-desc">Category (Z-A)</SelectItem>
+                  <SelectItem value="name-asc">{t("admin_products.sort_name_asc")}</SelectItem>
+                  <SelectItem value="name-desc">{t("admin_products.sort_name_desc")}</SelectItem>
+                  <SelectItem value="price-desc">{t("admin_products.sort_price_high")}</SelectItem>
+                  <SelectItem value="price-asc">{t("admin_products.sort_price_low")}</SelectItem>
+                  <SelectItem value="stock-desc">{t("admin_products.sort_stock_high")}</SelectItem>
+                  <SelectItem value="stock-asc">{t("admin_products.sort_stock_low")}</SelectItem>
+                  <SelectItem value="category-asc">{t("admin_products.sort_category_asc")}</SelectItem>
+                  <SelectItem value="category-desc">{t("admin_products.sort_category_desc")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -340,12 +362,12 @@ const AdminProductsTab = () => {
                 }}
               >
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Per page" />
+                  <SelectValue placeholder={t("admin_products.per_page_placeholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {ADMIN_PRODUCTS_PAGE_SIZE_OPTIONS.map((size) => (
                     <SelectItem key={size} value={String(size)}>
-                      {size} per page
+                      {t("admin_products.per_page", { count: size })}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -359,7 +381,7 @@ const AdminProductsTab = () => {
                       ? "bg-primary text-primary-foreground"
                       : "bg-background text-muted-foreground hover:text-foreground"
                   }`}
-                  aria-label="Table view"
+                  aria-label={t("admin_products.table_view")}
                 >
                   <TableIcon className="h-4 w-4" />
                 </button>
@@ -371,7 +393,7 @@ const AdminProductsTab = () => {
                       ? "bg-primary text-primary-foreground"
                       : "bg-background text-muted-foreground hover:text-foreground"
                   }`}
-                  aria-label="Grid view"
+                  aria-label={t("admin_products.grid_view")}
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </button>
@@ -387,20 +409,27 @@ const AdminProductsTab = () => {
             onClearSelection={() => setSelectedIds(new Set())}
             disabled={bulkLoading}
             actions={[
-              { label: bulkLoading ? "Updating..." : "Publish", onClick: () => void bulkPublish(true) },
-              { label: bulkLoading ? "Updating..." : "Unpublish", variant: "outline", onClick: () => void bulkPublish(false) },
+              {
+                label: bulkLoading ? t("admin_products.updating") : t("admin_products.publish"),
+                onClick: () => void bulkPublish(true),
+              },
+              {
+                label: bulkLoading ? t("admin_products.updating") : t("admin_products.unpublish"),
+                variant: "outline",
+                onClick: () => void bulkPublish(false),
+              },
             ]}
           />
 
           {loading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Loading products...</span>
+              <span>{t("admin_products.loading")}</span>
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="font-medium">No products found</p>
-              <p className="text-sm mt-1">Try adjusting your filters or search term.</p>
+              <p className="font-medium">{t("admin_products.no_results")}</p>
+              <p className="text-sm mt-1">{t("admin_products.no_results_hint")}</p>
             </div>
           ) : (
             <>
@@ -420,20 +449,12 @@ const AdminProductsTab = () => {
                           }
                         />
                       </TableHead>
-                      {["Product", "Category", "Price", "Stock", "Status", "Published", "Publish", "Edit", "Lock"].map((h) => (
+                      {PRODUCT_COLUMNS.map((column) => (
                         <TableHead
-                          key={h}
-                          className={`font-semibold text-xs uppercase tracking-wider ${
-                            h === "Lock"
-                              ? "w-12 text-center"
-                              : h === "Publish"
-                                ? "w-28 text-left"
-                                : h === "Edit"
-                                  ? "w-20 text-left"
-                                  : ""
-                          }`}
+                          key={column.id}
+                          className={`font-semibold text-xs uppercase tracking-wider ${column.className}`}
                         >
-                          {h}
+                          {t(column.labelKey)}
                         </TableHead>
                       ))}
                     </TableRow>
@@ -448,10 +469,10 @@ const AdminProductsTab = () => {
                         <TableCell className="text-muted-foreground">{p.category}</TableCell>
                         <TableCell className="font-semibold">{p.priceDisplay}</TableCell>
                         <TableCell>{p.stock}</TableCell>
-                        <TableCell><Badge variant="outline" className={stockColor(p.status)}>{p.status}</Badge></TableCell>
+                        <TableCell><Badge variant="outline" className={stockColor(p.status)}>{translateProductStatus(p.status, t)}</Badge></TableCell>
                         <TableCell>
                           <Badge variant="outline" className={publishedColor(p.published)}>
-                            {p.published ? "Published" : "Draft"}
+                            {p.published ? t("product_status.published") : t("product_status.draft")}
                           </Badge>
                         </TableCell>
                         <TableCell className="w-28 px-2 text-left">
@@ -461,7 +482,7 @@ const AdminProductsTab = () => {
                             className="text-primary hover:text-primary px-2"
                             onClick={() => void handleTogglePublished(p.id, !p.published)}
                           >
-                            {p.published ? "Unpublish" : "Publish"}
+                            {p.published ? t("admin_products.unpublish") : t("admin_products.publish")}
                           </Button>
                         </TableCell>
                         <TableCell className="w-20 px-2 text-left">
@@ -471,7 +492,7 @@ const AdminProductsTab = () => {
                             className="text-primary hover:text-primary px-2"
                             onClick={() => openEdit(p)}
                           >
-                            Edit
+                            {t("admin_products.edit")}
                           </Button>
                         </TableCell>
                         <TableCell className="w-12 px-2 text-center">
@@ -494,16 +515,18 @@ const AdminProductsTab = () => {
                             <div className="flex justify-between items-start gap-2">
                               <span className="font-medium">{p.name}</span>
                               <div className="flex flex-col items-end gap-1">
-                                <Badge variant="outline" className={stockColor(p.status)}>{p.status}</Badge>
+                                <Badge variant="outline" className={stockColor(p.status)}>{translateProductStatus(p.status, t)}</Badge>
                                 <Badge variant="outline" className={publishedColor(p.published)}>
-                                  {p.published ? "Published" : "Draft"}
+                                  {p.published ? t("product_status.published") : t("product_status.draft")}
                                 </Badge>
                               </div>
                             </div>
                             <p className="text-sm text-muted-foreground">{p.category}</p>
                             <div className="flex justify-between items-center">
                               <span className="font-semibold">{p.priceDisplay}</span>
-                              <span className="text-sm text-muted-foreground">{p.stock} in stock</span>
+                              <span className="text-sm text-muted-foreground">
+                                {t("admin_products.in_stock_count", { count: p.stock })}
+                              </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Button
@@ -512,10 +535,10 @@ const AdminProductsTab = () => {
                                 className="text-primary px-2"
                                 onClick={() => void handleTogglePublished(p.id, !p.published)}
                               >
-                                {p.published ? "Unpublish" : "Publish"}
+                                {p.published ? t("admin_products.unpublish") : t("admin_products.publish")}
                               </Button>
                               <Button variant="ghost" size="sm" className="text-primary px-2" onClick={() => openEdit(p)}>
-                                Edit
+                                {t("admin_products.edit")}
                               </Button>
                               <div className="ml-auto">
                                 <ProductSyncLockButton

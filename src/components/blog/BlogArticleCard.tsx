@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock } from "lucide-react";
 import type { BlogArticle } from "@/data/blogArticles";
+import { formatDate } from "@/lib/i18n/format";
 
 interface Props {
   article: BlogArticle;
@@ -40,7 +41,7 @@ const BlogArticleCard = ({ article, layout, onClick }: Props) => {
             <span>{article.author}</span>
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {new Date(article.date).toLocaleDateString()}
+              {formatDate(article.date)}
             </span>
           </div>
         </div>
@@ -74,7 +75,7 @@ const BlogArticleCard = ({ article, layout, onClick }: Props) => {
           </span>
           <span className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
-            {new Date(article.date).toLocaleDateString()}
+            {formatDate(article.date)}
           </span>
         </div>
         <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">

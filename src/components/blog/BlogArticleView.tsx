@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User } from "lucide-react";
 import type { BlogArticle } from "@/data/blogArticles";
+import { formatDate } from "@/lib/i18n/format";
 
 interface Props {
   article: BlogArticle;
@@ -89,7 +90,7 @@ const BlogArticleView = ({ article }: Props) => {
           </span>
           <span className="text-sm text-muted-foreground font-body flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" />
-            {new Date(article.date).toLocaleDateString()}
+            {formatDate(article.date)}
           </span>
           <span className="text-sm text-muted-foreground font-body flex items-center gap-1">
             <User className="h-3.5 w-3.5" /> {article.author}

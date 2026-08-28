@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useLanguage, type TranslateVars } from "@/context/LanguageContext";
+import { formatDateTime } from "@/lib/i18n/format";
 
 interface CsvProduct {
   name: string;
@@ -20,10 +22,16 @@ interface CsvProduct {
   status: string;
 }
 
+interface ImportError {
+  row: number;
+  messageKey: string;
+  params?: TranslateVars;
+}
+
 interface ImportResult {
   total: number;
   valid: CsvProduct[];
-  errors: { row: number; message: string }[];
+  errors: ImportError[];
 }
 
 const EXPECTED_HEADERS = ["name", "description", "category", "price", "stock", "status"];
@@ -66,12 +74,24 @@ function parseCsvLine(line: string): string[] {
 
 function parseCsv(text: string): ImportResult {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return { total: 0, valid: [], errors: [{ row: 0, message: "File is empty or has no data rows" }] };
+  if (lines.length < 2) {
+    return { total: 0, valid: [], errors: [{ row: 0, messageKey: "management.err_empty" }] };
+  }
 
   const headers = parseCsvLine(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z]/g, ""));
   const missingHeaders = EXPECTED_HEADERS.filter((h) => !headers.includes(h));
   if (missingHeaders.length > 0) {
-    return { total: 0, valid: [], errors: [{ row: 1, message: `Missing columns: ${missingHeaders.join(", ")}` }] };
+    return {
+      total: 0,
+      valid: [],
+      errors: [
+        {
+          row: 1,
+          messageKey: "management.err_missing_columns",
+          params: { columns: missingHeaders.join(", ") },
+        },
+      ],
+    };
   }
 
   const nameIdx = headers.indexOf("name");
@@ -82,7 +102,7 @@ function parseCsv(text: string): ImportResult {
   const statusIdx = headers.indexOf("status");
 
   const valid: CsvProduct[] = [];
-  const errors: { row: number; message: string }[] = [];
+  const errors: ImportError[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const cols = parseCsvLine(lines[i]);
@@ -94,11 +114,28 @@ function parseCsv(text: string): ImportResult {
     const stockStr = cols[stockIdx] || "";
     const status = cols[statusIdx] || "";
 
-    if (!name) { errors.push({ row: rowNum, message: "Missing product name" }); continue; }
+    if (!name) {
+      errors.push({ row: rowNum, messageKey: "management.err_missing_name" });
+      continue;
+    }
     const price = parseFloat(priceStr);
-    if (isNaN(price) || price < 0) { errors.push({ row: rowNum, message: `Invalid price "${priceStr}" for "${name}"` }); continue; }
+    if (isNaN(price) || price < 0) {
+      errors.push({
+        row: rowNum,
+        messageKey: "management.err_invalid_price",
+        params: { value: priceStr, name },
+      });
+      continue;
+    }
     const stock = parseInt(stockStr, 10);
-    if (isNaN(stock) || stock < 0) { errors.push({ row: rowNum, message: `Invalid stock "${stockStr}" for "${name}"` }); continue; }
+    if (isNaN(stock) || stock < 0) {
+      errors.push({
+        row: rowNum,
+        messageKey: "management.err_invalid_stock",
+        params: { value: stockStr, name },
+      });
+      continue;
+    }
 
     valid.push({ name, description, category, price, stock, status: status || "In Stock" });
   }
@@ -116,6 +153,7 @@ function productsToCsv(products: typeof currentProducts): string {
 }
 
 const AdminManagementTab = () => {
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -130,7 +168,7 @@ const AdminManagementTab = () => {
     a.download = `products_export_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(`Exported ${currentProducts.length} products`);
+    toast.success(t("management.toast_exported", { count: currentProducts.length }));
   };
 
   const handleExportTemplate = () => {
@@ -142,14 +180,14 @@ const AdminManagementTab = () => {
     a.download = "product_import_template.csv";
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Template downloaded");
+    toast.success(t("management.toast_template"));
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.name.endsWith(".csv")) {
-      toast.error("Please upload a .csv file");
+      toast.error(t("management.toast_not_csv"));
       return;
     }
     const reader = new FileReader();
@@ -166,10 +204,10 @@ const AdminManagementTab = () => {
   const confirmImport = () => {
     if (!importResult) return;
     setImportHistory((prev) => [
-      { date: new Date().toLocaleString(), total: importResult.total, valid: importResult.valid.length, errors: importResult.errors.length },
+      { date: formatDateTime(new Date()), total: importResult.total, valid: importResult.valid.length, errors: importResult.errors.length },
       ...prev,
     ]);
-    toast.success(`Imported ${importResult.valid.length} products successfully`);
+    toast.success(t("management.toast_imported", { count: importResult.valid.length }));
     setPreviewOpen(false);
     setImportResult(null);
   };
@@ -183,10 +221,10 @@ const AdminManagementTab = () => {
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
               <Download className="w-6 h-6 text-primary" />
             </div>
-            <h3 className="font-display font-semibold">Export Products</h3>
-            <p className="text-sm text-muted-foreground">Download all products as a CSV file</p>
+            <h3 className="font-display font-semibold">{t("management.export_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("management.export_desc")}</p>
             <Button onClick={handleExport} className="w-full mt-2">
-              <Download className="w-4 h-4 mr-2" /> Export CSV
+              <Download className="w-4 h-4 mr-2" /> {t("management.export_button")}
             </Button>
           </CardContent>
         </Card>
@@ -196,11 +234,11 @@ const AdminManagementTab = () => {
             <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
               <Upload className="w-6 h-6 text-green-600" />
             </div>
-            <h3 className="font-display font-semibold">Import Products</h3>
-            <p className="text-sm text-muted-foreground">Upload a CSV file to add or update products</p>
+            <h3 className="font-display font-semibold">{t("management.import_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("management.import_desc")}</p>
             <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleFileSelect} />
             <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="w-full mt-2">
-              <Upload className="w-4 h-4 mr-2" /> Upload CSV
+              <Upload className="w-4 h-4 mr-2" /> {t("management.import_button")}
             </Button>
           </CardContent>
         </Card>
@@ -210,10 +248,10 @@ const AdminManagementTab = () => {
             <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
               <FileSpreadsheet className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h3 className="font-display font-semibold">Download Template</h3>
-            <p className="text-sm text-muted-foreground">Get a blank CSV template with the correct format</p>
+            <h3 className="font-display font-semibold">{t("management.template_title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("management.template_desc")}</p>
             <Button onClick={handleExportTemplate} variant="secondary" className="w-full mt-2">
-              <FileSpreadsheet className="w-4 h-4 mr-2" /> Get Template
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> {t("management.template_button")}
             </Button>
           </CardContent>
         </Card>
@@ -222,17 +260,18 @@ const AdminManagementTab = () => {
       {/* Format info */}
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="font-display text-lg">CSV Format</CardTitle>
+          <CardTitle className="font-display text-lg">{t("management.csv_format")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">Your CSV must include these columns:</p>
+          <p className="text-sm text-muted-foreground mb-3">{t("management.csv_columns")}</p>
           <div className="flex flex-wrap gap-2">
             {EXPECTED_HEADERS.map((h) => (
               <Badge key={h} variant="outline" className="font-mono text-xs">{h}</Badge>
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            Status values: <span className="font-mono">In Stock</span>, <span className="font-mono">Low Stock</span>, <span className="font-mono">Out of Stock</span>
+            {t("management.status_values")}{" "}
+            <span className="font-mono">In Stock</span>, <span className="font-mono">Low Stock</span>, <span className="font-mono">Out of Stock</span>
           </p>
         </CardContent>
       </Card>
@@ -241,16 +280,16 @@ const AdminManagementTab = () => {
       {importHistory.length > 0 && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="font-display text-lg">Import History</CardTitle>
+            <CardTitle className="font-display text-lg">{t("management.import_history")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Total Rows</TableHead>
-                  <TableHead>Imported</TableHead>
-                  <TableHead>Errors</TableHead>
+                  <TableHead>{t("management.col_date")}</TableHead>
+                  <TableHead>{t("management.col_total_rows")}</TableHead>
+                  <TableHead>{t("management.col_imported")}</TableHead>
+                  <TableHead>{t("management.col_errors")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -280,19 +319,19 @@ const AdminManagementTab = () => {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="font-display">Import Preview</DialogTitle>
+            <DialogTitle className="font-display">{t("management.preview_title")}</DialogTitle>
           </DialogHeader>
           {importResult && (
             <div className="space-y-4">
               <div className="flex gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <span>{importResult.valid.length} valid</span>
+                  <span>{t("management.valid_count", { count: importResult.valid.length })}</span>
                 </div>
                 {importResult.errors.length > 0 && (
                   <div className="flex items-center gap-2 text-sm">
                     <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                    <span>{importResult.errors.length} errors</span>
+                    <span>{t("management.error_count", { count: importResult.errors.length })}</span>
                   </div>
                 )}
               </div>
@@ -300,10 +339,17 @@ const AdminManagementTab = () => {
               {importResult.errors.length > 0 && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 space-y-1">
                   {importResult.errors.slice(0, 5).map((err, i) => (
-                    <p key={i} className="text-xs text-destructive">Row {err.row}: {err.message}</p>
+                    <p key={i} className="text-xs text-destructive">
+                      {t("management.row_error", {
+                        row: err.row,
+                        message: t(err.messageKey, err.params),
+                      })}
+                    </p>
                   ))}
                   {importResult.errors.length > 5 && (
-                    <p className="text-xs text-muted-foreground">...and {importResult.errors.length - 5} more</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("management.and_more", { count: importResult.errors.length - 5 })}
+                    </p>
                   )}
                 </div>
               )}
@@ -315,10 +361,10 @@ const AdminManagementTab = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Stock</TableHead>
+                        <TableHead>{t("management.col_name")}</TableHead>
+                        <TableHead>{t("management.col_category")}</TableHead>
+                        <TableHead>{t("management.col_price")}</TableHead>
+                        <TableHead>{t("management.col_stock")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -336,9 +382,9 @@ const AdminManagementTab = () => {
               )}
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setPreviewOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setPreviewOpen(false)}>{t("common.cancel")}</Button>
                 <Button onClick={confirmImport} disabled={importResult.valid.length === 0}>
-                  Import {importResult.valid.length} Products
+                  {t("management.import_confirm", { count: importResult.valid.length })}
                 </Button>
               </div>
             </div>

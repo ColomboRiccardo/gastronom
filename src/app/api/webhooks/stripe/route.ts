@@ -31,7 +31,10 @@ export async function POST(request: Request) {
 
     if (!result.ok) {
       console.error("Webhook fulfill failed:", result.error);
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      // Acknowledge terminal failures so Stripe stops retrying for three days.
+      if (!result.terminal) {
+        return NextResponse.json({ error: result.error }, { status: 500 });
+      }
     }
   }
 

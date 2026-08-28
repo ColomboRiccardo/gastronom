@@ -16,59 +16,59 @@ import {
 import DashboardChart from "./DashboardChart";
 import { formatDashboardCurrency } from "@/lib/orders/dashboard-metrics";
 import { type AdminDashboardData } from "@/lib/orders/dashboard-types";
+import { useLanguage } from "@/context/LanguageContext";
+import { formatDateTime } from "@/lib/i18n/format";
+import { translateOrderStatus } from "@/lib/i18n/status";
 
 const COLLAPSED_COUNT = 6;
-
-function formatChange(percent: number | null): { label: string; up: boolean; isNew: boolean } {
-  if (percent === null) {
-    return { label: "No prior data", up: true, isNew: true };
-  }
-  const up = percent >= 0;
-  return {
-    label: `${up ? "+" : ""}${percent.toFixed(1)}%`,
-    up,
-    isNew: false,
-  };
-}
 
 interface AdminDashboardTabProps {
   data: AdminDashboardData;
 }
 
 const AdminDashboardTab = ({ data }: AdminDashboardTabProps) => {
+  const { t } = useLanguage();
   const [activityExpanded, setActivityExpanded] = useState(false);
   const [productsExpanded, setProductsExpanded] = useState(false);
 
   const { stats, recentActivity, topProducts, orders } = data;
 
+  const formatChange = (percent: number | null) => {
+    if (percent === null) {
+      return { label: t("dashboard.no_prior_data"), up: true, isNew: true };
+    }
+    const up = percent >= 0;
+    return { label: `${up ? "+" : ""}${percent.toFixed(1)}%`, up, isNew: false };
+  };
+
   const statCards = [
     {
-      label: "Revenue This Month",
+      label: t("dashboard.revenue_this_month"),
       value: formatDashboardCurrency(stats.revenueThisMonth),
       change: formatChange(stats.revenueChangePercent),
       icon: DollarSign,
-      subtitle: "vs last month",
+      subtitle: t("dashboard.vs_last_month"),
     },
     {
-      label: "Orders This Month",
+      label: t("dashboard.orders_this_month"),
       value: String(stats.ordersThisMonth),
       change: formatChange(stats.ordersChangePercent),
       icon: ShoppingCart,
-      subtitle: "vs last month",
+      subtitle: t("dashboard.vs_last_month"),
     },
     {
-      label: "Active Customers",
+      label: t("dashboard.active_customers"),
       value: String(stats.activeCustomers),
       change: formatChange(stats.customersChangePercent),
       icon: Users,
-      subtitle: "last 30 days vs prior 30",
+      subtitle: t("dashboard.last_30_days"),
     },
     {
-      label: "Avg. Order Value",
+      label: t("dashboard.avg_order_value"),
       value: formatDashboardCurrency(stats.avgOrderValue),
       change: formatChange(stats.avgOrderChangePercent),
       icon: TrendingUp,
-      subtitle: "this month vs last",
+      subtitle: t("dashboard.this_month_vs_last"),
     },
   ];
 
@@ -122,23 +122,31 @@ const AdminDashboardTab = ({ data }: AdminDashboardTabProps) => {
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="font-display text-xl">Recent Activity</CardTitle>
+            <CardTitle className="font-display text-xl">{t("dashboard.recent_activity")}</CardTitle>
           </CardHeader>
           <CardContent>
             {recentActivity.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No recent activity yet.</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.no_recent_activity")}</p>
             ) : (
               <>
                 <div className="space-y-4">
-                  {visibleActivity.map((item, i) => (
-                    <div key={`${item.type}-${item.event}-${i}`} className="flex gap-3 items-start">
-                      <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
-                      <div>
-                        <p className="text-sm text-foreground">{item.event}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{item.timeLabel}</p>
+                  {visibleActivity.map((item, i) => {
+                    const params =
+                      item.type === "status"
+                        ? { ...item.params, status: translateOrderStatus(String(item.params.status), t) }
+                        : item.params;
+                    return (
+                      <div key={`${item.type}-${item.messageKey}-${i}`} className="flex gap-3 items-start">
+                        <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
+                        <div>
+                          <p className="text-sm text-foreground">{t(item.messageKey, params)}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {item.at ? formatDateTime(item.at) : t("activity.current_inventory")}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {recentActivity.length > COLLAPSED_COUNT && (
                   <Button
@@ -149,11 +157,12 @@ const AdminDashboardTab = ({ data }: AdminDashboardTabProps) => {
                   >
                     {activityExpanded ? (
                       <>
-                        <ChevronUp className="w-4 h-4" /> Show Less
+                        <ChevronUp className="w-4 h-4" /> {t("dashboard.show_less")}
                       </>
                     ) : (
                       <>
-                        <ChevronDown className="w-4 h-4" /> Show All ({recentActivity.length})
+                        <ChevronDown className="w-4 h-4" />{" "}
+                        {t("dashboard.show_all", { count: recentActivity.length })}
                       </>
                     )}
                   </Button>
@@ -165,11 +174,11 @@ const AdminDashboardTab = ({ data }: AdminDashboardTabProps) => {
 
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="font-display text-xl">Top Products</CardTitle>
+            <CardTitle className="font-display text-xl">{t("dashboard.top_products")}</CardTitle>
           </CardHeader>
           <CardContent>
             {topProducts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No sales data yet.</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.no_sales_data")}</p>
             ) : (
               <>
                 <div className="space-y-3">
@@ -190,7 +199,9 @@ const AdminDashboardTab = ({ data }: AdminDashboardTabProps) => {
                         <p className="text-sm font-semibold">
                           {formatDashboardCurrency(product.revenue)}
                         </p>
-                        <p className="text-xs text-muted-foreground">{product.sold} sold</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("dashboard.sold", { count: product.sold })}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -204,11 +215,12 @@ const AdminDashboardTab = ({ data }: AdminDashboardTabProps) => {
                   >
                     {productsExpanded ? (
                       <>
-                        <ChevronUp className="w-4 h-4" /> Show Less
+                        <ChevronUp className="w-4 h-4" /> {t("dashboard.show_less")}
                       </>
                     ) : (
                       <>
-                        <ChevronDown className="w-4 h-4" /> Show All ({topProducts.length})
+                        <ChevronDown className="w-4 h-4" />{" "}
+                        {t("dashboard.show_all", { count: topProducts.length })}
                       </>
                     )}
                   </Button>

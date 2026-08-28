@@ -1,4 +1,5 @@
 import type { OrderDetail, OrderItem } from "@/components/account/OrderDetailModal";
+import { formatDate } from "@/lib/i18n/format";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapOrderItem(item: any): OrderItem {
@@ -28,18 +29,17 @@ export function transformOrder(row: any): OrderDetail {
 
   return {
     id: `ORD-${row.id}`,
-    date: new Date(row.created_at).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
+    date: formatDate(row.created_at),
+    createdAt: row.created_at,
     customer: profile?.name || profile?.email || undefined,
     customerEmail: profile?.email || undefined,
     customerPhone: profile?.phone || undefined,
     items,
     modificationProposal: mapProposalItems(row.modification_proposal),
+    modificationOriginalItems: mapProposalItems(row.modification_original_items),
     modificationMessage: row.modification_message || undefined,
     modificationSentAt: row.modification_sent_at || undefined,
+    modificationState: row.modification_state || undefined,
     total: `€${Number(row.total).toFixed(2)}`,
     status: row.status,
     shippingAddress: row.shipping_address || undefined,

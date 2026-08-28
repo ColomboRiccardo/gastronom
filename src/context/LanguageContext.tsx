@@ -1,9 +1,17 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { translations, type Language } from "@/lib/i18n/translations";
+import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react";
+import { type Language } from "@/lib/i18n/translations";
+import {
+  createTranslator,
+  isLanguage,
+  type Translate,
+  type TranslateVars,
+} from "@/lib/i18n/translate";
 
-export type { Language };
+export type { Language, TranslateVars };
+
+const STORAGE_KEY = "app-language";
 
 interface LanguageInfo {
   code: Language;
@@ -21,7 +29,7 @@ export const LANGUAGES: LanguageInfo[] = [
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: Translate;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -30,20 +38,18 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>("en");
 
   useEffect(() => {
-    const saved = localStorage.getItem("app-language");
-    if (saved && ["en", "fr", "it", "ru"].includes(saved)) {
-      setLanguageState(saved as Language);
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (isLanguage(saved)) {
+      setLanguageState(saved);
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("app-language", lang);
+    localStorage.setItem(STORAGE_KEY, lang);
   };
 
-  const t = (key: string): string => {
-    return translations[language]?.[key] || translations.en[key] || key;
-  };
+  const t = useMemo(() => createTranslator(language), [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
@@ -57,3 +63,13 @@ export const useLanguage = () => {
   if (!ctx) throw new Error("useLanguage must be used within LanguageProvider");
   return ctx;
 };
+
+/**
+ * Reads the stored language outside React, for code paths that need to send it
+ * to the server (checkout) before any provider is in scope.
+ */
+export function readStoredLanguage(): Language {
+  if (typeof window === "undefined") return "en";
+  const saved = window.localStorage.getItem(STORAGE_KEY);
+  return isLanguage(saved) ? saved : "en";
+}

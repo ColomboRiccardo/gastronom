@@ -78,6 +78,7 @@ export async function PATCH(
     if (ctx) {
       const emailResult = await sendOrderStatusUpdateEmail({
         to: ctx.customerEmail,
+        language: ctx.language,
         customerName: ctx.customerName,
         orderId: ctx.orderId,
         status,

@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatLockedFields, hasEditorLocks } from "@/lib/products/editor-locks";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ProductSyncLockButtonProps {
   lockedFields: string[];
@@ -21,6 +22,7 @@ const ProductSyncLockButton = ({
   onUnlock,
   disabled = false,
 }: ProductSyncLockButtonProps) => {
+  const { t } = useLanguage();
   const locked = hasEditorLocks(lockedFields);
 
   return (
@@ -37,7 +39,7 @@ const ProductSyncLockButton = ({
             }`}
             disabled={!locked || disabled}
             onClick={onUnlock}
-            aria-label={locked ? "Unlock sync-protected fields" : "No sync-protected fields"}
+            aria-label={locked ? t("lock.unlock_aria") : t("lock.none_aria")}
           >
             {locked ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
           </Button>
@@ -45,12 +47,12 @@ const ProductSyncLockButton = ({
         <TooltipContent side="top" className="max-w-xs text-xs">
           {locked ? (
             <>
-              <p className="font-semibold mb-1">Sync-protected fields</p>
+              <p className="font-semibold mb-1">{t("lock.title")}</p>
               <p>{formatLockedFields(lockedFields)}</p>
-              <p className="mt-1 text-muted-foreground">Click to unlock all and allow Lackmann sync to update them.</p>
+              <p className="mt-1 text-muted-foreground">{t("lock.click_to_unlock")}</p>
             </>
           ) : (
-            <p>All fields follow Lackmann sync. Edits or publish changes will lock affected fields.</p>
+            <p>{t("lock.all_synced")}</p>
           )}
         </TooltipContent>
       </Tooltip>

@@ -1,12 +1,16 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { toLanguage, type Language } from "@/lib/i18n/translate";
 
 import type { OrderEmailItem } from "./types";
 
 export interface OrderNotificationContext {
   orderId: number;
   userId: string;
+  /** Language the order was placed in, not the language of whoever triggered this. */
+  language: Language;
   customerEmail: string;
   customerName?: string;
+  customerPhone?: string | null;
   items: OrderEmailItem[];
   total: number;
   shippingAddress?: string | null;
@@ -29,10 +33,11 @@ export async function loadOrderNotificationContext(
       id,
       user_id,
       total,
+      language,
       shipping_address,
       payment_method,
       order_items ( product_name, qty, unit_price ),
-      profiles ( name, email )
+      profiles ( name, email, phone )
     `)
     .eq("id", orderId)
     .single();
@@ -60,8 +65,10 @@ export async function loadOrderNotificationContext(
   return {
     orderId: order.id as number,
     userId: order.user_id as string,
+    language: toLanguage(order.language),
     customerEmail,
     customerName: profile?.name ?? undefined,
+    customerPhone: profile?.phone ?? null,
     items,
     total: Number(order.total),
     shippingAddress: order.shipping_address,

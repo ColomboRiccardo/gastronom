@@ -16,19 +16,20 @@ import {
   type DashboardMetric,
   type DashboardOrderRow,
 } from "@/lib/orders/dashboard-types";
+import { useLanguage } from "@/context/LanguageContext";
 
-const metricLabels: Record<DashboardMetric, string> = {
-  revenue: "Revenue",
-  orders: "Orders",
-  customers: "Customers",
-  average: "Avg. Order",
+const metricKeys: Record<DashboardMetric, string> = {
+  revenue: "dashboard.revenue",
+  orders: "dashboard.orders",
+  customers: "dashboard.customers",
+  average: "dashboard.avg_order",
 };
 
-const granularityLabels: Record<DashboardGranularity, string> = {
-  day: "Day",
-  week: "Week",
-  month: "Month",
-  year: "Year",
+const granularityKeys: Record<DashboardGranularity, string> = {
+  day: "dashboard.day",
+  week: "dashboard.week",
+  month: "dashboard.month",
+  year: "dashboard.year",
 };
 
 const formatValue = (value: number, metric: DashboardMetric) => {
@@ -44,6 +45,7 @@ interface DashboardChartProps {
 }
 
 const DashboardChart = ({ orders, defaultMetric = "revenue" }: DashboardChartProps) => {
+  const { t } = useLanguage();
   const [metric, setMetric] = useState<DashboardMetric>(defaultMetric);
   const [granularity, setGranularity] = useState<DashboardGranularity>("month");
 
@@ -54,7 +56,7 @@ const DashboardChart = ({ orders, defaultMetric = "revenue" }: DashboardChartPro
 
   const chartConfig: ChartConfig = {
     value: {
-      label: metricLabels[metric],
+      label: t(metricKeys[metric]),
       color: "hsl(var(--primary))",
     },
   };
@@ -63,9 +65,9 @@ const DashboardChart = ({ orders, defaultMetric = "revenue" }: DashboardChartPro
     <Card className="border-border">
       <CardHeader className="pb-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <CardTitle className="font-display text-lg">{metricLabels[metric]}</CardTitle>
+          <CardTitle className="font-display text-lg">{t(metricKeys[metric])}</CardTitle>
           <div className="flex gap-1">
-            {(Object.keys(granularityLabels) as DashboardGranularity[]).map((g) => (
+            {(Object.keys(granularityKeys) as DashboardGranularity[]).map((g) => (
               <Button
                 key={g}
                 variant={granularity === g ? "default" : "ghost"}
@@ -73,13 +75,13 @@ const DashboardChart = ({ orders, defaultMetric = "revenue" }: DashboardChartPro
                 className="text-xs h-7 px-2"
                 onClick={() => setGranularity(g)}
               >
-                {granularityLabels[g]}
+                {t(granularityKeys[g])}
               </Button>
             ))}
           </div>
         </div>
         <div className="flex gap-1 mt-1">
-          {(Object.keys(metricLabels) as DashboardMetric[]).map((m) => (
+          {(Object.keys(metricKeys) as DashboardMetric[]).map((m) => (
             <Button
               key={m}
               variant={metric === m ? "secondary" : "ghost"}
@@ -87,7 +89,7 @@ const DashboardChart = ({ orders, defaultMetric = "revenue" }: DashboardChartPro
               className="text-xs h-7 px-2"
               onClick={() => setMetric(m)}
             >
-              {metricLabels[m]}
+              {t(metricKeys[m])}
             </Button>
           ))}
         </div>
@@ -95,7 +97,7 @@ const DashboardChart = ({ orders, defaultMetric = "revenue" }: DashboardChartPro
       <CardContent className="pt-0">
         {orders.length === 0 ? (
           <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">
-            No order data yet
+            {t("dashboard.no_order_data")}
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[220px] w-full">

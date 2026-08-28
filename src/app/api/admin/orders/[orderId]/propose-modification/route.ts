@@ -8,6 +8,7 @@ import {
 } from "@/lib/emails/send-order-modification";
 import { type ProposeModificationPayload } from "@/lib/orders/types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { toLanguage } from "@/lib/i18n/translate";
 
 async function requireAdmin() {
   const user = await getAuthenticatedUser();
@@ -72,6 +73,7 @@ export async function POST(
       id,
       status,
       user_id,
+      language,
       order_items ( product_id, product_name, qty, unit_price ),
       profiles ( name, email, phone )
     `)
@@ -96,17 +98,21 @@ export async function POST(
     }),
   );
 
-  const proposedTotal = body.items.reduce((sum, item) => sum + item.qty * item.unit_price, 0);
   const sentAt = new Date().toISOString();
+  // The customer reads this, so it follows the order's language, not the admin's.
+  const language = toLanguage(order.language);
 
+  // The order keeps the items and total the customer actually paid for. The
+  // proposal only takes effect once it is accepted.
   const { error: updateError } = await supabase
     .from("orders")
     .update({
       status: "Modification",
-      total: proposedTotal,
       modification_proposal: body.items,
       modification_message: body.message?.trim() || null,
       modification_sent_at: sentAt,
+      modification_state: "pending",
+      modification_resolved_at: null,
     })
     .eq("id", orderId);
 
@@ -117,6 +123,7 @@ export async function POST(
 
   const emailResult = await sendOrderModificationEmail({
     to: customerEmail,
+    language,
     customerName: profile?.name ?? undefined,
     orderId,
     originalItems,
@@ -133,6 +140,7 @@ export async function POST(
 
   const whatsappMessage = buildWhatsAppModificationMessage({
     orderId,
+    language,
     customerName: profile?.name ?? undefined,
     proposedItems: body.items,
     message: body.message?.trim(),

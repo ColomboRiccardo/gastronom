@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatDate } from "@/lib/i18n/format";
 
 const AdminArticlesTab = () => {
   const { t } = useLanguage();
@@ -141,7 +142,7 @@ const AdminArticlesTab = () => {
                       {article.category}
                     </TableCell>
                     <TableCell className="font-body text-sm text-muted-foreground">
-                      {new Date(article.date).toLocaleDateString()}
+                      {formatDate(article.date)}
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={`inline-block w-2 h-2 rounded-full ${article.content ? "bg-green-500" : "bg-yellow-400"}`} />

@@ -42,7 +42,7 @@ const AboutSection = () => {
               </div>
               <div>
                 <h4 className="font-display text-lg font-semibold">{t("home.opening_hours")}</h4>
-                <p className="font-body text-sm text-primary-foreground/60">{SHOP.hours}</p>
+                <p className="font-body text-sm text-primary-foreground/60">{t("home.hours_value")}</p>
               </div>
             </div>
             <div className="flex flex-col items-center gap-3">

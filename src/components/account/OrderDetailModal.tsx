@@ -39,9 +39,12 @@ import {
   RefreshCw,
   Mail,
   MessageCircle,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatDateTime } from "@/lib/i18n/format";
+import { translateOrderStatus, translateShippingMethod } from "@/lib/i18n/status";
 
 /* ------------------------------------------------------------------ */
 /*  Shared types                                                       */
@@ -56,14 +59,20 @@ export interface OrderItem {
 
 export interface OrderDetail {
   id: string;
+  /** Display date, always DD/MM/YYYY. */
   date: string;
+  /** Raw ISO timestamp, used for sorting. */
+  createdAt?: string;
   customer?: string;
   customerEmail?: string;
   customerPhone?: string;
   items: OrderItem[];
   modificationProposal?: OrderItem[];
+  /** Lines the order held before an accepted proposal replaced them. */
+  modificationOriginalItems?: OrderItem[];
   modificationMessage?: string;
   modificationSentAt?: string;
+  modificationState?: "pending" | "accepted" | "declined";
   total: string;
   status: string;
   shippingAddress?: string;
@@ -88,9 +97,9 @@ interface Props {
   onProposeModification?: (
     orderId: string,
     items: OrderItem[],
-    newTotal: string,
     message: string,
   ) => Promise<{ ok: boolean; whatsappUrl?: string | null; error?: string }>;
+  onResolveModification?: (orderId: string, action: "accept" | "decline") => Promise<boolean>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -109,6 +118,7 @@ const statusMeta: Record<string, { icon: React.ElementType; color: string }> = {
 };
 
 function StatusPipeline({ current }: { current: string }) {
+  const { t } = useLanguage();
   const isCancelled = current === "Cancelled";
   const isModification = current === "Modification";
   const activeIdx = STATUSES.indexOf(current as (typeof STATUSES)[number]);
@@ -117,7 +127,7 @@ function StatusPipeline({ current }: { current: string }) {
     return (
       <div className="flex items-center gap-2 py-3 px-2 rounded-lg bg-destructive/5 border border-destructive/20">
         <AlertTriangle className="w-4 h-4 text-destructive" />
-        <span className="text-sm font-semibold text-destructive">Order Cancelled</span>
+        <span className="text-sm font-semibold text-destructive">{t("orders.cancelled_banner")}</span>
       </div>
     );
   }
@@ -127,7 +137,7 @@ function StatusPipeline({ current }: { current: string }) {
       <div className="flex items-center gap-2 py-3 px-2 rounded-lg bg-orange-50 border border-orange-200">
         <RefreshCw className="w-4 h-4 text-orange-600" />
         <span className="text-sm font-semibold text-orange-800">
-          Awaiting customer response to proposed changes
+          {t("orders.awaiting_response")}
         </span>
       </div>
     );
@@ -158,7 +168,7 @@ function StatusPipeline({ current }: { current: string }) {
                   reached ? "text-foreground" : "text-muted-foreground",
                 )}
               >
-                {s}
+                {translateOrderStatus(s, t)}
               </span>
             </div>
             {i < STATUSES.length - 1 && (
@@ -209,6 +219,7 @@ function AddProductPopover({
   products: ProductOption[];
   onAdd: (product: ProductOption) => void;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -223,14 +234,14 @@ function AddProductPopover({
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Plus className="w-3.5 h-3.5" />
-          Add Product
+          {t("admin_products.add")}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-2" align="start">
         <div className="relative mb-2">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search products..."
+            placeholder={t("admin_products.search_placeholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-8 text-sm"
@@ -238,7 +249,7 @@ function AddProductPopover({
         </div>
         <div className="max-h-48 overflow-y-auto space-y-0.5">
           {filtered.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-3">No products found</p>
+            <p className="text-xs text-muted-foreground text-center py-3">{t("admin_products.no_results")}</p>
           ) : (
             filtered.map((p) => (
               <button
@@ -273,6 +284,7 @@ const OrderDetailModal = ({
   onStatusChange,
   onDelete,
   onProposeModification,
+  onResolveModification,
 }: Props) => {
   const { t } = useLanguage();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -282,6 +294,7 @@ const OrderDetailModal = ({
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [sendingProposal, setSendingProposal] = useState(false);
+  const [resolvingProposal, setResolvingProposal] = useState(false);
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const [replaceOpenIndex, setReplaceOpenIndex] = useState<number | null>(null);
 
@@ -312,21 +325,18 @@ const OrderDetailModal = ({
 
   if (!order) return null;
 
-  const hasProposal = Boolean(order.modificationProposal?.length);
-  const displayItems =
-    !editingItems && order.status === "Modification" && hasProposal
-      ? order.modificationProposal!
-      : editingItems
-        ? localItems
-        : order.items;
+  const proposalPending =
+    order.modificationState === "pending" && Boolean(order.modificationProposal?.length);
+  const proposalAccepted =
+    order.modificationState === "accepted" && Boolean(order.modificationOriginalItems?.length);
 
+  // Items and total always come from the order itself, so they can never
+  // disagree. A pending proposal is shown alongside, never instead.
+  const displayItems = editingItems ? localItems : order.items;
   const displayTotal = editingItems ? calcTotal(localItems) : order.total;
 
   const startEditing = () => {
-    const base =
-      order.status === "Modification" && order.modificationProposal?.length
-        ? order.modificationProposal
-        : order.items;
+    const base = proposalPending ? order.modificationProposal! : order.items;
     setLocalItems(base.map((item) => ({ ...item })));
     setModificationMessage(order.modificationMessage ?? "");
     setWhatsappUrl(null);
@@ -340,15 +350,20 @@ const OrderDetailModal = ({
     setReplaceOpenIndex(null);
   };
 
+  const resolveProposal = async (action: "accept" | "decline") => {
+    if (!onResolveModification || resolvingProposal) return;
+    setResolvingProposal(true);
+    await onResolveModification(order.id, action);
+    setResolvingProposal(false);
+  };
+
   const sendProposal = async () => {
     if (!onProposeModification || localItems.length === 0) return;
 
     setSendingProposal(true);
-    const newTotal = calcTotal(localItems);
     const result = await onProposeModification(
       order.id,
       localItems,
-      newTotal,
       modificationMessage.trim(),
     );
     setSendingProposal(false);
@@ -435,7 +450,7 @@ const OrderDetailModal = ({
           <DialogTitle className="font-display text-xl flex flex-wrap items-center gap-2 pr-8">
             <span className="font-mono text-primary break-all">{order.id}</span>
             <Badge variant="outline" className={statusColor(order.status)}>
-              {order.status}
+              {translateOrderStatus(order.status, t)}
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -447,11 +462,11 @@ const OrderDetailModal = ({
 
         {order.status === "Modification" && order.modificationMessage && !editingItems && (
           <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-900">
-            <p className="text-xs font-semibold uppercase tracking-wider mb-1">Message to customer</p>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1">{t("orders.message_to_customer")}</p>
             <p>{order.modificationMessage}</p>
             {order.modificationSentAt && (
               <p className="text-xs text-orange-700 mt-1">
-                Sent {new Date(order.modificationSentAt).toLocaleString("en-GB")}
+                {t("orders.sent_at", { date: formatDateTime(order.modificationSentAt) })}
               </p>
             )}
           </div>
@@ -470,6 +485,22 @@ const OrderDetailModal = ({
               <p className="font-medium">{order.customer}</p>
             </div>
           )}
+          {order.customerPhone && (
+            <div>
+              <p className="text-muted-foreground text-xs">{t("profile.phone")}</p>
+              <a href={`tel:${order.customerPhone}`} className="font-medium text-primary hover:underline">
+                {order.customerPhone}
+              </a>
+            </div>
+          )}
+          {order.customerEmail && (
+            <div>
+              <p className="text-muted-foreground text-xs">{t("profile.email")}</p>
+              <a href={`mailto:${order.customerEmail}`} className="font-medium text-primary hover:underline break-all">
+                {order.customerEmail}
+              </a>
+            </div>
+          )}
           {order.paymentMethod && (
             <div>
               <p className="text-muted-foreground text-xs">{t("orders.payment")}</p>
@@ -480,7 +511,7 @@ const OrderDetailModal = ({
             <div>
               <p className="text-muted-foreground text-xs">{t("orders.shipping")}</p>
               <p className="font-medium">
-                {order.shippingMethod}
+                {translateShippingMethod(order.shippingMethod, t)}
                 {order.shippingCost ? ` · ${order.shippingCost}` : ""}
               </p>
             </div>
@@ -498,9 +529,7 @@ const OrderDetailModal = ({
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {order.status === "Modification" && hasProposal && !editingItems
-                ? t("orders.proposed_items")
-                : t("orders.items")}
+              {t("orders.items")}
               {editingItems && <span className="text-primary ml-1">({t("orders.editing")})</span>}
             </p>
             {isAdmin && !editingItems && order.status !== "Delivered" && order.status !== "Cancelled" && (
@@ -511,11 +540,11 @@ const OrderDetailModal = ({
             )}
           </div>
 
-          {order.status === "Modification" && hasProposal && !editingItems && (
+          {proposalAccepted && !editingItems && (
             <div className="mb-3 rounded-md border border-dashed border-border p-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t("orders.original_order")}</p>
               <div className="space-y-1">
-                {order.items.map((item, i) => (
+                {order.modificationOriginalItems!.map((item, i) => (
                   <div key={`orig-${item.name}-${i}`} className="flex justify-between text-sm text-muted-foreground">
                     <span>{item.name} ×{item.qty}</span>
                     <span>{item.price}</span>
@@ -545,7 +574,7 @@ const OrderDetailModal = ({
                         }}
                       >
                         <SelectTrigger className="h-8 flex-1 min-w-0 text-sm">
-                          <SelectValue placeholder="Select product..." />
+                          <SelectValue placeholder={t("orders.select_product")} />
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
                           {products.map((p) => (
@@ -570,7 +599,7 @@ const OrderDetailModal = ({
                           disabled={productsLoading}
                         >
                           <RefreshCw className="w-3 h-3 mr-1" />
-                          Replace
+                          {t("orders.replace")}
                         </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(i, -1)}>
                           <Minus className="w-3 h-3" />
@@ -606,10 +635,10 @@ const OrderDetailModal = ({
             <div className="mt-3 space-y-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                  Note to customer (optional)
+                  {t("orders.note_to_customer")}
                 </p>
                 <Textarea
-                  placeholder="e.g. Beluga caviar is out of stock, we suggest red salmon caviar instead."
+                  placeholder={t("orders.note_placeholder")}
                   value={modificationMessage}
                   onChange={(e) => setModificationMessage(e.target.value)}
                   rows={3}
@@ -626,7 +655,7 @@ const OrderDetailModal = ({
                   className="gap-1.5"
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  {sendingProposal ? "Sending..." : "Send proposal via email"}
+                  {sendingProposal ? t("orders.sending") : t("orders.send_proposal")}
                 </Button>
               </div>
             </div>
@@ -638,6 +667,50 @@ const OrderDetailModal = ({
           </div>
         </div>
 
+        {proposalPending && !editingItems && (
+          <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-orange-900 mb-2">
+              {t("orders.proposed_items")}
+            </p>
+            <div className="space-y-1">
+              {order.modificationProposal!.map((item, i) => (
+                <div key={`proposed-${item.name}-${i}`} className="flex justify-between text-sm text-orange-900">
+                  <span>{item.name} ×{item.qty}</span>
+                  <span>{item.price}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between items-center mt-2 pt-2 border-t border-orange-200 text-sm">
+              <span className="font-medium text-orange-900">{t("orders.proposed_total")}</span>
+              <span className="font-semibold text-orange-900">
+                {calcTotal(order.modificationProposal!)}
+              </span>
+            </div>
+
+            {isAdmin && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={resolvingProposal}
+                  onClick={() => void resolveProposal("accept")}
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  {t("orders.accept_proposal")}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={resolvingProposal}
+                  onClick={() => void resolveProposal("decline")}
+                >
+                  {t("orders.decline_proposal")}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {isAdmin && !editingItems && (
           <>
             <Separator />
@@ -648,16 +721,13 @@ const OrderDetailModal = ({
                   <SelectTrigger className="w-[180px]">
                     <div className="flex items-center gap-2">
                       <Edit className="w-3.5 h-3.5" />
-                      <SelectValue placeholder="Change status" />
+                      <SelectValue placeholder={t("orders.change_status")} />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Received">Received</SelectItem>
-                    <SelectItem value="Processing">Processing</SelectItem>
-                    <SelectItem value="Modification">Modification</SelectItem>
-                    <SelectItem value="Shipped">Shipped</SelectItem>
-                    <SelectItem value="Delivered">Delivered</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    {["Received", "Processing", "Modification", "Shipped", "Delivered", "Cancelled"].map((s) => (
+                      <SelectItem key={s} value={s}>{translateOrderStatus(s, t)}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
@@ -679,14 +749,14 @@ const OrderDetailModal = ({
                 <Button variant="outline" size="sm" className="gap-1.5" asChild>
                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="w-3.5 h-3.5" />
-                    Send same message on WhatsApp
+                    {t("orders.whatsapp_send")}
                   </a>
                 </Button>
               )}
 
               {order.status === "Modification" && order.customerPhone && !whatsappUrl && (
                 <p className="text-xs text-muted-foreground">
-                  Customer phone on file: {order.customerPhone}. Use &quot;Propose changes&quot; to generate a WhatsApp link after sending.
+                  {t("orders.phone_hint", { phone: order.customerPhone })}
                 </p>
               )}
             </div>

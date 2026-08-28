@@ -7,6 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import ProductSyncLockButton from "@/components/account/ProductSyncLockButton";
 import { hasEditorLocks } from "@/lib/products/editor-locks";
 import { type AdminProduct } from "@/lib/products/types";
+import { useLanguage } from "@/context/LanguageContext";
+import { translateProductStatus } from "@/lib/i18n/status";
 
 const stockColor = (status: string) => {
   switch (status) {
@@ -43,6 +45,7 @@ const AdminProductCard = ({
   onEdit,
   onUnlock,
 }: AdminProductCardProps) => {
+  const { t } = useLanguage();
   const locked = hasEditorLocks(product.editorLockedFields);
 
   return (
@@ -77,17 +80,17 @@ const AdminProductCard = ({
 
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 max-w-[50%]">
           <Badge variant="outline" className={`${stockColor(product.status)} text-xs`}>
-            {product.status}
+            {translateProductStatus(product.status, t)}
           </Badge>
           <Badge variant="outline" className={`${publishedColor(product.published)} text-xs`}>
-            {product.published ? "Published" : "Draft"}
+            {product.published ? t("product_status.published") : t("product_status.draft")}
           </Badge>
         </div>
 
         {locked && (
           <span className="absolute bottom-3 left-3 flex items-center gap-1 bg-amber-100/95 text-amber-800 text-xs font-medium font-body px-2 py-1 rounded-full border border-amber-200">
             <Lock className="h-3 w-3" />
-            Sync locked
+            {t("lock.badge")}
           </span>
         )}
       </div>
@@ -109,7 +112,9 @@ const AdminProductCard = ({
             <span className="font-display text-xl font-bold text-primary shrink-0">
               {product.priceDisplay}
             </span>
-            <span className="text-sm text-muted-foreground font-body">{product.stock} in stock</span>
+            <span className="text-sm text-muted-foreground font-body">
+              {t("admin_products.in_stock_count", { count: product.stock })}
+            </span>
           </div>
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <Button
@@ -118,7 +123,7 @@ const AdminProductCard = ({
               className="text-primary hover:text-primary px-2 h-8"
               onClick={onTogglePublished}
             >
-              {product.published ? "Unpublish" : "Publish"}
+              {product.published ? t("admin_products.unpublish") : t("admin_products.publish")}
             </Button>
             <Button
               variant="ghost"
@@ -126,7 +131,7 @@ const AdminProductCard = ({
               className="text-primary hover:text-primary px-2 h-8"
               onClick={onEdit}
             >
-              Edit
+              {t("admin_products.edit")}
             </Button>
             <div className="ml-auto">
               <ProductSyncLockButton

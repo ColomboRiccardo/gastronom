@@ -5,15 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
-import { useLanguage } from "@/context/LanguageContext";
+import { LANGUAGES, useLanguage } from "@/context/LanguageContext";
 
 const SettingsTab = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  const currentLanguage = LANGUAGES.find((l) => l.code === language);
 
   const preferences = [
-    { title: t("settings.email_notifications"), desc: "Receive order updates and promotions", action: "On" },
-    { title: t("settings.language"), desc: "Display language preference", action: "English" },
-    { title: t("settings.currency"), desc: "Preferred display currency", action: "EUR (€)" },
+    {
+      title: t("settings.email_notifications"),
+      desc: t("settings.email_notifications_desc"),
+      action: t("settings.on"),
+    },
+    {
+      title: t("settings.language"),
+      desc: t("settings.language_desc"),
+      action: currentLanguage?.label ?? language.toUpperCase(),
+    },
+    {
+      title: t("settings.currency"),
+      desc: t("settings.currency_desc"),
+      action: "EUR (€)",
+    },
   ];
 
   return (
@@ -45,9 +59,7 @@ const SettingsTab = () => {
           </Button>
           <div className="rounded-md border border-border p-3 space-y-2">
             <p className="text-sm font-medium text-foreground">{t("settings.privacy")}</p>
-            <p className="text-xs text-muted-foreground">
-              Manage optional cookies and read how we handle personal data.
-            </p>
+            <p className="text-xs text-muted-foreground">{t("settings.privacy_desc")}</p>
             <div className="flex flex-wrap gap-3 text-sm pt-1">
               <CookiePreferencesLink label={t("footer.cookie_preferences")} />
               <Link href="/privacy" className="text-primary underline underline-offset-2">

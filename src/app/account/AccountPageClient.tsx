@@ -82,20 +82,20 @@ const AccountPageClient = ({
             </div>
             <div>
               <h1 className="font-display text-3xl md:text-4xl font-bold">
-                {user.name || "User"}
+                {user.name || t("account.user")}
               </h1>
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-[hsl(var(--gold-light))] text-sm">
                   {user.role === "admin"
-                    ? "Administrator"
+                    ? t("account.role_admin")
                     : user.role === "manager"
-                      ? "Manager"
-                      : "Customer"}
+                      ? t("account.role_manager")
+                      : t("account.role_customer")}
                 </p>
                 {isAdmin && (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold bg-[hsl(var(--gold))]/20 text-[hsl(var(--gold-light))] px-2 py-0.5 rounded-full">
                     <Shield className="w-3 h-3" />
-                    Admin
+                    {t("account.admin_badge")}
                   </span>
                 )}
               </div>
@@ -106,7 +106,7 @@ const AccountPageClient = ({
                 className="mt-2 h-8 px-2 text-[hsl(var(--gold-light))] hover:text-primary-foreground hover:bg-white/10 gap-1.5"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                Logout
+                {t("account.logout")}
               </Button>
             </div>
           </div>

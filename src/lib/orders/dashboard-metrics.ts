@@ -4,7 +4,6 @@ import {
   endOfWeek,
   endOfYear,
   format,
-  formatDistanceToNow,
   isWithinInterval,
   startOfDay,
   startOfMonth,
@@ -110,30 +109,30 @@ export function computeTopProducts(orders: DashboardOrderRow[]): DashboardTopPro
     .sort((a, b) => b.revenue - a.revenue || b.sold - a.sold);
 }
 
-interface ActivitySource {
-  at: string;
-  event: string;
-  type: DashboardActivityItem["type"];
-}
-
+/**
+ * Activity rows carry a dictionary key and its values rather than a finished
+ * sentence, so the browser can render them in the reader's language.
+ */
 export function buildRecentActivity(
   orders: DashboardOrderRow[],
   lowStockProducts: { name: string; stock: number; status: string }[],
   recentCustomers: { name: string; createdAt: string }[],
 ): DashboardActivityItem[] {
-  const items: ActivitySource[] = [];
+  const items: DashboardActivityItem[] = [];
 
   for (const order of orders.slice(0, 20)) {
     items.push({
       at: order.createdAt,
-      event: `New order #ORD-${order.id} placed by ${order.customerName}`,
+      messageKey: "activity.new_order",
+      params: { id: `ORD-${order.id}`, customer: order.customerName },
       type: "order",
     });
 
     if (order.status !== "Received") {
       items.push({
         at: order.createdAt,
-        event: `Order #ORD-${order.id} is ${order.status}`,
+        messageKey: "activity.order_status",
+        params: { id: `ORD-${order.id}`, status: order.status },
         type: "status",
       });
     }
@@ -142,40 +141,36 @@ export function buildRecentActivity(
   for (const customer of recentCustomers) {
     items.push({
       at: customer.createdAt,
-      event: `New customer registration: ${customer.name}`,
+      messageKey: "activity.new_customer",
+      params: { name: customer.name },
       type: "customer",
     });
   }
 
   const sorted = items
-    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-    .slice(0, 16)
-    .map((item) => ({
-      ...item,
-      timeLabel: formatDistanceToNow(new Date(item.at), { addSuffix: true }),
-    }));
+    .sort((a, b) => new Date(b.at ?? 0).getTime() - new Date(a.at ?? 0).getTime())
+    .slice(0, 16);
 
   const stockItems: DashboardActivityItem[] = lowStockProducts.slice(0, 4).map((product) => ({
-    at: new Date(0).toISOString(),
-    timeLabel: "Current inventory",
-    event:
-      product.status === "Out of Stock"
-        ? `Product '${product.name}' is out of stock`
-        : `Product '${product.name}' low stock alert (${product.stock} remaining)`,
+    at: null,
+    messageKey:
+      product.status === "Out of Stock" ? "activity.out_of_stock" : "activity.low_stock",
+    params: { name: product.name, stock: product.stock },
     type: "stock" as const,
   }));
 
   return [...sorted, ...stockItems].slice(0, 20);
 }
 
+/** Numeric labels so the axis reads the same in every language. */
 function bucketLabel(date: Date, granularity: DashboardGranularity): string {
   switch (granularity) {
     case "day":
-      return format(date, "EEE d");
+      return format(date, "dd/MM");
     case "week":
-      return format(date, "d MMM");
+      return format(date, "dd/MM");
     case "month":
-      return format(date, "MMM yyyy");
+      return format(date, "MM/yyyy");
     case "year":
       return format(date, "yyyy");
   }

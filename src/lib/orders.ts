@@ -3,8 +3,6 @@
  * Reads are handled server-side in ./server-queries.ts.
  */
 
-import { createClient } from "@/lib/supabase/client";
-
 export async function updateOrderStatus(orderId: string, newStatus: string): Promise<boolean> {
   const response = await fetch(`/api/admin/orders/${orderId}/status`, {
     method: "PATCH",
@@ -22,18 +20,35 @@ export async function updateOrderStatus(orderId: string, newStatus: string): Pro
 }
 
 export async function deleteOrder(orderId: string): Promise<boolean> {
-  const supabase = createClient();
-  const numericId = orderId.replace("ORD-", "");
+  const response = await fetch(`/api/admin/orders/${orderId}`, { method: "DELETE" });
 
-  const { error } = await supabase
-    .from("orders")
-    .delete()
-    .eq("id", numericId);
-
-  if (error) {
-    console.error("Failed to delete order:", error);
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    console.error("Failed to delete order:", data.error || response.statusText);
     return false;
   }
+
+  return true;
+}
+
+export type ModificationAction = "accept" | "decline";
+
+export async function resolveOrderModification(
+  orderId: string,
+  action: ModificationAction,
+): Promise<boolean> {
+  const response = await fetch(`/api/admin/orders/${orderId}/resolve-modification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action }),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    console.error("Failed to resolve modification:", data.error || response.statusText);
+    return false;
+  }
+
   return true;
 }
 
