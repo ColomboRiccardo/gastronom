@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Package } from "lucide-react";
+import { toast } from "sonner";
 import OrderDetailModal, { type OrderDetail } from "./OrderDetailModal";
 import { formatOrderItemsSummary } from "@/lib/orders/format-items-summary";
+import { resolveOrderModification } from "@/lib/orders";
 import { useLanguage } from "@/context/LanguageContext";
 import { translateOrderStatus } from "@/lib/i18n/status";
 
@@ -27,6 +30,7 @@ const statusColor = (status: string) => {
 
 const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
   const { t } = useLanguage();
+  const router = useRouter();
   const [orders, setOrders] = useState<OrderDetail[]>(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -38,6 +42,24 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
   const openOrder = (order: OrderDetail) => {
     setSelectedOrder(order);
     setModalOpen(true);
+  };
+
+  const handleResolveModification = async (orderId: string, action: "accept" | "decline") => {
+    const ok = await resolveOrderModification(orderId, action, { asCustomer: true });
+    if (!ok) {
+      toast.error(t("orders.toast_resolve_failed", { id: orderId }));
+      return false;
+    }
+
+    toast.success(
+      action === "accept"
+        ? t("orders.toast_customer_accepted", { id: orderId })
+        : t("orders.toast_customer_declined", { id: orderId }),
+    );
+    setModalOpen(false);
+    setSelectedOrder(null);
+    router.refresh();
+    return true;
   };
 
   const headers = [
@@ -154,7 +176,12 @@ const OrdersTab = ({ initialOrders }: OrdersTabProps) => {
         </CardContent>
       </Card>
 
-      <OrderDetailModal order={selectedOrder} open={modalOpen} onOpenChange={setModalOpen} />
+      <OrderDetailModal
+        order={selectedOrder}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onResolveModification={handleResolveModification}
+      />
     </>
   );
 };

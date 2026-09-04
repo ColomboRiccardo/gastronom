@@ -265,8 +265,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.proposed_total": "Proposed total",
     "orders.accept_proposal": "Apply proposed changes",
     "orders.decline_proposal": "Discard proposal",
+    "orders.accept_changes": "Accept changes",
+    "orders.decline_changes": "Decline changes",
     "orders.toast_proposal_accepted": "Proposed changes applied to order {id}",
     "orders.toast_proposal_declined": "Proposal discarded for order {id}",
+    "orders.toast_customer_accepted": "Changes accepted for order {id}. A confirmation email is on its way.",
+    "orders.toast_customer_declined": "Proposal declined for order {id}. Your original order stands.",
     "orders.toast_resolve_failed": "Could not update the proposal for {id}",
     "orders.whatsapp_send": "Send same message on WhatsApp",
     "orders.phone_hint": "Customer phone on file: {phone}. Use \"Propose changes\" to generate a WhatsApp link after sending.",
@@ -411,8 +415,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "email.mod_original": "Your original order",
     "email.mod_proposed": "Proposed changes",
     "email.mod_review":
-      "Please review the changes in your account and let us know if you accept them.",
+      "Open your order in your account and use Accept changes or Decline changes.",
     "email.mod_whatsapp": "If you have questions, reply to this email or contact us on WhatsApp.",
+    "email.mod_accepted_subject": "Order #{id} - changes confirmed",
+    "email.mod_accepted_heading": "Your updated order - #{id}",
+    "email.mod_accepted_body":
+      "The proposed changes have been accepted. Here is your updated order:",
+    "email.mod_declined_subject": "Order #{id} - proposal declined",
+    "email.mod_declined_heading": "Order unchanged - #{id}",
+    "email.mod_declined_body":
+      "The proposed changes were declined. Your order continues with the items below:",
     "email.wa_intro": "Regarding your Gastronom order #{id}: some items are unavailable.",
     "email.wa_proposed": "Proposed order:",
     "email.wa_new_total": "New total: {total}",
@@ -859,8 +871,14 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.proposed_total": "Total proposé",
     "orders.accept_proposal": "Appliquer les modifications",
     "orders.decline_proposal": "Abandonner la proposition",
+    "orders.accept_changes": "Accepter les modifications",
+    "orders.decline_changes": "Refuser les modifications",
     "orders.toast_proposal_accepted": "Modifications appliquées à la commande {id}",
     "orders.toast_proposal_declined": "Proposition abandonnée pour la commande {id}",
+    "orders.toast_customer_accepted":
+      "Modifications acceptées pour la commande {id}. Un e-mail de confirmation est en route.",
+    "orders.toast_customer_declined":
+      "Proposition refusée pour la commande {id}. Votre commande d'origine reste inchangée.",
     "orders.toast_resolve_failed": "Impossible de mettre à jour la proposition pour {id}",
     "orders.whatsapp_send": "Envoyer le même message sur WhatsApp",
     "orders.phone_hint": "Téléphone du client : {phone}. Utilisez « Proposer des modifications » pour générer un lien WhatsApp après l'envoi.",
@@ -1005,9 +1023,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "email.mod_original": "Votre commande d'origine",
     "email.mod_proposed": "Modifications proposées",
     "email.mod_review":
-      "Merci de consulter les modifications dans votre compte et de nous dire si vous les acceptez.",
+      "Ouvrez votre commande dans votre compte et utilisez Accepter les modifications ou Refuser les modifications.",
     "email.mod_whatsapp":
       "Pour toute question, répondez à cet e-mail ou contactez-nous sur WhatsApp.",
+    "email.mod_accepted_subject": "Commande n°{id} - modifications confirmées",
+    "email.mod_accepted_heading": "Votre commande mise à jour - n°{id}",
+    "email.mod_accepted_body":
+      "Les modifications proposées ont été acceptées. Voici votre commande mise à jour :",
+    "email.mod_declined_subject": "Commande n°{id} - proposition refusée",
+    "email.mod_declined_heading": "Commande inchangée - n°{id}",
+    "email.mod_declined_body":
+      "Les modifications proposées ont été refusées. Votre commande continue avec les articles ci-dessous :",
     "email.wa_intro":
       "Au sujet de votre commande Gastronom n°{id} : certains articles sont indisponibles.",
     "email.wa_proposed": "Commande proposée :",
@@ -1459,8 +1485,14 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.proposed_total": "Totale proposto",
     "orders.accept_proposal": "Applica le modifiche proposte",
     "orders.decline_proposal": "Scarta la proposta",
+    "orders.accept_changes": "Accetta le modifiche",
+    "orders.decline_changes": "Rifiuta le modifiche",
     "orders.toast_proposal_accepted": "Modifiche applicate all'ordine {id}",
     "orders.toast_proposal_declined": "Proposta scartata per l'ordine {id}",
+    "orders.toast_customer_accepted":
+      "Modifiche accettate per l'ordine {id}. Ti arriverà un'email di conferma.",
+    "orders.toast_customer_declined":
+      "Proposta rifiutata per l'ordine {id}. Resta l'ordine originale.",
     "orders.toast_resolve_failed": "Impossibile aggiornare la proposta per {id}",
     "orders.whatsapp_send": "Invia lo stesso messaggio su WhatsApp",
     "orders.phone_hint": "Telefono del cliente: {phone}. Usa \"Proponi modifiche\" per generare un link WhatsApp dopo l'invio.",
@@ -1605,8 +1637,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "email.mod_original": "Il tuo ordine originale",
     "email.mod_proposed": "Modifiche proposte",
     "email.mod_review":
-      "Controlla le modifiche nel tuo account e facci sapere se le accetti.",
+      "Apri l'ordine nel tuo account e usa Accetta le modifiche o Rifiuta le modifiche.",
     "email.mod_whatsapp": "Per domande, rispondi a questa email o scrivici su WhatsApp.",
+    "email.mod_accepted_subject": "Ordine #{id} - modifiche confermate",
+    "email.mod_accepted_heading": "Il tuo ordine aggiornato - #{id}",
+    "email.mod_accepted_body":
+      "Le modifiche proposte sono state accettate. Ecco il tuo ordine aggiornato:",
+    "email.mod_declined_subject": "Ordine #{id} - proposta rifiutata",
+    "email.mod_declined_heading": "Ordine invariato - #{id}",
+    "email.mod_declined_body":
+      "Le modifiche proposte sono state rifiutate. L'ordine prosegue con gli articoli qui sotto:",
     "email.wa_intro":
       "Riguardo al tuo ordine Gastronom #{id}: alcuni articoli non sono disponibili.",
     "email.wa_proposed": "Ordine proposto:",
@@ -2061,8 +2101,14 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.proposed_total": "Предложенная сумма",
     "orders.accept_proposal": "Применить изменения",
     "orders.decline_proposal": "Отклонить предложение",
+    "orders.accept_changes": "Принять изменения",
+    "orders.decline_changes": "Отклонить изменения",
     "orders.toast_proposal_accepted": "Изменения применены к заказу {id}",
     "orders.toast_proposal_declined": "Предложение отклонено для заказа {id}",
+    "orders.toast_customer_accepted":
+      "Изменения приняты для заказа {id}. Скоро придёт письмо с подтверждением.",
+    "orders.toast_customer_declined":
+      "Предложение отклонено для заказа {id}. Остаётся исходный заказ.",
     "orders.toast_resolve_failed": "Не удалось обновить предложение для {id}",
     "orders.whatsapp_send": "Отправить то же сообщение в WhatsApp",
     "orders.phone_hint": "Телефон клиента: {phone}. Используйте «Предложить изменения», чтобы получить ссылку на WhatsApp после отправки.",
@@ -2208,8 +2254,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "email.mod_original": "Ваш исходный заказ",
     "email.mod_proposed": "Предложенные изменения",
     "email.mod_review":
-      "Пожалуйста, посмотрите изменения в личном кабинете и сообщите нам, согласны ли вы.",
+      "Откройте заказ в личном кабинете и нажмите «Принять изменения» или «Отклонить изменения».",
     "email.mod_whatsapp": "Если есть вопросы, ответьте на это письмо или напишите нам в WhatsApp.",
+    "email.mod_accepted_subject": "Заказ №{id} - изменения подтверждены",
+    "email.mod_accepted_heading": "Ваш обновлённый заказ - №{id}",
+    "email.mod_accepted_body":
+      "Предложенные изменения приняты. Вот ваш обновлённый заказ:",
+    "email.mod_declined_subject": "Заказ №{id} - предложение отклонено",
+    "email.mod_declined_heading": "Заказ без изменений - №{id}",
+    "email.mod_declined_body":
+      "Предложенные изменения отклонены. Заказ продолжается с товарами ниже:",
     "email.wa_intro":
       "По поводу вашего заказа Gastronom №{id}: некоторых товаров нет в наличии.",
     "email.wa_proposed": "Предлагаемый заказ:",

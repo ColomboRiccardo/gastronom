@@ -36,8 +36,13 @@ export type ModificationAction = "accept" | "decline";
 export async function resolveOrderModification(
   orderId: string,
   action: ModificationAction,
+  options?: { asCustomer?: boolean },
 ): Promise<boolean> {
-  const response = await fetch(`/api/admin/orders/${orderId}/resolve-modification`, {
+  const path = options?.asCustomer
+    ? `/api/orders/${orderId}/resolve-modification`
+    : `/api/admin/orders/${orderId}/resolve-modification`;
+
+  const response = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action }),

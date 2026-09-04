@@ -10,6 +10,7 @@ import { join } from "node:path";
 import { buildNewOrderAlertEmail } from "../src/lib/emails/send-new-order-alert";
 import { buildOrderConfirmationEmail } from "../src/lib/emails/send-order-confirmation";
 import { buildOrderModificationEmail } from "../src/lib/emails/send-order-modification";
+import { buildOrderModificationResolvedEmail } from "../src/lib/emails/send-order-modification-resolved";
 import { buildOrderStatusUpdateEmail } from "../src/lib/emails/send-order-status-update";
 import { SUPPORTED_LANGUAGES } from "../src/lib/i18n/translate";
 
@@ -40,6 +41,16 @@ for (const language of SUPPORTED_LANGUAGES) {
       originalItems: items,
       proposedItems: [{ product_name: "Red Caviar 100g", qty: 1, unit_price: 42 }],
       message: "Beluga vodka is out of stock this week.",
+    }),
+    "mod-accepted": buildOrderModificationResolvedEmail({
+      ...base,
+      action: "accept",
+      items: [{ product_name: "Red Caviar 100g", qty: 1, unit_price: 42 }],
+      total: 42,
+    }),
+    "mod-declined": buildOrderModificationResolvedEmail({
+      ...base,
+      action: "decline",
     }),
     alert: buildNewOrderAlertEmail({
       orderId: base.orderId,

@@ -687,7 +687,7 @@ const OrderDetailModal = ({
               </span>
             </div>
 
-            {isAdmin && (
+            {onResolveModification && (
               <div className="flex flex-wrap gap-2 mt-3">
                 <Button
                   size="sm"
@@ -696,7 +696,7 @@ const OrderDetailModal = ({
                   onClick={() => void resolveProposal("accept")}
                 >
                   <Check className="w-3.5 h-3.5" />
-                  {t("orders.accept_proposal")}
+                  {t(isAdmin ? "orders.accept_proposal" : "orders.accept_changes")}
                 </Button>
                 <Button
                   variant="outline"
@@ -704,7 +704,7 @@ const OrderDetailModal = ({
                   disabled={resolvingProposal}
                   onClick={() => void resolveProposal("decline")}
                 >
-                  {t("orders.decline_proposal")}
+                  {t(isAdmin ? "orders.decline_proposal" : "orders.decline_changes")}
                 </Button>
               </div>
             )}
