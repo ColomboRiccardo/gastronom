@@ -1,4 +1,9 @@
 import { type Product } from "@/components/ProductCard";
+import { type Language } from "@/lib/i18n/translate";
+
+import { type ProductTranslationRow } from "./resolve-copy";
+
+export type { ProductTranslationRow };
 
 export interface DbProductRow {
   id: number;
@@ -18,6 +23,14 @@ export interface DbProductRow {
     maingroup?: string;
   } | null;
   editor_locked_fields?: string[];
+  /** Nested select from product_translations; may be missing on older query paths. */
+  product_translations?: ProductTranslationRow[] | null;
+}
+
+export interface ProductTranslationInput {
+  language: Language;
+  name: string;
+  description: string;
 }
 
 export interface UiProduct extends Product {
@@ -44,6 +57,7 @@ export interface AdminProduct {
   image: string;
   isFrozen: boolean;
   editorLockedFields: string[];
+  translations: ProductTranslationRow[];
 }
 
 export interface AdminProductUpdate {
@@ -53,4 +67,6 @@ export interface AdminProductUpdate {
   stock: number;
   badge: string | null;
   isFrozen: boolean;
+  /** Locale being edited; save upserts this translation row. Defaults to en until the modal selector ships. */
+  language?: Language;
 }

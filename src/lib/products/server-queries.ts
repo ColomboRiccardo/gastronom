@@ -38,7 +38,8 @@ const PUBLISHED_PRODUCTS_SELECT = `
   is_frozen,
   created_at,
   lackmann_data,
-  editor_locked_fields
+  editor_locked_fields,
+  product_translations ( language, name, description )
 `;
 
 const FEATURED_PRODUCTS_SELECT = PUBLISHED_PRODUCTS_SELECT;
@@ -122,7 +123,7 @@ export async function fetchPublishedProductsPage(
   const meta = buildPageMeta(totalCount, requestedPage, pageSize);
 
   return {
-    items: ((data || []) as DbProductRow[]).map(mapDbProductToUiProduct),
+    items: ((data || []) as DbProductRow[]).map((row) => mapDbProductToUiProduct(row)),
     totalCount,
     page: meta.page,
     pageSize,
@@ -178,7 +179,7 @@ export async function fetchFeaturedPublishedProducts(
     return [];
   }
 
-  const mapped = ((data || []) as DbProductRow[]).map(mapDbProductToUiProduct);
+  const mapped = ((data || []) as DbProductRow[]).map((row) => mapDbProductToUiProduct(row));
   return shuffle(mapped).slice(0, count);
 }
 
@@ -268,7 +269,7 @@ export async function fetchAdminProductsPage(
   const meta = buildPageMeta(totalCount, requestedPage, pageSize);
 
   return {
-    items: ((data || []) as DbProductRow[]).map(mapDbProductToAdminProduct),
+    items: ((data || []) as DbProductRow[]).map((row) => mapDbProductToAdminProduct(row)),
     totalCount,
     page: meta.page,
     pageSize,

@@ -1,3 +1,6 @@
+import { DEFAULT_LANGUAGE, type Language } from "@/lib/i18n/translate";
+
+import { resolveProductCopy, translationsToList } from "./resolve-copy";
 import { type AdminProduct, type DbProductRow, type UiProduct } from "./types";
 
 const EUR_FORMATTER = new Intl.NumberFormat("en-IE", {
@@ -31,19 +34,25 @@ function resolveCategoryRow(row: DbProductRow): string {
   return resolveCategory(row);
 }
 
-export function mapDbProductToUiProduct(row: DbProductRow): UiProduct {
+export function mapDbProductToUiProduct(
+  row: DbProductRow,
+  language: Language = DEFAULT_LANGUAGE,
+): UiProduct {
   const priceNum = Number(row.price);
+  const translations = translationsToList(row.product_translations);
+  const copy = resolveProductCopy(row, translations, language);
 
   return {
     id: row.id,
-    name: row.name,
-    description: row.description || "",
+    name: copy.name,
+    description: copy.description,
     price: EUR_FORMATTER.format(priceNum),
     priceNum,
     image: row.image_url || FALLBACK_IMAGE,
     category: resolveCategoryRow(row),
     badge: row.badge || undefined,
     isFrozen: Boolean(row.is_frozen),
+    translations,
     createdAt: row.created_at,
   };
 }
@@ -52,13 +61,18 @@ export function formatPrice(price: number): string {
   return EUR_FORMATTER.format(price);
 }
 
-export function mapDbProductToAdminProduct(row: DbProductRow): AdminProduct {
+export function mapDbProductToAdminProduct(
+  row: DbProductRow,
+  language: Language = DEFAULT_LANGUAGE,
+): AdminProduct {
   const price = Number(row.price);
+  const translations = translationsToList(row.product_translations);
+  const copy = resolveProductCopy(row, translations, language);
 
   return {
     id: row.id,
-    name: row.name,
-    description: row.description || "",
+    name: copy.name,
+    description: copy.description,
     category: resolveCategoryRow(row),
     price,
     priceDisplay: EUR_FORMATTER.format(price),
@@ -69,5 +83,6 @@ export function mapDbProductToAdminProduct(row: DbProductRow): AdminProduct {
     image: row.image_url || FALLBACK_IMAGE,
     isFrozen: Boolean(row.is_frozen),
     editorLockedFields: row.editor_locked_fields ?? [],
+    translations,
   };
 }

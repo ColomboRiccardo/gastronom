@@ -27,7 +27,8 @@ const PRODUCTS_SELECT = `
   is_frozen,
   created_at,
   lackmann_data,
-  editor_locked_fields
+  editor_locked_fields,
+  product_translations ( language, name, description )
 `;
 
 export async function fetchPublishedProducts(): Promise<UiProduct[]> {
@@ -42,7 +43,7 @@ export async function fetchPublishedProducts(): Promise<UiProduct[]> {
     throw new Error(`Failed to fetch published products: ${error.message}`);
   }
 
-  return ((data || []) as DbProductRow[]).map(mapDbProductToUiProduct);
+  return ((data || []) as DbProductRow[]).map((row) => mapDbProductToUiProduct(row));
 }
 
 function shuffleProducts<T>(items: T[]): T[] {
@@ -69,7 +70,7 @@ export async function fetchRandomPublishedProducts(
     throw new Error(`Failed to fetch random published products: ${error.message}`);
   }
 
-  const mapped = ((data || []) as DbProductRow[]).map(mapDbProductToUiProduct);
+  const mapped = ((data || []) as DbProductRow[]).map((row) => mapDbProductToUiProduct(row));
   return shuffleProducts(mapped).slice(0, Math.max(0, count));
 }
 
@@ -109,7 +110,7 @@ export async function fetchAllProductsForAdmin(): Promise<AdminProduct[] | null>
     return null;
   }
 
-  return ((data || []) as DbProductRow[]).map(mapDbProductToAdminProduct);
+  return ((data || []) as DbProductRow[]).map((row) => mapDbProductToAdminProduct(row));
 }
 
 export {
