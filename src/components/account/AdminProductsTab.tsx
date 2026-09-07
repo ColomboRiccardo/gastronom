@@ -29,6 +29,7 @@ import {
   type AdminProductsSortKey,
 } from "@/lib/products/constants";
 import { type AdminProduct, type AdminProductUpdate } from "@/lib/products/types";
+import { resolveProductCopy } from "@/lib/products/resolve-copy";
 import { useLanguage } from "@/context/LanguageContext";
 import { translateProductStatus } from "@/lib/i18n/status";
 
@@ -56,6 +57,7 @@ const toProduct = (p: AdminProduct): Product => ({
   category: p.category,
   badge: p.badge ?? undefined,
   isFrozen: p.isFrozen,
+  translations: p.translations,
 });
 
 type AdminViewMode = "table" | "grid";
@@ -73,7 +75,7 @@ const PRODUCT_COLUMNS = [
 ] as const;
 
 const AdminProductsTab = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -460,12 +462,14 @@ const AdminProductsTab = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {products.map((p) => (
+                    {products.map((p) => {
+                      const copy = resolveProductCopy(p, p.translations, language);
+                      return (
                       <TableRow key={p.id} className="border-border">
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
                         </TableCell>
-                        <TableCell className="font-medium">{p.name}</TableCell>
+                        <TableCell className="font-medium">{copy.name}</TableCell>
                         <TableCell className="text-muted-foreground">{p.category}</TableCell>
                         <TableCell className="font-semibold">{p.priceDisplay}</TableCell>
                         <TableCell>{p.stock}</TableCell>
@@ -502,18 +506,21 @@ const AdminProductsTab = () => {
                           />
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                     </Table>
                   </div>
                   <div className="md:hidden space-y-4">
-                    {products.map((p) => (
+                    {products.map((p) => {
+                      const copy = resolveProductCopy(p, p.translations, language);
+                      return (
                       <div key={p.id} className="border border-border rounded-lg p-4 space-y-2">
                         <div className="flex items-start gap-3">
                           <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} className="mt-1" />
                           <div className="flex-1">
                             <div className="flex justify-between items-start gap-2">
-                              <span className="font-medium">{p.name}</span>
+                              <span className="font-medium">{copy.name}</span>
                               <div className="flex flex-col items-end gap-1">
                                 <Badge variant="outline" className={stockColor(p.status)}>{translateProductStatus(p.status, t)}</Badge>
                                 <Badge variant="outline" className={publishedColor(p.published)}>
@@ -550,7 +557,8 @@ const AdminProductsTab = () => {
                           </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               ) : (

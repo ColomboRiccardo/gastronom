@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 
 import { getAuthenticatedUser } from "@/lib/auth/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { toLanguage } from "@/lib/i18n/translate";
+import { resolveProductCopy } from "@/lib/products/resolve-copy";
+import type { ProductTranslationRow } from "@/lib/products/resolve-copy";
 
 async function requireAdmin() {
   const user = await getAuthenticatedUser();
@@ -19,6 +22,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search")?.trim() ?? "";
+  const language = toLanguage(searchParams.get("lang"));
 
   let supabase;
   try {
@@ -30,7 +34,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from("products")
-    .select("id, name, price")
+    .select("id, name, description, price, product_translations ( language, name, description )")
     .order("name", { ascending: true })
     .limit(500);
 
@@ -45,11 +49,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const products = (data || []).map((row) => ({
-    id: row.id as number,
-    name: row.name as string,
-    price: Number(row.price),
-  }));
+  const products = (data || []).map((row) => {
+    const translations = (row.product_translations || []) as ProductTranslationRow[];
+    const copy = resolveProductCopy(
+      { name: row.name as string, description: row.description as string | null },
+      translations,
+      language,
+    );
+    return {
+      id: row.id as number,
+      name: copy.name,
+      price: Number(row.price),
+    };
+  });
 
   return NextResponse.json({ products });
 }

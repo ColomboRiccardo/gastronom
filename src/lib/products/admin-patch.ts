@@ -1,3 +1,5 @@
+import { DEFAULT_LANGUAGE, toLanguage } from "@/lib/i18n/translate";
+
 import { deriveStockStatus, formatPrice } from "./mappers";
 import { type AdminProduct, type AdminProductUpdate } from "./types";
 
@@ -13,13 +15,9 @@ function changedLockFields(
   update: AdminProductUpdate,
 ): string[] {
   const stock = Math.max(0, Math.floor(update.stock));
-  const name = update.name.trim();
-  const description = update.description.trim();
   const badge = update.badge?.trim() || null;
   const changed: string[] = [];
 
-  if (name !== product.name) changed.push("name");
-  if (description !== product.description) changed.push("description");
   if (update.price !== product.price) changed.push("price");
   if (stock !== product.stock) changed.push("stock", "status");
   if (badge !== product.badge) changed.push("badge");
@@ -38,12 +36,23 @@ export function patchAdminProduct(
   const price = update.price;
   const badge = update.badge?.trim() || null;
   const isFrozen = Boolean(update.isFrozen);
+  const language = toLanguage(update.language ?? DEFAULT_LANGUAGE);
   const lockFields = changedLockFields(product, update);
+
+  const translations = [...(product.translations ?? [])];
+  const existingIdx = translations.findIndex((row) => row.language === language);
+  const row = { language, name, description };
+  if (existingIdx >= 0) {
+    translations[existingIdx] = row;
+  } else {
+    translations.push(row);
+  }
 
   return {
     ...product,
     name,
     description,
+    translations,
     price,
     priceDisplay: formatPrice(price),
     stock,
@@ -76,7 +85,14 @@ export function matchesAdminProductFilters(
 ): boolean {
   if (filters.search.trim()) {
     const term = filters.search.trim().toLowerCase();
-    if (!product.name.toLowerCase().includes(term)) return false;
+    const haystacks = [
+      product.name,
+      product.description,
+      ...(product.translations ?? []).flatMap((row) => [row.name, row.description ?? ""]),
+    ];
+    if (!haystacks.some((value) => value.toLowerCase().includes(term))) {
+      return false;
+    }
   }
 
   if (filters.category !== "all" && product.category !== filters.category) {

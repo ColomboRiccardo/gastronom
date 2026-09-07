@@ -286,7 +286,7 @@ const OrderDetailModal = ({
   onProposeModification,
   onResolveModification,
 }: Props) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingItems, setEditingItems] = useState(false);
   const [localItems, setLocalItems] = useState<OrderItem[]>([]);
@@ -304,7 +304,7 @@ const OrderDetailModal = ({
     let cancelled = false;
     setProductsLoading(true);
 
-    fetch("/api/admin/products/options")
+    fetch(`/api/admin/products/options?lang=${encodeURIComponent(language)}`)
       .then((res) => res.json())
       .then((data) => {
         if (!cancelled && Array.isArray(data.products)) {
@@ -321,7 +321,7 @@ const OrderDetailModal = ({
     return () => {
       cancelled = true;
     };
-  }, [open, isAdmin, editingItems]);
+  }, [open, isAdmin, editingItems, language]);
 
   if (!order) return null;
 

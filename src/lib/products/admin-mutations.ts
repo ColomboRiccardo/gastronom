@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { DEFAULT_LANGUAGE, toLanguage } from "@/lib/i18n/translate";
 
 import { deriveStockStatus } from "./mappers";
 import { type AdminProductUpdate } from "./types";
@@ -93,6 +94,10 @@ export async function bulkUpdatePublished(
   return updateProductsWithLocks(productIds, { published }, ["published"]);
 }
 
+/**
+ * Name/description live only in product_translations (including en).
+ * products.* keeps price/stock/badge/frozen for sync; Lackmann never writes translations.
+ */
 export async function saveAdminProductEdits(
   productId: number,
   update: AdminProductUpdate,
@@ -105,9 +110,36 @@ export async function saveAdminProductEdits(
     return false;
   }
 
+  const language = toLanguage(update.language ?? DEFAULT_LANGUAGE);
+  const name = update.name.trim();
+  const description = update.description.trim();
+
+  if (!name) {
+    console.error("Product name is required for translation save");
+    return false;
+  }
+
+  const { error: translationError } = await supabase
+    .from("product_translations")
+    .upsert(
+      {
+        product_id: productId,
+        language,
+        name,
+        description: description || null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "product_id,language" },
+    );
+
+  if (translationError) {
+    console.error("Failed to upsert product translation:", translationError.message);
+    return false;
+  }
+
   const { data: existing, error } = await supabase
     .from("products")
-    .select("name, description, price, stock, badge, is_frozen")
+    .select("price, stock, badge, is_frozen")
     .eq("id", productId)
     .single();
 
@@ -118,15 +150,11 @@ export async function saveAdminProductEdits(
 
   const stock = Math.max(0, Math.floor(update.stock));
   const status = deriveStockStatus(stock);
-  const name = update.name.trim();
-  const description = update.description.trim();
   const price = update.price;
   const badge = update.badge?.trim() || null;
   const isFrozen = Boolean(update.isFrozen);
 
   const changedFields: string[] = [];
-  if (name !== existing.name) changedFields.push("name");
-  if (description !== (existing.description || "")) changedFields.push("description");
   if (price !== Number(existing.price)) changedFields.push("price");
   if (stock !== existing.stock) changedFields.push("stock", "status");
   if (badge !== (existing.badge || null)) changedFields.push("badge");
@@ -136,7 +164,7 @@ export async function saveAdminProductEdits(
 
   return updateProductsWithLocks(
     [productId],
-    { name, description, price, stock, status, badge, is_frozen: isFrozen },
+    { price, stock, status, badge, is_frozen: isFrozen },
     changedFields,
   );
 }

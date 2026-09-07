@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { resolveProductCopy } from "@/lib/products/resolve-copy";
 import { Heart, Trash2 } from "lucide-react";
 
 const WishlistTab = () => {
   const { items, removeItem, clearWishlist } = useWishlist();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   if (items.length === 0) {
     return (
@@ -40,12 +41,15 @@ const WishlistTab = () => {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((product) => (
+          {items.map((product) => {
+            const copy = resolveProductCopy(product, product.translations, language);
+            const display = { ...product, name: copy.name, description: copy.description };
+            return (
             <div key={product.id} className="border border-border rounded-lg overflow-hidden group">
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img
                   src={product.image}
-                  alt={product.name}
+                  alt={copy.name}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <span className="absolute top-2 right-2 bg-accent/90 text-accent-foreground text-xs font-medium font-body px-2 py-0.5 rounded">
@@ -54,14 +58,14 @@ const WishlistTab = () => {
               </div>
               <div className="p-4 space-y-3">
                 <div>
-                  <h3 className="font-display text-base font-semibold text-foreground">{product.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">{product.description}</p>
+                  <h3 className="font-display text-base font-semibold text-foreground">{copy.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">{copy.description}</p>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-display text-lg font-bold text-primary">{product.price}</span>
                 </div>
                 <div className="flex gap-2">
-                  <CartQuantityControl product={product} size="sm" className="flex-1" />
+                  <CartQuantityControl product={display} size="sm" className="flex-1" />
                   <Button
                     variant="outline"
                     size="sm"
@@ -73,7 +77,8 @@ const WishlistTab = () => {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

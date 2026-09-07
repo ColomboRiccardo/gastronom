@@ -9,6 +9,7 @@ import { hasEditorLocks } from "@/lib/products/editor-locks";
 import { type AdminProduct } from "@/lib/products/types";
 import { useLanguage } from "@/context/LanguageContext";
 import { translateProductStatus } from "@/lib/i18n/status";
+import { resolveProductCopy } from "@/lib/products/resolve-copy";
 
 const stockColor = (status: string) => {
   switch (status) {
@@ -45,8 +46,9 @@ const AdminProductCard = ({
   onEdit,
   onUnlock,
 }: AdminProductCardProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const locked = hasEditorLocks(product.editorLockedFields);
+  const copy = resolveProductCopy(product, product.translations, language);
 
   return (
     <div className="group h-full flex flex-col bg-card rounded-lg overflow-hidden border border-border hover:shadow-lg transition-shadow duration-300">
@@ -56,7 +58,7 @@ const AdminProductCard = ({
       >
         <img
           src={product.image}
-          alt={product.name}
+          alt={copy.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
@@ -101,10 +103,10 @@ const AdminProductCard = ({
           className="font-display text-lg font-semibold text-foreground mb-1 line-clamp-2 min-h-[3.5rem] cursor-pointer hover:text-primary transition-colors"
           onClick={onEdit}
         >
-          {product.name}
+          {copy.name}
         </h3>
         <p className="font-body text-sm text-muted-foreground mb-3 line-clamp-2 min-h-[2.5rem] flex-1">
-          {product.description || "\u00A0"}
+          {copy.description || "\u00A0"}
         </p>
 
         <div className="mt-auto pt-3 border-t border-border space-y-3">
