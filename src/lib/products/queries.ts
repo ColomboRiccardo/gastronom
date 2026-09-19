@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/client";
 import {
   mapDbProductToAdminProduct,
   mapDbProductToUiProduct,
-  resolveCategory,
 } from "./mappers";
 import {
   type AdminProduct,
@@ -28,7 +27,14 @@ const PRODUCTS_SELECT = `
   created_at,
   lackmann_data,
   editor_locked_fields,
-  product_translations ( language, name, description )
+  product_translations ( language, name, description ),
+  categories (
+    id,
+    name,
+    slug,
+    source_key,
+    category_translations ( language, name )
+  )
 `;
 
 export async function fetchPublishedProducts(): Promise<UiProduct[]> {
@@ -78,24 +84,41 @@ export async function fetchPublishedCategorySummaries(): Promise<CategorySummary
   const supabase = createClient();
   const { data, error } = await supabase
     .from("products")
-    .select("lackmann_data, category_id")
-    .eq("published", true);
+    .select(`
+      category_id,
+      categories (
+        id,
+        name,
+        slug,
+        category_translations ( language, name )
+      )
+    `)
+    .eq("published", true)
+    .not("category_id", "is", null);
 
   if (error) {
     throw new Error(`Failed to fetch category summaries: ${error.message}`);
   }
 
-  const counts = new Map<string, number>();
+  const counts = new Map<number, CategorySummary>();
   for (const row of data || []) {
-    const name = resolveCategory(
-      row as Pick<DbProductRow, "lackmann_data" | "category_id">,
-    );
-    counts.set(name, (counts.get(name) || 0) + 1);
+    const nest = Array.isArray(row.categories) ? row.categories[0] : row.categories;
+    if (!nest?.id) continue;
+    const existing = counts.get(nest.id);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      counts.set(nest.id, {
+        id: nest.id,
+        slug: nest.slug,
+        name: nest.name,
+        count: 1,
+        translations: nest.category_translations ?? [],
+      });
+    }
   }
 
-  return Array.from(counts.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return Array.from(counts.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function fetchAllProductsForAdmin(): Promise<AdminProduct[] | null> {

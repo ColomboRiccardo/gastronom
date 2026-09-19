@@ -22,9 +22,10 @@ import { toast } from "sonner";
 import { type Product } from "@/components/ProductCard";
 import { type AdminProductUpdate } from "@/lib/products/types";
 import { saveAdminProductEdits } from "@/lib/products/admin-client";
-import { resolveProductCopy } from "@/lib/products/resolve-copy";
+import { resolveCategoryName, resolveProductCopy } from "@/lib/products/resolve-copy";
 import { Switch } from "@/components/ui/switch";
 import { type Language } from "@/lib/i18n/translate";
+import { type CategorySummary } from "@/lib/products/types";
 
 interface ProductModalProps {
   product: Product | null;
@@ -61,12 +62,30 @@ const ProductModal = ({
   const [editStock, setEditStock] = useState("");
   const [editBadge, setEditBadge] = useState("");
   const [editIsFrozen, setEditIsFrozen] = useState(false);
+  const [editCategoryId, setEditCategoryId] = useState<string>("none");
+  const [categoryOptions, setCategoryOptions] = useState<CategorySummary[]>([]);
 
   useEffect(() => {
     if (!open || !product) return;
     setContentLanguage(language);
     setIsEditing(false);
   }, [open, product?.id, language]);
+
+  useEffect(() => {
+    if (!open || mode !== "admin") return;
+    let cancelled = false;
+    void fetch("/api/admin/categories")
+      .then((res) => res.json())
+      .then((data: { categories?: CategorySummary[] }) => {
+        if (!cancelled) setCategoryOptions(data.categories ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setCategoryOptions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, mode]);
 
   if (!product) return null;
 
@@ -89,6 +108,9 @@ const ProductModal = ({
     setEditStock(String(adminStock));
     setEditBadge(adminBadge ?? product.badge ?? "");
     setEditIsFrozen(adminIsFrozen || Boolean(product.isFrozen));
+    setEditCategoryId(
+      product.categoryId != null ? String(product.categoryId) : "none",
+    );
     setIsEditing(true);
   };
 
@@ -125,6 +147,7 @@ const ProductModal = ({
       badge: editBadge.trim() || null,
       isFrozen: editIsFrozen,
       language: contentLanguage,
+      categoryId: editCategoryId === "none" ? null : Number.parseInt(editCategoryId, 10),
     };
     const ok = await saveAdminProductEdits(product.id, update);
     setIsSaving(false);
@@ -264,7 +287,19 @@ const ProductModal = ({
                     <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">
                       {t("product.category")}
                     </label>
-                    <Input value={product.category} disabled />
+                    <Select value={editCategoryId} onValueChange={setEditCategoryId}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">{t("product.category_none")}</SelectItem>
+                        {categoryOptions.map((cat) => (
+                          <SelectItem key={cat.id} value={String(cat.id)}>
+                            {resolveCategoryName(cat, cat.translations, contentLanguage)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">

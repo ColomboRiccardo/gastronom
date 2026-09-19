@@ -10,10 +10,12 @@ import {
   type SortOption,
 } from "@/lib/products/constants";
 import { useLanguage } from "@/context/LanguageContext";
+import { type CategorySummary } from "@/lib/products/types";
+import { resolveCategoryName } from "@/lib/products/resolve-copy";
 
 interface ProductFiltersProps {
   selectedCategories: string[];
-  categories?: string[];
+  categories?: CategorySummary[];
   onCategoriesChange: (cats: string[]) => void;
   selectedPriceRange: number | null;
   onPriceRangeChange: (idx: number | null) => void;
@@ -32,15 +34,21 @@ const ProductFilters = ({
   onSortChange,
   resultCount,
 }: ProductFiltersProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const categoryOptions = categories ?? [];
 
-  const toggleCategory = (cat: string) => {
+  const labelForSlug = (slug: string) => {
+    const match = categoryOptions.find((c) => c.slug === slug);
+    if (!match) return slug;
+    return resolveCategoryName(match, match.translations, language);
+  };
+
+  const toggleCategory = (slug: string) => {
     onCategoriesChange(
-      selectedCategories.includes(cat)
-        ? selectedCategories.filter((c) => c !== cat)
-        : [...selectedCategories, cat]
+      selectedCategories.includes(slug)
+        ? selectedCategories.filter((c) => c !== slug)
+        : [...selectedCategories, slug],
     );
   };
 
@@ -66,13 +74,13 @@ const ProductFilters = ({
             </Button>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {selectedCategories.map((cat) => (
+            {selectedCategories.map((slug) => (
               <span
-                key={cat}
+                key={slug}
                 className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-body px-2 py-1 rounded-full cursor-pointer hover:bg-primary/20"
-                onClick={() => toggleCategory(cat)}
+                onClick={() => toggleCategory(slug)}
               >
-                {cat}
+                {labelForSlug(slug)}
                 <X className="h-3 w-3" />
               </span>
             ))}
@@ -94,17 +102,20 @@ const ProductFilters = ({
           {t("products.category")}
         </h3>
         <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-          {categoryOptions.map((cat) => (
-            <label key={cat} className="flex items-center gap-2.5 cursor-pointer group">
-              <Checkbox
-                checked={selectedCategories.includes(cat)}
-                onCheckedChange={() => toggleCategory(cat)}
-              />
-              <span className="font-body text-sm text-foreground/80 group-hover:text-primary transition-colors">
-                {cat}
-              </span>
-            </label>
-          ))}
+          {categoryOptions.map((cat) => {
+            const label = resolveCategoryName(cat, cat.translations, language);
+            return (
+              <label key={cat.slug} className="flex items-center gap-2.5 cursor-pointer group">
+                <Checkbox
+                  checked={selectedCategories.includes(cat.slug)}
+                  onCheckedChange={() => toggleCategory(cat.slug)}
+                />
+                <span className="font-body text-sm text-foreground/80 group-hover:text-primary transition-colors">
+                  {label}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
 

@@ -9,7 +9,7 @@ import { hasEditorLocks } from "@/lib/products/editor-locks";
 import { type AdminProduct } from "@/lib/products/types";
 import { useLanguage } from "@/context/LanguageContext";
 import { translateProductStatus } from "@/lib/i18n/status";
-import { resolveProductCopy } from "@/lib/products/resolve-copy";
+import { resolveCategoryName, resolveProductCopy } from "@/lib/products/resolve-copy";
 
 const stockColor = (status: string) => {
   switch (status) {
@@ -49,6 +49,11 @@ const AdminProductCard = ({
   const { t, language } = useLanguage();
   const locked = hasEditorLocks(product.editorLockedFields);
   const copy = resolveProductCopy(product, product.translations, language);
+  const categoryLabel = resolveCategoryName(
+    { name: product.category },
+    product.categoryTranslations,
+    language,
+  );
 
   return (
     <div className="group h-full flex flex-col bg-card rounded-lg overflow-hidden border border-border hover:shadow-lg transition-shadow duration-300">
@@ -98,7 +103,7 @@ const AdminProductCard = ({
       </div>
 
       <div className="flex flex-col flex-1 p-4">
-        <span className="text-xs text-muted-foreground font-body mb-1 truncate">{product.category}</span>
+        <span className="text-xs text-muted-foreground font-body mb-1 truncate">{categoryLabel}</span>
         <h3
           className="font-display text-lg font-semibold text-foreground mb-1 line-clamp-2 min-h-[3.5rem] cursor-pointer hover:text-primary transition-colors"
           onClick={onEdit}

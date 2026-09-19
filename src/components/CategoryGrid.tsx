@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PLACEHOLDER_CATEGORY_IMAGE } from "@/lib/products/mappers";
 import { type CategorySummary } from "@/lib/products/types";
 import { useLanguage } from "@/context/LanguageContext";
+import { resolveCategoryName } from "@/lib/products/resolve-copy";
 
 interface CategoryGridProps {
   categories: CategorySummary[];
@@ -16,7 +17,7 @@ const CategoryGrid = ({
   className = "",
   columns = "page",
 }: CategoryGridProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   if (categories.length === 0) {
     return (
@@ -33,30 +34,33 @@ const CategoryGrid = ({
 
   return (
     <div className={`${gridClass} ${className}`.trim()}>
-      {categories.map((cat) => (
-        <Link
-          key={cat.name}
-          href={`/products?category=${encodeURIComponent(cat.name)}`}
-          className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer border border-border hover:shadow-lg transition-shadow duration-300"
-        >
-          <img
-            src={PLACEHOLDER_CATEGORY_IMAGE}
-            alt={cat.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-            <h3 className="font-display text-lg md:text-xl font-semibold text-primary-foreground line-clamp-2">
-              {cat.name}
-            </h3>
-            <p className="font-body text-sm text-primary-foreground/60">
-              {cat.count}{" "}
-              {cat.count === 1 ? t("products.product_one") : t("products.product_other")}
-            </p>
-          </div>
-        </Link>
-      ))}
+      {categories.map((cat) => {
+        const label = resolveCategoryName(cat, cat.translations, language);
+        return (
+          <Link
+            key={cat.id}
+            href={`/products?category=${encodeURIComponent(cat.slug)}`}
+            className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer border border-border hover:shadow-lg transition-shadow duration-300"
+          >
+            <img
+              src={PLACEHOLDER_CATEGORY_IMAGE}
+              alt={label}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
+              <h3 className="font-display text-lg md:text-xl font-semibold text-primary-foreground line-clamp-2">
+                {label}
+              </h3>
+              <p className="font-body text-sm text-primary-foreground/60">
+                {cat.count}{" "}
+                {cat.count === 1 ? t("products.product_one") : t("products.product_other")}
+              </p>
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 };

@@ -22,6 +22,12 @@ function changedLockFields(
   if (stock !== product.stock) changed.push("stock", "status");
   if (badge !== product.badge) changed.push("badge");
   if (Boolean(update.isFrozen) !== product.isFrozen) changed.push("is_frozen");
+  if (
+    update.categoryId !== undefined &&
+    update.categoryId !== product.categoryId
+  ) {
+    changed.push("category_id");
+  }
 
   return changed;
 }
@@ -53,6 +59,7 @@ export function patchAdminProduct(
     name,
     description,
     translations,
+    categoryId: update.categoryId !== undefined ? update.categoryId : product.categoryId,
     price,
     priceDisplay: formatPrice(price),
     stock,

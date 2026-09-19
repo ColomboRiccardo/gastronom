@@ -55,15 +55,13 @@ export default async function ProductsPage({
     }),
   ]);
 
-  const filterCategories = categorySummaries.map((c) => c.name);
-
   return (
     <ProductsPageClient
       products={productPage.items}
       totalCount={productPage.totalCount}
       page={productPage.page}
       totalPages={productPage.totalPages}
-      categories={filterCategories}
+      categories={categorySummaries}
       initialCategories={categoriesFromUrl}
       initialPriceRange={priceRangeIndex}
       initialSort={sort}

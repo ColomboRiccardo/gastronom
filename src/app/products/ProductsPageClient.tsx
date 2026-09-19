@@ -8,7 +8,7 @@ import ProductCard from "@/components/ProductCard";
 import ProductFilters from "@/components/ProductFilters";
 import ListPagination from "@/components/ListPagination";
 import { type SortOption } from "@/lib/products/constants";
-import { type UiProduct } from "@/lib/products/types";
+import { type UiProduct, type CategorySummary } from "@/lib/products/types";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface ProductsPageClientProps {
@@ -16,7 +16,7 @@ interface ProductsPageClientProps {
   totalCount: number;
   page: number;
   totalPages: number;
-  categories: string[];
+  categories: CategorySummary[];
   initialCategories: string[];
   initialPriceRange: number | null;
   initialSort: SortOption;

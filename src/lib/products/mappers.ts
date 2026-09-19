@@ -1,7 +1,17 @@
 import { DEFAULT_LANGUAGE, type Language } from "@/lib/i18n/translate";
 
-import { resolveProductCopy, translationsToList } from "./resolve-copy";
-import { type AdminProduct, type DbProductRow, type UiProduct } from "./types";
+import {
+  categoryTranslationsToList,
+  resolveCategoryName,
+  resolveProductCopy,
+  translationsToList,
+} from "./resolve-copy";
+import {
+  type AdminProduct,
+  type DbCategoryNest,
+  type DbProductRow,
+  type UiProduct,
+} from "./types";
 
 const EUR_FORMATTER = new Intl.NumberFormat("en-IE", {
   style: "currency",
@@ -21,17 +31,32 @@ export function deriveStockStatus(stock: number): string {
 /** Placeholder until per-category images are added in Supabase. */
 export const PLACEHOLDER_CATEGORY_IMAGE = FALLBACK_IMAGE;
 
+function nestCategory(
+  row: Pick<DbProductRow, "categories">,
+): DbCategoryNest | null {
+  const nest = row.categories;
+  if (!nest) return null;
+  return Array.isArray(nest) ? nest[0] ?? null : nest;
+}
+
+/** Prefer joined category + translations; fall back to legacy maingroup text. */
 export function resolveCategory(
-  row: Pick<DbProductRow, "lackmann_data" | "category_id">,
+  row: Pick<DbProductRow, "lackmann_data" | "category_id" | "categories">,
+  language: Language = DEFAULT_LANGUAGE,
 ): string {
+  const nest = nestCategory(row);
+  if (nest) {
+    return resolveCategoryName(
+      nest,
+      categoryTranslationsToList(nest.category_translations),
+      language,
+    );
+  }
+
   return (
     row.lackmann_data?.maingroup?.trim() ||
     (row.category_id !== null ? `Category ${row.category_id}` : FALLBACK_CATEGORY)
   );
-}
-
-function resolveCategoryRow(row: DbProductRow): string {
-  return resolveCategory(row);
 }
 
 export function mapDbProductToUiProduct(
@@ -41,6 +66,10 @@ export function mapDbProductToUiProduct(
   const priceNum = Number(row.price);
   const translations = translationsToList(row.product_translations);
   const copy = resolveProductCopy(row, translations, language);
+  const nest = nestCategory(row);
+  const categoryTranslations = categoryTranslationsToList(
+    nest?.category_translations,
+  );
 
   return {
     id: row.id,
@@ -49,7 +78,9 @@ export function mapDbProductToUiProduct(
     price: EUR_FORMATTER.format(priceNum),
     priceNum,
     image: row.image_url || FALLBACK_IMAGE,
-    category: resolveCategoryRow(row),
+    category: resolveCategory(row, language),
+    categoryId: row.category_id,
+    categoryTranslations,
     badge: row.badge || undefined,
     isFrozen: Boolean(row.is_frozen),
     translations,
@@ -68,12 +99,19 @@ export function mapDbProductToAdminProduct(
   const price = Number(row.price);
   const translations = translationsToList(row.product_translations);
   const copy = resolveProductCopy(row, translations, language);
+  const nest = nestCategory(row);
+  const categoryTranslations = categoryTranslationsToList(
+    nest?.category_translations,
+  );
 
   return {
     id: row.id,
     name: copy.name,
     description: copy.description,
-    category: resolveCategoryRow(row),
+    category: resolveCategory(row, language),
+    categoryId: row.category_id,
+    categorySlug: nest?.slug ?? null,
+    categoryTranslations,
     price,
     priceDisplay: EUR_FORMATTER.format(price),
     stock: row.stock,

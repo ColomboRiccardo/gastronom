@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { resolveProductCopy } from "@/lib/products/resolve-copy";
+import { resolveCategoryName, resolveProductCopy } from "@/lib/products/resolve-copy";
 import { Heart, Trash2 } from "lucide-react";
 
 const WishlistTab = () => {
@@ -43,7 +43,17 @@ const WishlistTab = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((product) => {
             const copy = resolveProductCopy(product, product.translations, language);
-            const display = { ...product, name: copy.name, description: copy.description };
+            const categoryLabel = resolveCategoryName(
+              { name: product.category },
+              product.categoryTranslations,
+              language,
+            );
+            const display = {
+              ...product,
+              name: copy.name,
+              description: copy.description,
+              category: categoryLabel,
+            };
             return (
             <div key={product.id} className="border border-border rounded-lg overflow-hidden group">
               <div className="relative aspect-[4/3] overflow-hidden">
@@ -53,7 +63,7 @@ const WishlistTab = () => {
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <span className="absolute top-2 right-2 bg-accent/90 text-accent-foreground text-xs font-medium font-body px-2 py-0.5 rounded">
-                  {product.category}
+                  {categoryLabel}
                 </span>
               </div>
               <div className="p-4 space-y-3">

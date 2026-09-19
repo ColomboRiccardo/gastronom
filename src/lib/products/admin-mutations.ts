@@ -137,9 +137,15 @@ export async function saveAdminProductEdits(
     return false;
   }
 
+  const stock = Math.max(0, Math.floor(update.stock));
+  const status = deriveStockStatus(stock);
+  const price = update.price;
+  const badge = update.badge?.trim() || null;
+  const isFrozen = Boolean(update.isFrozen);
+
   const { data: existing, error } = await supabase
     .from("products")
-    .select("price, stock, badge, is_frozen")
+    .select("price, stock, badge, is_frozen, category_id")
     .eq("id", productId)
     .single();
 
@@ -148,25 +154,37 @@ export async function saveAdminProductEdits(
     return false;
   }
 
-  const stock = Math.max(0, Math.floor(update.stock));
-  const status = deriveStockStatus(stock);
-  const price = update.price;
-  const badge = update.badge?.trim() || null;
-  const isFrozen = Boolean(update.isFrozen);
-
+  const values: Record<string, unknown> = {};
   const changedFields: string[] = [];
-  if (price !== Number(existing.price)) changedFields.push("price");
-  if (stock !== existing.stock) changedFields.push("stock", "status");
-  if (badge !== (existing.badge || null)) changedFields.push("badge");
-  if (isFrozen !== Boolean(existing.is_frozen)) changedFields.push("is_frozen");
+
+  if (price !== Number(existing.price)) {
+    values.price = price;
+    changedFields.push("price");
+  }
+  if (stock !== existing.stock) {
+    values.stock = stock;
+    values.status = status;
+    changedFields.push("stock", "status");
+  }
+  if (badge !== (existing.badge || null)) {
+    values.badge = badge;
+    changedFields.push("badge");
+  }
+  if (isFrozen !== Boolean(existing.is_frozen)) {
+    values.is_frozen = isFrozen;
+    changedFields.push("is_frozen");
+  }
+  if (
+    update.categoryId !== undefined &&
+    update.categoryId !== (existing.category_id as number | null)
+  ) {
+    values.category_id = update.categoryId;
+    changedFields.push("category_id");
+  }
 
   if (changedFields.length === 0) return true;
 
-  return updateProductsWithLocks(
-    [productId],
-    { price, stock, status, badge, is_frozen: isFrozen },
-    changedFields,
-  );
+  return updateProductsWithLocks([productId], values, changedFields);
 }
 
 export async function clearEditorLocks(productId: number): Promise<boolean> {

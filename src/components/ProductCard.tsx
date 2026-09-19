@@ -10,7 +10,9 @@ import { useLanguage } from "@/context/LanguageContext";
 import ProductModal from "@/components/ProductModal";
 import { toast } from "sonner";
 import {
+  resolveCategoryName,
   resolveProductCopy,
+  type CategoryTranslationRow,
   type ProductTranslationRow,
 } from "@/lib/products/resolve-copy";
 
@@ -22,6 +24,8 @@ export interface Product {
   priceNum: number;
   image: string;
   category: string;
+  categoryId?: number | null;
+  categoryTranslations?: CategoryTranslationRow[];
   badge?: string;
   /** Cold-chain; blocks national courier shipping. */
   isFrozen?: boolean;
@@ -38,10 +42,16 @@ const ProductCard = ({ product }: { product: Product }) => {
   const wishlisted = isInWishlist(product.id);
 
   const copy = resolveProductCopy(product, product.translations, language);
+  const categoryLabel = resolveCategoryName(
+    { name: product.category },
+    product.categoryTranslations,
+    language,
+  );
   const displayProduct: Product = {
     ...product,
     name: copy.name,
     description: copy.description,
+    category: categoryLabel,
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {

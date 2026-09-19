@@ -12,7 +12,6 @@ import {
 import {
   mapDbProductToAdminProduct,
   mapDbProductToUiProduct,
-  resolveCategory,
 } from "./mappers";
 import {
   type AdminProduct,
@@ -39,10 +38,44 @@ const PUBLISHED_PRODUCTS_SELECT = `
   created_at,
   lackmann_data,
   editor_locked_fields,
-  product_translations ( language, name, description )
+  product_translations ( language, name, description ),
+  categories (
+    id,
+    name,
+    slug,
+    source_key,
+    category_translations ( language, name )
+  )
 `;
 
 const FEATURED_PRODUCTS_SELECT = PUBLISHED_PRODUCTS_SELECT;
+
+async function resolveCategoryIdsBySlug(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  slugs: string[],
+): Promise<number[]> {
+  if (slugs.length === 0) return [];
+
+  const wanted = new Set(slugs);
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, slug, source_key, name");
+
+  if (error || !data) {
+    console.error("Failed to resolve category slugs:", error?.message);
+    return [];
+  }
+
+  return (data as { id: number; slug: string; source_key: string | null; name: string }[])
+    .filter(
+      (row) =>
+        wanted.has(row.slug) ||
+        (row.source_key != null && wanted.has(row.source_key)) ||
+        wanted.has(row.name),
+    )
+    .map((row) => row.id);
+}
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
@@ -93,10 +126,16 @@ export async function fetchPublishedProductsPage(
     .select(PUBLISHED_PRODUCTS_SELECT, { count: "exact" })
     .eq("published", true);
 
-  if (categories.length === 1) {
-    query = query.eq("lackmann_data->>maingroup", categories[0]);
-  } else if (categories.length > 1) {
-    query = query.in("lackmann_data->>maingroup", categories);
+  if (categories.length > 0) {
+    const ids = await resolveCategoryIdsBySlug(supabase, categories);
+    if (ids.length === 0) {
+      return { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+    }
+    if (ids.length === 1) {
+      query = query.eq("category_id", ids[0]);
+    } else {
+      query = query.in("category_id", ids);
+    }
   }
 
   if (params.priceRangeIndex != null && PRICE_RANGES[params.priceRangeIndex]) {
@@ -137,29 +176,64 @@ export async function fetchPublishedProducts(): Promise<UiProduct[]> {
   return result.items;
 }
 
-/** Server-side category aggregation — lightweight columns only. */
+/** Server-side category aggregation with localized names attached. */
 export async function fetchPublishedCategorySummaries(): Promise<CategorySummary[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
-    .select("lackmann_data, category_id")
-    .eq("published", true);
+    .select(`
+      category_id,
+      categories (
+        id,
+        name,
+        slug,
+        category_translations ( language, name )
+      )
+    `)
+    .eq("published", true)
+    .not("category_id", "is", null);
 
   if (error) {
     console.error("Failed to fetch category summaries:", error.message);
     return [];
   }
 
-  const counts = new Map<string, number>();
+  const counts = new Map<
+    number,
+    {
+      id: number;
+      slug: string;
+      name: string;
+      count: number;
+      translations: { language: string; name: string }[];
+    }
+  >();
+
   for (const row of data || []) {
-    const name = resolveCategory(
-      row as Pick<DbProductRow, "lackmann_data" | "category_id">,
-    );
-    counts.set(name, (counts.get(name) || 0) + 1);
+    const nest = Array.isArray(row.categories) ? row.categories[0] : row.categories;
+    if (!nest?.id) continue;
+    const existing = counts.get(nest.id);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      counts.set(nest.id, {
+        id: nest.id,
+        slug: nest.slug,
+        name: nest.name,
+        count: 1,
+        translations: nest.category_translations ?? [],
+      });
+    }
   }
 
-  return Array.from(counts.entries())
-    .map(([name, count]) => ({ name, count }))
+  return Array.from(counts.values())
+    .map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      count: row.count,
+      translations: row.translations as CategorySummary["translations"],
+    }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -213,7 +287,7 @@ function applyAdminSort(
     case "stock":
       return query.order("stock", { ascending });
     case "category":
-      return query.order("lackmann_data->>maingroup", { ascending, nullsFirst: false });
+      return query.order("category_id", { ascending, nullsFirst: false });
     default:
       return query.order("name", { ascending });
   }
@@ -237,7 +311,11 @@ export async function fetchAdminProductsPage(
   }
 
   if (params.category && params.category !== "all") {
-    query = query.eq("lackmann_data->>maingroup", params.category);
+    const ids = await resolveCategoryIdsBySlug(supabase, [params.category]);
+    if (ids.length === 0) {
+      return { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+    }
+    query = query.eq("category_id", ids[0]);
   }
 
   if (params.published === "published") {
@@ -277,22 +355,32 @@ export async function fetchAdminProductsPage(
   };
 }
 
-/** Distinct category names for admin filters. */
-export async function fetchAdminProductCategories(): Promise<string[]> {
+/** Category options for admin filters (slug + localized-ready payload). */
+export async function fetchAdminProductCategories(): Promise<CategorySummary[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("products").select("lackmann_data, category_id");
+  const { data, error } = await supabase
+    .from("categories")
+    .select(`
+      id,
+      name,
+      slug,
+      category_translations ( language, name ),
+      products ( id )
+    `)
+    .order("name", { ascending: true });
 
   if (error) {
     console.error("Failed to fetch admin categories:", error.message);
     return [];
   }
 
-  const names = new Set<string>();
-  for (const row of data || []) {
-    names.add(resolveCategory(row as Pick<DbProductRow, "lackmann_data" | "category_id">));
-  }
-
-  return Array.from(names).sort((a, b) => a.localeCompare(b));
+  return (data || []).map((row) => ({
+    id: row.id as number,
+    name: row.name as string,
+    slug: row.slug as string,
+    count: Array.isArray(row.products) ? row.products.length : 0,
+    translations: (row.category_translations ?? []) as CategorySummary["translations"],
+  }));
 }
 
 /** @deprecated Use fetchAdminProductsPage. */

@@ -28,8 +28,8 @@ import {
   type AdminProductsPageSize,
   type AdminProductsSortKey,
 } from "@/lib/products/constants";
-import { type AdminProduct, type AdminProductUpdate } from "@/lib/products/types";
-import { resolveProductCopy } from "@/lib/products/resolve-copy";
+import { type AdminProduct, type AdminProductUpdate, type CategorySummary } from "@/lib/products/types";
+import { resolveCategoryName, resolveProductCopy } from "@/lib/products/resolve-copy";
 import { useLanguage } from "@/context/LanguageContext";
 import { translateProductStatus } from "@/lib/i18n/status";
 
@@ -55,6 +55,8 @@ const toProduct = (p: AdminProduct): Product => ({
   priceNum: p.price,
   image: p.image,
   category: p.category,
+  categoryId: p.categoryId,
+  categoryTranslations: p.categoryTranslations,
   badge: p.badge ?? undefined,
   isFrozen: p.isFrozen,
   translations: p.translations,
@@ -77,7 +79,7 @@ const PRODUCT_COLUMNS = [
 const AdminProductsTab = () => {
   const { t, language } = useLanguage();
   const [products, setProducts] = useState<AdminProduct[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<CategorySummary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -106,7 +108,7 @@ const AdminProductsTab = () => {
   useEffect(() => {
     void fetch("/api/admin/products?categoriesOnly=true")
       .then((res) => res.json())
-      .then((data: { categories?: string[] }) => {
+      .then((data: { categories?: CategorySummary[] }) => {
         setCategories(data.categories ?? []);
       })
       .catch(() => setCategories([]));
@@ -303,7 +305,11 @@ const AdminProductsTab = () => {
                 <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("admin_products.category_filter")} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("admin_products.all_categories")}</SelectItem>
-                  {categories.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                  {categories.map((c) => (
+                    <SelectItem key={c.slug} value={c.slug}>
+                      {resolveCategoryName(c, c.translations, language)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select
@@ -470,7 +476,13 @@ const AdminProductsTab = () => {
                           <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
                         </TableCell>
                         <TableCell className="font-medium">{copy.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{p.category}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {resolveCategoryName(
+                            { name: p.category },
+                            p.categoryTranslations,
+                            language,
+                          )}
+                        </TableCell>
                         <TableCell className="font-semibold">{p.priceDisplay}</TableCell>
                         <TableCell>{p.stock}</TableCell>
                         <TableCell><Badge variant="outline" className={stockColor(p.status)}>{translateProductStatus(p.status, t)}</Badge></TableCell>

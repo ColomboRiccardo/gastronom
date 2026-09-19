@@ -17,6 +17,7 @@ import {
   FileText,
   DatabaseBackup,
   LogOut,
+  FolderTree,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import AdminCustomersTab from "@/components/account/AdminCustomersTab";
 import WishlistTab from "@/components/account/WishlistTab";
 import AdminArticlesTab from "@/components/account/AdminArticlesTab";
 import AdminManagementTab from "@/components/account/AdminManagementTab";
+import AdminCategoriesTab from "@/components/account/AdminCategoriesTab";
 
 interface AccountPageClientProps {
   user: AppUser;
@@ -171,6 +173,13 @@ const AccountPageClient = ({
                     {t("account.products")}
                   </TabsTrigger>
                   <TabsTrigger
+                    value="admin-categories"
+                    className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm"
+                  >
+                    <FolderTree className="w-4 h-4" />
+                    {t("account.categories")}
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="admin-customers"
                     className="font-body data-[state=active]:bg-[hsl(var(--navy))] data-[state=active]:text-primary-foreground gap-2 text-sm"
                   >
@@ -219,6 +228,9 @@ const AccountPageClient = ({
               </TabsContent>
               <TabsContent value="admin-products">
                 <AdminProductsTab />
+              </TabsContent>
+              <TabsContent value="admin-categories">
+                <AdminCategoriesTab />
               </TabsContent>
               <TabsContent value="admin-customers">
                 <AdminCustomersTab />
