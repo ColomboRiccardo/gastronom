@@ -99,6 +99,36 @@ export const translations: Record<Language, Record<string, string>> = {
     "about.title": "About Us",
     "about.page_title": "About Us",
     "about.page_subtitle": "A little corner of Eastern Europe on the beautiful Ligurian coast",
+    "about.eyebrow": "Our Story",
+    "about.story_title": "Born from Nostalgia, Built with Love",
+    "about.story_p1":
+      "Gastronom was born from a simple longing — the taste of home. When our founders settled on the sun-drenched Ligurian coast, they fell in love with Italy but missed the bold, soulful flavours of Eastern Europe: the sharp bite of a proper pickle, the smoky richness of dried fish, the warmth of a good vodka shared among friends.",
+    "about.story_p2":
+      "So they created a place where those flavours could live alongside Italian olive oil and focaccia — a shop that bridges two culinary worlds. Today, Gastronom is a destination for anyone who craves authenticity, whether they grew up in Moscow or Genova.",
+    "about.values_title": "What We Stand For",
+    "about.value_auth_title": "Authenticity",
+    "about.value_auth_body":
+      "Every product is carefully selected from trusted producers across Russia, Ukraine, Georgia, and beyond — no imitations, only the real thing.",
+    "about.value_quality_title": "Quality",
+    "about.value_quality_body":
+      "We taste and test every item ourselves. If it wouldn't earn a place on our family table, it won't earn a place on our shelves.",
+    "about.value_fresh_title": "Fresh Selection",
+    "about.value_fresh_body":
+      "We keep our shelves stocked with carefully chosen goods — from smoked kolbasa to just-packed pickles — so you always find something worth taking home.",
+    "about.journey_title": "Our Journey",
+    "about.tl_2019_title": "A Dream Takes Root",
+    "about.tl_2019_body":
+      "Founded by a family of Eastern European expats who missed the flavours of home, Gastronom opened its doors on a quiet street near the Ligurian coast.",
+    "about.tl_2021_title": "Growing Community",
+    "about.tl_2021_body":
+      "Word spread fast. Our little shop became a gathering point for the Eastern European community — and curious Italian neighbours who fell in love with our products.",
+    "about.tl_2023_title": "Expanding Horizons",
+    "about.tl_2023_body":
+      "We expanded our selection to include Georgian wines, Uzbek spices, and handcrafted souvenirs. The shop doubled in size to welcome even more treasures.",
+    "about.tl_2025_title": "Online & Beyond",
+    "about.tl_2025_body":
+      "Gastronom goes online, bringing the best of Eastern Europe to customers across Italy — while our brick-and-mortar shop remains the heart of it all.",
+    "about.visit_title": "Come Visit Us",
 
     "account.profile": "Profile",
     "account.orders": "Orders",
@@ -741,6 +771,36 @@ export const translations: Record<Language, Record<string, string>> = {
     "about.page_title": "À propos de nous",
     "about.page_subtitle":
       "Un petit coin d'Europe de l'Est sur la belle côte ligure",
+    "about.eyebrow": "Notre histoire",
+    "about.story_title": "Née de la nostalgie, bâtie avec amour",
+    "about.story_p1":
+      "Gastronom est né d'une simple envie — le goût de la maison. Quand nos fondateurs se sont installés sur la côte ligure ensoleillée, ils sont tombés amoureux de l'Italie, mais leur manquaient les saveurs audacieuses et chaleureuses d'Europe de l'Est : le croquant d'un vrai cornichon, la richesse fumée du poisson séché, la chaleur d'une bonne vodka partagée entre amis.",
+    "about.story_p2":
+      "Ils ont donc créé un lieu où ces saveurs cohabitent avec l'huile d'olive et la focaccia italiennes — une boutique qui relie deux mondes culinaires. Aujourd'hui, Gastronom accueille tous ceux qui cherchent l'authenticité, qu'ils aient grandi à Moscou ou à Gênes.",
+    "about.values_title": "Ce qui nous guide",
+    "about.value_auth_title": "Authenticité",
+    "about.value_auth_body":
+      "Chaque produit est soigneusement choisi auprès de producteurs de confiance en Russie, Ukraine, Géorgie et au-delà — pas d'imitations, seulement le vrai.",
+    "about.value_quality_title": "Qualité",
+    "about.value_quality_body":
+      "Nous goûtons et testons chaque article nous-mêmes. S'il n'aurait pas sa place à notre table de famille, il n'aura pas sa place sur nos rayons.",
+    "about.value_fresh_title": "Sélection fraîche",
+    "about.value_fresh_body":
+      "Nous gardons nos rayons bien fournis — de la kolbasa fumée aux pickles frais — pour que vous trouviez toujours quelque chose à emporter.",
+    "about.journey_title": "Notre parcours",
+    "about.tl_2019_title": "Un rêve prend racine",
+    "about.tl_2019_body":
+      "Fondé par une famille d'expatriés d'Europe de l'Est qui manquaient les saveurs du pays, Gastronom a ouvert ses portes dans une rue calme près de la côte ligure.",
+    "about.tl_2021_title": "Une communauté grandit",
+    "about.tl_2021_body":
+      "La nouvelle s'est répandue vite. Notre petite boutique est devenue un lieu de rencontre pour la communauté d'Europe de l'Est — et pour des voisins italiens curieux qui ont adopté nos produits.",
+    "about.tl_2023_title": "De nouveaux horizons",
+    "about.tl_2023_body":
+      "Nous avons élargi la sélection aux vins géorgiens, aux épices ouzbèkes et aux souvenirs artisanaux. La boutique a doublé de taille pour accueillir encore plus de trésors.",
+    "about.tl_2025_title": "En ligne et au-delà",
+    "about.tl_2025_body":
+      "Gastronom passe en ligne, pour apporter le meilleur de l'Europe de l'Est aux clients dans toute l'Italie — tandis que la boutique physique reste le cœur de tout.",
+    "about.visit_title": "Venez nous voir",
 
     "account.profile": "Profil",
     "account.orders": "Commandes",
@@ -1391,6 +1451,36 @@ export const translations: Record<Language, Record<string, string>> = {
     "about.page_title": "Chi Siamo",
     "about.page_subtitle":
       "Un angolo di Europa orientale sulla splendida costa ligure",
+    "about.eyebrow": "La nostra storia",
+    "about.story_title": "Nata dalla nostalgia, costruita con amore",
+    "about.story_p1":
+      "Gastronom è nato da un desiderio semplice — il sapore di casa. Quando i fondatori si sono stabiliti sulla costa ligure soleggiata, si sono innamorati dell'Italia ma sentivano la mancanza dei sapori forti e sinceri dell'Europa orientale: il morso di un vero sottaceto, la ricchezza affumicata del pesce secco, il calore di una buona vodka condivisa tra amici.",
+    "about.story_p2":
+      "Così hanno creato un luogo in cui quei sapori convivono con l'olio d'oliva e la focaccia italiani — un negozio che unisce due mondi culinari. Oggi Gastronom è una meta per chi cerca autenticità, sia cresciuto a Mosca o a Genova.",
+    "about.values_title": "Ciò in cui crediamo",
+    "about.value_auth_title": "Autenticità",
+    "about.value_auth_body":
+      "Ogni prodotto è scelto con cura da produttori di fiducia in Russia, Ucraina, Georgia e oltre — niente imitazioni, solo il vero.",
+    "about.value_quality_title": "Qualità",
+    "about.value_quality_body":
+      "Assaggiamo e proviamo ogni articolo noi stessi. Se non entrerebbe nella nostra tavola di famiglia, non entrerà nei nostri scaffali.",
+    "about.value_fresh_title": "Selezione fresca",
+    "about.value_fresh_body":
+      "Teniamo gli scaffali forniti di prodotti scelti con cura — dalla kolbasa affumicata ai sottaceti appena preparati — così trovi sempre qualcosa da portare a casa.",
+    "about.journey_title": "Il nostro percorso",
+    "about.tl_2019_title": "Un sogno mette radici",
+    "about.tl_2019_body":
+      "Fondato da una famiglia di espatriati dell'Europa orientale che sentiva la mancanza dei sapori di casa, Gastronom ha aperto in una via tranquilla vicino alla costa ligure.",
+    "about.tl_2021_title": "Una comunità che cresce",
+    "about.tl_2021_body":
+      "La voce si è sparsa in fretta. Il nostro piccolo negozio è diventato un punto di ritrovo per la comunità dell'Europa orientale — e per i vicini italiani curiosi che si sono innamorati dei nostri prodotti.",
+    "about.tl_2023_title": "Nuovi orizzonti",
+    "about.tl_2023_body":
+      "Abbiamo ampliato la selezione con vini georgiani, spezie uzbeke e souvenir artigianali. Il negozio ha raddoppiato le dimensioni per accogliere ancora più tesori.",
+    "about.tl_2025_title": "Online e oltre",
+    "about.tl_2025_body":
+      "Gastronom va online, portando il meglio dell'Europa orientale ai clienti in tutta Italia — mentre il negozio fisico resta il cuore di tutto.",
+    "about.visit_title": "Vieni a trovarci",
 
     "account.profile": "Profilo",
     "account.orders": "Ordini",
@@ -2040,6 +2130,36 @@ export const translations: Record<Language, Record<string, string>> = {
     "about.page_title": "О Нас",
     "about.page_subtitle":
       "Уголок Восточной Европы на прекрасном лигурийском побережье",
+    "about.eyebrow": "Наша история",
+    "about.story_title": "Рождено ностальгией, создано с любовью",
+    "about.story_p1":
+      "Gastronom родился из простой тоски — по вкусу дома. Когда основатели поселились на солнечном лигурийском побережье, они полюбили Италию, но скучали по смелым, душевным вкусам Восточной Европы: хрусту настоящего маринада, копчёной насыщенности сушёной рыбы, теплу хорошей водки в кругу друзей.",
+    "about.story_p2":
+      "Так появилось место, где эти вкусы живут рядом с итальянским оливковым маслом и фокаччей — магазин, соединяющий два кулинарных мира. Сегодня Gastronom — для всех, кто ищет подлинность, выросли ли они в Москве или в Генуе.",
+    "about.values_title": "Наши принципы",
+    "about.value_auth_title": "Подлинность",
+    "about.value_auth_body":
+      "Каждый продукт тщательно отобран у проверенных производителей в России, Украине, Грузии и дальше — никаких подделок, только настоящее.",
+    "about.value_quality_title": "Качество",
+    "about.value_quality_body":
+      "Мы сами пробуем каждый товар. Если ему нет места за нашим семейным столом, ему нет места и на наших полках.",
+    "about.value_fresh_title": "Свежий выбор",
+    "about.value_fresh_body":
+      "Мы держим полки наполненными тщательно выбранными товарами — от копчёной колбасы до свежих маринадов — чтобы всегда было что унести домой.",
+    "about.journey_title": "Наш путь",
+    "about.tl_2019_title": "Мечта пускает корни",
+    "about.tl_2019_body":
+      "Основанный семьёй выходцев из Восточной Европы, скучавших по вкусам дома, Gastronom открыл двери на тихой улице у лигурийского побережья.",
+    "about.tl_2021_title": "Растущее сообщество",
+    "about.tl_2021_body":
+      "Слава разлетелась быстро. Наш маленький магазин стал местом встреч для восточноевропейской общины — и для любопытных итальянских соседей, полюбивших наши продукты.",
+    "about.tl_2023_title": "Новые горизонты",
+    "about.tl_2023_body":
+      "Мы расширили ассортимент грузинскими винами, узбекскими специями и рукодельными сувенирами. Магазин увеличился вдвое, чтобы принять ещё больше находок.",
+    "about.tl_2025_title": "Онлайн и дальше",
+    "about.tl_2025_body":
+      "Gastronom выходит в интернет, открывая лучшее Восточной Европы клиентам по всей Италии — а физический магазин остаётся сердцем всего.",
+    "about.visit_title": "Приходите к нам",
 
     "account.profile": "Профиль",
     "account.orders": "Заказы",
