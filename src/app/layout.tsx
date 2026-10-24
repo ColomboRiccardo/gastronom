@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import Providers from "./providers";
 import { getAuthenticatedUser } from "@/lib/auth/server";
+import { getSiteUrl } from "@/lib/seo/site";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -20,7 +21,11 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  title: "Гастроном — Eastern European Delicatessen",
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: "Гастроном — Eastern European Delicatessen",
+    template: "%s — Гастроном",
+  },
   description:
     "Authentic Eastern European delicacies, spirits & crafts in Liguria, Italy.",
   openGraph: {

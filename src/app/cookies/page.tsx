@@ -4,8 +4,9 @@ import LegalPageShell, { LegalSection } from "@/components/LegalPageShell";
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy — Гастроном",
+  title: "Cookie Policy",
   description: "How Gastronom uses cookies and similar technologies on this website.",
+  alternates: { canonical: "/cookies" },
 };
 
 export default function CookiesPage() {

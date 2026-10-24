@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import LegalPageShell, { LegalSection } from "@/components/LegalPageShell";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Гастроном",
+  title: "Privacy Policy",
   description: "How Gastronom collects, uses, and protects your personal data under the GDPR.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {

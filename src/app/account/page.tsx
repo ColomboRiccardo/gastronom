@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import AccountPageClient from "./AccountPageClient";
 import { getAuthenticatedUser } from "@/lib/auth/server";
 import { fetchAllOrdersForAdmin, fetchUserOrdersForAccount } from "@/lib/orders/server-queries";
 import { fetchAdminDashboardData } from "@/lib/orders/dashboard-queries";
+import { noIndexFollow } from "@/lib/seo/site";
+
+export const metadata: Metadata = {
+  title: "My account",
+  robots: noIndexFollow,
+};
 
 export default async function AccountPage() {
   const user = await getAuthenticatedUser();

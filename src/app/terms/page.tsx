@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import LegalPageShell, { LegalSection } from "@/components/LegalPageShell";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Гастроном",
+  title: "Terms of Service",
   description: "Terms governing use of the Gastronom online shop.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {
