@@ -5,6 +5,7 @@ import { noIndexFollow } from "@/lib/seo/site";
 
 export const metadata: Metadata = {
   title: "Sign up",
+  description: "Create a Гастроном account to order Eastern European products online from Sanremo.",
   robots: noIndexFollow,
 };
 

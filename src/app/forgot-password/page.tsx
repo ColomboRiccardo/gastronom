@@ -5,6 +5,7 @@ import { noIndexFollow } from "@/lib/seo/site";
 
 export const metadata: Metadata = {
   title: "Forgot password",
+  description: "Reset your Гастроном account password by email.",
   robots: noIndexFollow,
 };
 

@@ -5,6 +5,7 @@ import { noIndexFollow } from "@/lib/seo/site";
 
 export const metadata: Metadata = {
   title: "Cart",
+  description: "Review items in your Гастроном shopping cart before checkout.",
   robots: noIndexFollow,
 };
 

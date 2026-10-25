@@ -9,6 +9,7 @@ import { noIndexFollow } from "@/lib/seo/site";
 
 export const metadata: Metadata = {
   title: "My account",
+  description: "Manage your Гастроном orders, addresses, and account settings.",
   robots: noIndexFollow,
 };
 

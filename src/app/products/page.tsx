@@ -77,6 +77,11 @@ export async function generateMetadata({
   else titleParts.push("Shop");
   if (page > 1) titleParts.push(`Page ${page}`);
 
+  const pageSuffix = page > 1 ? ` Page ${page}.` : "";
+  const description = categoryLabel
+    ? `Shop ${categoryLabel} at Гастроном in Sanremo — authentic Eastern European products.${pageSuffix}`
+    : `Browse the full Гастроном shop in Sanremo: Eastern European food, drinks, and specialties.${pageSuffix}`;
+
   const isFiltered =
     page > 1 ||
     sort !== "newest" ||
@@ -85,9 +90,7 @@ export async function generateMetadata({
 
   return {
     title: titleParts.join(" · "),
-    description: categoryLabel
-      ? `Buy ${categoryLabel} online from Гастроном, Eastern European delicatessen in Sanremo.`
-      : "Browse authentic Eastern European products from Гастроном in Sanremo, Liguria.",
+    description,
     alternates: {
       canonical: shopCanonicalPath(singleCategory),
     },

@@ -30,8 +30,6 @@ export const metadata: Metadata = {
     "Authentic Eastern European delicacies, spirits & crafts in Liguria, Italy.",
   openGraph: {
     title: "Гастроном — Eastern European Delicatessen",
-    description:
-      "Authentic Eastern European delicacies, spirits & crafts in Liguria, Italy.",
     type: "website",
   },
 };

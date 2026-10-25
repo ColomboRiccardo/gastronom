@@ -5,6 +5,7 @@ import { noIndexFollow } from "@/lib/seo/site";
 
 export const metadata: Metadata = {
   title: "Order confirmed",
+  description: "Your Гастроном order was placed successfully.",
   robots: noIndexFollow,
 };
 

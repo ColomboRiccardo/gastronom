@@ -9,6 +9,8 @@ import Footer from "@/components/Footer";
 import { fetchFeaturedPublishedProducts, fetchPublishedCategorySummaries } from "@/lib/products/server-queries";
 
 export const metadata: Metadata = {
+  description:
+    "Authentic Eastern European delicacies, spirits & crafts in Liguria, Italy. Shop online or visit Гастроном in Sanremo.",
   alternates: { canonical: "/" },
 };
 
