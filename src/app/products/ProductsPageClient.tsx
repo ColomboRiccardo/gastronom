@@ -7,7 +7,9 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import ProductFilters from "@/components/ProductFilters";
 import ListPagination from "@/components/ListPagination";
+import Link from "next/link";
 import { type SortOption } from "@/lib/products/constants";
+import { resolveCategoryName } from "@/lib/products/resolve-copy";
 import { type UiProduct, type CategorySummary } from "@/lib/products/types";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -33,8 +35,16 @@ const ProductsPageClient = ({
   initialSort,
 }: ProductsPageClientProps) => {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [, startTransition] = useTransition();
+
+  const activeCategory =
+    initialCategories.length === 1
+      ? categories.find((c) => c.slug === initialCategories[0])
+      : undefined;
+  const activeCategoryLabel = activeCategory
+    ? resolveCategoryName(activeCategory, activeCategory.translations, language)
+    : null;
 
   const buildQueryString = useCallback(
     (overrides: {
@@ -93,8 +103,13 @@ const ProductsPageClient = ({
       <section className="pt-24 pb-12 bg-muted/50 relative overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">
-            {t("products.title")}
+            {activeCategoryLabel ?? t("products.title")}
           </h1>
+          <p className="font-body text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            {activeCategoryLabel
+              ? t("products.category_intro", { category: activeCategoryLabel })
+              : t("products.subtitle")}
+          </p>
         </div>
         <img
           src="/slavic-border.png"
@@ -138,6 +153,37 @@ const ProductsPageClient = ({
               )}
             </div>
           </div>
+
+          {categories.length > 1 && (
+            <nav
+              aria-label={t("products.browse_categories")}
+              className="mt-14 pt-10 border-t border-border"
+            >
+              <h2 className="font-display text-xl font-semibold text-foreground text-center mb-4">
+                {t("products.browse_categories")}
+              </h2>
+              <ul className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-4xl mx-auto">
+                {categories.map((cat) => {
+                  const label = resolveCategoryName(cat, cat.translations, language);
+                  const isActive = initialCategories.length === 1 && cat.slug === initialCategories[0];
+                  return (
+                    <li key={cat.id}>
+                      <Link
+                        href={`/products?category=${encodeURIComponent(cat.slug)}`}
+                        className={`font-body text-sm underline-offset-4 hover:underline ${
+                          isActive
+                            ? "text-primary font-medium"
+                            : "text-foreground/80 hover:text-primary"
+                        }`}
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          )}
         </div>
       </section>
 

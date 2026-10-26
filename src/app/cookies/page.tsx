@@ -83,7 +83,31 @@ export default function CookiesPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="5. More information">
+      <LegalSection title="5. Retention and updates">
+        <p>
+          Necessary cookies last for the session or as long as required to keep you signed in and
+          protect the shop. Preference cookies remember your language and consent choice until you
+          clear them or change settings. If we add analytics or marketing tools later, we will only
+          load them after you opt in, and we will update this page to name those tools.
+        </p>
+        <p>
+          We may revise this Cookie Policy when our practices or the law change. The date at the top
+          of the page shows the latest update. Continued use of the site after a change means you
+          accept the revised policy for necessary cookies; optional categories still need your
+          consent.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="6. Your rights and contact">
+        <p>
+          Under the GDPR you can access, correct, or delete personal data tied to your account, and
+          you can withdraw optional cookie consent at any time without affecting the shop’s essential
+          functions. For requests about cookies or privacy, contact us at the shop address on our{" "}
+          <a href="/about" className="text-primary hover:underline">
+            About
+          </a>{" "}
+          page or through the contact details shown in the site footer.
+        </p>
         <p>
           For personal data beyond cookies, see our{" "}
           <a href="/privacy" className="text-primary hover:underline">

@@ -1,0 +1,24 @@
+# Гастроном (Gastronom)
+
+> Eastern European delicatessen in Sanremo, Liguria (Italy). Online shop and physical store for authentic food, drinks, and specialties from Eastern Europe.
+
+Gastronom (brand name: Гастроном) sells Eastern European delicacies from Via Nuvoloni 13, 18038 Sanremo (IM), Italy. Customers can browse and order online, or visit the shop. The site is available in English, French, Italian, and Russian. Currency and checkout are in EUR.
+
+Shop address: Via Nuvoloni 13, 18038 Sanremo (IM), Italy.
+Phone: +39 348 655 6241.
+Opening hours: Mon–Sun 10:00–14:00 / 15:00–20:00.
+
+## Primary
+
+- [Home](https://www.gastronomsanremo.com/): Landing page with featured products and categories
+- [Shop](https://www.gastronomsanremo.com/products): Full product catalogue with filters
+- [Categories](https://www.gastronomsanremo.com/categories): Browse products by food category
+- [About](https://www.gastronomsanremo.com/about): Store story and visit information
+- [Blog](https://www.gastronomsanremo.com/blog): Articles on Slavic food culture and guides
+
+## Optional
+
+- [Privacy Policy](https://www.gastronomsanremo.com/privacy): GDPR privacy information
+- [Cookie Policy](https://www.gastronomsanremo.com/cookies): Cookie and consent details
+- [Terms of Service](https://www.gastronomsanremo.com/terms): Shop terms
+- [Sitemap](https://www.gastronomsanremo.com/sitemap.xml): Machine-readable list of indexable URLs

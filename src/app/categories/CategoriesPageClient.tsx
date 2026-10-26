@@ -22,8 +22,11 @@ export default function CategoriesPageClient({
           <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">
             {t("categories.page_title")}
           </h1>
-          <p className="font-body text-muted-foreground max-w-lg mx-auto">
+          <p className="font-body text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {t("categories.subtitle")}
+          </p>
+          <p className="font-body text-muted-foreground max-w-2xl mx-auto leading-relaxed mt-3">
+            {t("categories.intro")}
           </p>
         </div>
         <img

@@ -24,6 +24,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.view_all_products": "View All Products",
     "home.categories_eyebrow": "Browse by",
     "home.categories_title": "Categories",
+    "home.categories_all_label": "All product categories",
     "home.view_all_categories": "View All Categories",
     "home.about_since": "Since 2019",
     "home.about_title": "Our Story",
@@ -76,6 +77,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "cart.shipping_line": "Shipping",
 
     "products.title": "Our Products",
+    "products.subtitle":
+      "Browse authentic Eastern European food, drinks, and specialties from our Sanremo delicatessen. Filter by category or price, then order online for pickup or delivery.",
+    "products.category_intro":
+      "Shop {category} at Гастроном in Sanremo — carefully selected Eastern European products you can order online or find in our Via Nuvoloni store.",
+    "products.browse_categories": "Browse all categories",
     "products.search": "Search products...",
     "products.no_results": "No products found",
     "products.add_to_cart": "Add to Cart",
@@ -511,7 +517,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "blog.title": "Our Blog",
     "blog.subtitle": "Stories & Guides",
     "blog.description":
-      "Explore the flavours, traditions, and stories behind Eastern European cuisine and culture.",
+      "Explore the flavours, traditions, and stories behind Eastern European cuisine and culture — from vodka and caviar to fermentation, zakuski, and festive tables.",
+    "blog.intro":
+      "These guides are written for curious cooks and anyone missing home flavours in Liguria. New pieces appear here as we share recipes, product tips, and the history behind what we stock at Гастроном.",
     "blog.back": "Back to Blog",
     "blog.articles_count": "articles",
     "blog.sort_newest": "Newest First",
@@ -668,6 +676,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "categories.page_title": "All Categories",
     "categories.subtitle":
       "Explore our full range of Eastern European delicacies, spirits, and crafts — organized by category.",
+    "categories.intro":
+      "From dairy, sausage, and fish to preserves, sweets, tea, and frozen goods, each category opens the matching products in our online shop. Visit us in Sanremo or order for pickup and delivery across Italy.",
     "categories.empty": "No categories available yet.",
   },
 
@@ -695,6 +705,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.view_all_products": "Voir tous les produits",
     "home.categories_eyebrow": "Parcourir par",
     "home.categories_title": "Catégories",
+    "home.categories_all_label": "Toutes les catégories de produits",
     "home.view_all_categories": "Voir toutes les catégories",
     "home.about_since": "Depuis 2019",
     "home.about_title": "Notre histoire",
@@ -747,6 +758,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "cart.shipping_line": "Livraison",
 
     "products.title": "Nos Produits",
+    "products.subtitle":
+      "Parcourez aliments, boissons et spécialités d'Europe de l'Est de notre épicerie de Sanremo. Filtrez par catégorie ou prix, puis commandez en ligne pour un retrait ou une livraison.",
+    "products.category_intro":
+      "Achetez {category} chez Гастроном à Sanremo — des produits d'Europe de l'Est sélectionnés, disponibles en ligne ou dans notre magasin Via Nuvoloni.",
+    "products.browse_categories": "Parcourir toutes les catégories",
     "products.search": "Rechercher des produits...",
     "products.no_results": "Aucun produit trouvé",
     "products.add_to_cart": "Ajouter au panier",
@@ -1187,7 +1203,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "blog.title": "Notre Blog",
     "blog.subtitle": "Histoires & Guides",
     "blog.description":
-      "Explorez les saveurs, traditions et histoires de la cuisine et culture d'Europe de l'Est.",
+      "Explorez les saveurs, traditions et histoires de la cuisine et culture d'Europe de l'Est — de la vodka et du caviar à la fermentation, aux zakuski et aux tables de fête.",
+    "blog.intro":
+      "Ces guides s'adressent aux cuisiniers curieux et à ceux qui cherchent les goûts d'autrefois en Ligurie. De nouveaux articles partagent recettes, conseils produits et l'histoire de ce que nous proposons chez Гастроном.",
     "blog.back": "Retour au Blog",
     "blog.articles_count": "articles",
     "blog.sort_newest": "Plus récents",
@@ -1348,6 +1366,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "categories.page_title": "Toutes les catégories",
     "categories.subtitle":
       "Explorez notre gamme de délices, spiritueux et artisanat d'Europe de l'Est — organisée par catégorie.",
+    "categories.intro":
+      "Produits laitiers, charcuterie, poisson, conserves, confiseries, thés et surgelés : chaque catégorie ouvre les produits correspondants dans la boutique en ligne. Venez à Sanremo ou commandez pour un retrait et une livraison en Italie.",
     "categories.empty": "Aucune catégorie disponible pour le moment.",
   },
 
@@ -1375,6 +1395,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.view_all_products": "Vedi tutti i prodotti",
     "home.categories_eyebrow": "Sfoglia per",
     "home.categories_title": "Categorie",
+    "home.categories_all_label": "Tutte le categorie di prodotti",
     "home.view_all_categories": "Vedi tutte le categorie",
     "home.about_since": "Dal 2019",
     "home.about_title": "La nostra storia",
@@ -1427,6 +1448,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "cart.shipping_line": "Spedizione",
 
     "products.title": "I Nostri Prodotti",
+    "products.subtitle":
+      "Sfoglia cibi, bevande e specialità dell'Europa orientale della nostra gastronomia di Sanremo. Filtra per categoria o prezzo, poi ordina online per ritiro o consegna.",
+    "products.category_intro":
+      "Acquista {category} da Гастроном a Sanremo — prodotti dell'Europa orientale selezionati, disponibili online o nel negozio di Via Nuvoloni.",
+    "products.browse_categories": "Sfoglia tutte le categorie",
     "products.search": "Cerca prodotti...",
     "products.no_results": "Nessun prodotto trovato",
     "products.add_to_cart": "Aggiungi al carrello",
@@ -1866,7 +1892,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "blog.title": "Il Nostro Blog",
     "blog.subtitle": "Storie & Guide",
     "blog.description":
-      "Esplora i sapori, le tradizioni e le storie della cucina e cultura dell'Europa orientale.",
+      "Esplora i sapori, le tradizioni e le storie della cucina e cultura dell'Europa orientale — dalla vodka e dal caviale alla fermentazione, agli zakuski e alle tavole di festa.",
+    "blog.intro":
+      "Queste guide sono per cuochi curiosi e per chi cerca i sapori di casa in Liguria. Qui condividiamo ricette, consigli sui prodotti e la storia di ciò che troviamo da Гастроном.",
     "blog.back": "Torna al Blog",
     "blog.articles_count": "articoli",
     "blog.sort_newest": "Più recenti",
@@ -2027,6 +2055,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "categories.page_title": "Tutte le categorie",
     "categories.subtitle":
       "Esplora la nostra gamma di specialità, distillati e artigianato dell'Europa orientale — organizzata per categoria.",
+    "categories.intro":
+      "Da latticini, salumi e pesce a conserve, dolci, tè e surgelati: ogni categoria apre i prodotti corrispondenti nel negozio online. Vieni a Sanremo o ordina per ritiro e consegna in Italia.",
     "categories.empty": "Nessuna categoria disponibile al momento.",
   },
 
@@ -2054,6 +2084,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.view_all_products": "Все товары",
     "home.categories_eyebrow": "Смотреть по",
     "home.categories_title": "Категории",
+    "home.categories_all_label": "Все категории товаров",
     "home.view_all_categories": "Все категории",
     "home.about_since": "С 2019 года",
     "home.about_title": "Наша история",
@@ -2106,6 +2137,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "cart.shipping_line": "Доставка",
 
     "products.title": "Наши Продукты",
+    "products.subtitle":
+      "Смотрите аутентичные восточноевропейские продукты, напитки и специалитеты нашего магазина в Сан-Ремо. Фильтруйте по категории или цене и заказывайте онлайн для самовывоза или доставки.",
+    "products.category_intro":
+      "Покупайте {category} в Гастрономе в Сан-Ремо — отобранные восточноевропейские продукты онлайн или в магазине на Via Nuvoloni.",
+    "products.browse_categories": "Все категории",
     "products.search": "Поиск продуктов...",
     "products.no_results": "Продукты не найдены",
     "products.add_to_cart": "В корзину",
@@ -2549,7 +2585,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "blog.title": "Наш Блог",
     "blog.subtitle": "Истории и Гиды",
     "blog.description":
-      "Откройте для себя вкусы, традиции и истории восточноевропейской кухни и культуры.",
+      "Откройте для себя вкусы, традиции и истории восточноевропейской кухни и культуры — от водки и икры до ферментации, закусок и праздничного стола.",
+    "blog.intro":
+      "Эти материалы для любопытных кулинаров и тех, кто скучает по домашним вкусам в Лигурии. Здесь появляются рецепты, советы по продуктам и история того, что мы продаём в Гастрономе.",
     "blog.back": "Назад к Блогу",
     "blog.articles_count": "статей",
     "blog.sort_newest": "Сначала новые",
@@ -2710,6 +2748,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "categories.page_title": "Все категории",
     "categories.subtitle":
       "Исследуйте наш ассортимент восточноевропейских деликатесов, напитков и ремёсел — по категориям.",
+    "categories.intro":
+      "От молочных продуктов, колбас и рыбы до консервов, сладостей, чая и заморозки: каждая категория открывает соответствующие товары в интернет-магазине. Приходите в Сан-Ремо или закажите самовывоз и доставку по Италии.",
     "categories.empty": "Категории пока недоступны.",
   },
 };
