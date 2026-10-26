@@ -170,50 +170,50 @@ const ProductModal = ({
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setIsEditing(false); }}>
       <DialogContent className="flex flex-col gap-0 p-0 sm:max-w-[600px] max-h-[90vh] overflow-hidden">
-        <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-t-lg">
-          <img
-            src={product.image}
-            alt={copy.name}
-            className="w-full h-full object-cover"
-          />
-          {product.badge && (
-            <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-bold font-body px-3 py-1 rounded-full">
-              {product.badge}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-lg">
+            <img
+              src={product.image}
+              alt={copy.name}
+              className="w-full h-full object-cover"
+            />
+            {product.badge && (
+              <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-bold font-body px-3 py-1 rounded-full">
+                {product.badge}
+              </span>
+            )}
+            <span className="absolute top-4 right-4 bg-accent/90 text-accent-foreground text-xs font-medium font-body px-2 py-1 rounded">
+              {product.category}
             </span>
-          )}
-          <span className="absolute top-4 right-4 bg-accent/90 text-accent-foreground text-xs font-medium font-body px-2 py-1 rounded">
-            {product.category}
-          </span>
-          {mode === "customer" && (
-            <button
-              className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors shadow-sm"
-              onClick={() => {
-                if (!isAuthenticated) {
-                  toast(t("product.wishlist_signin_title"), {
-                    description: t("product.wishlist_signin_desc"),
-                    action: {
-                      label: t("product.wishlist_signin_action"),
-                      onClick: () => {
-                        onOpenChange(false);
-                        router.push("/login");
+            {mode === "customer" && (
+              <button
+                className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors shadow-sm"
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    toast(t("product.wishlist_signin_title"), {
+                      description: t("product.wishlist_signin_desc"),
+                      action: {
+                        label: t("product.wishlist_signin_action"),
+                        onClick: () => {
+                          onOpenChange(false);
+                          router.push("/login");
+                        },
                       },
-                    },
-                  });
-                  return;
-                }
-                toggleItem({ ...product, name: copy.name, description: copy.description });
-              }}
-              aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
-            >
-              <Heart
-                className={`w-5 h-5 transition-colors ${isInWishlist(product.id) ? "fill-primary text-primary" : "text-muted-foreground hover:text-primary"}`}
-              />
-            </button>
-          )}
-        </div>
+                    });
+                    return;
+                  }
+                  toggleItem({ ...product, name: copy.name, description: copy.description });
+                }}
+                aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                <Heart
+                  className={`w-5 h-5 transition-colors ${isInWishlist(product.id) ? "fill-primary text-primary" : "text-muted-foreground hover:text-primary"}`}
+                />
+              </button>
+            )}
+          </div>
 
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-6 pb-4 space-y-4">
+          <div className="space-y-4 px-6 pt-6 pb-4">
             {mode === "admin" && (
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
@@ -326,53 +326,53 @@ const ProductModal = ({
               </p>
             )}
           </div>
+        </div>
 
-          <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-3">
-            {!isEditing ? (
-              <>
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                    {t("product.price")}
-                  </p>
-                  <span className="font-display text-3xl font-bold text-primary">{product.price}</span>
-                </div>
-
-                {mode === "customer" && (
-                  <CartQuantityControl
-                    product={{ ...product, name: copy.name, description: copy.description }}
-                    size="md"
-                    className="w-full"
-                  />
-                )}
-
-                {mode === "admin" && (
-                  <Button
-                    variant="outline"
-                    className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground gap-2"
-                    onClick={handleStartEdit}
-                  >
-                    <Pencil className="w-4 h-4" />
-                    {t("product.edit")}
-                  </Button>
-                )}
-              </>
-            ) : (
-              <div className="flex gap-3">
-                <Button
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
-                  onClick={() => void handleSaveEdit()}
-                  disabled={isSaving}
-                >
-                  <Save className="w-4 h-4" />
-                  {isSaving ? t("product.saving") : t("product.save")}
-                </Button>
-                <Button variant="outline" className="gap-2" onClick={handleCancelEdit} disabled={isSaving}>
-                  <X className="w-4 h-4" />
-                  {t("product.cancel")}
-                </Button>
+        <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-3">
+          {!isEditing ? (
+            <>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+                  {t("product.price")}
+                </p>
+                <span className="font-display text-3xl font-bold text-primary">{product.price}</span>
               </div>
-            )}
-          </div>
+
+              {mode === "customer" && (
+                <CartQuantityControl
+                  product={{ ...product, name: copy.name, description: copy.description }}
+                  size="md"
+                  className="w-full"
+                />
+              )}
+
+              {mode === "admin" && (
+                <Button
+                  variant="outline"
+                  className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground gap-2"
+                  onClick={handleStartEdit}
+                >
+                  <Pencil className="w-4 h-4" />
+                  {t("product.edit")}
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="flex gap-3">
+              <Button
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+                onClick={() => void handleSaveEdit()}
+                disabled={isSaving}
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? t("product.saving") : t("product.save")}
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={handleCancelEdit} disabled={isSaving}>
+                <X className="w-4 h-4" />
+                {t("product.cancel")}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
