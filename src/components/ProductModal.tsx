@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -64,12 +64,21 @@ const ProductModal = ({
   const [editIsFrozen, setEditIsFrozen] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState<string>("none");
   const [categoryOptions, setCategoryOptions] = useState<CategorySummary[]>([]);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!open || !product) return;
     setContentLanguage(language);
     setIsEditing(false);
   }, [open, product?.id, language]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const el = descriptionRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [isEditing, editDescription]);
 
   useEffect(() => {
     if (!open || mode !== "admin") return;
@@ -263,9 +272,11 @@ const ProductModal = ({
                     {t("product.description")}
                   </label>
                   <Textarea
+                    ref={descriptionRef}
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
-                    rows={4}
+                    rows={1}
+                    className="min-h-[80px] resize-none overflow-hidden"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
