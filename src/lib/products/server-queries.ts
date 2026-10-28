@@ -170,6 +170,79 @@ export async function fetchPublishedProductsPage(
   };
 }
 
+/** Single published product for /products/[slug]; null when missing or unpublished. */
+export async function fetchPublishedProductBySlug(slug: string): Promise<UiProduct | null> {
+  const trimmed = slug.trim();
+  if (!trimmed) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(PUBLISHED_PRODUCTS_SELECT)
+    .eq("published", true)
+    .eq("slug", trimmed)
+    .limit(1);
+
+  if (error) {
+    console.error("Failed to fetch product by slug:", error.message);
+    return null;
+  }
+
+  const row = (data as DbProductRow[] | null)?.[0];
+  return row ? mapDbProductToUiProduct(row) : null;
+}
+
+/** Related picks from the same category, excluding the current product. */
+export async function fetchRelatedPublishedProducts(
+  categoryId: number | null,
+  excludeId: number,
+  count: number = 4,
+): Promise<UiProduct[]> {
+  if (categoryId == null) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(PUBLISHED_PRODUCTS_SELECT)
+    .eq("published", true)
+    .eq("category_id", categoryId)
+    .neq("id", excludeId)
+    .limit(24);
+
+  if (error) {
+    console.error("Failed to fetch related products:", error.message);
+    return [];
+  }
+
+  const mapped = ((data || []) as DbProductRow[]).map((row) => mapDbProductToUiProduct(row));
+  return shuffle(mapped).slice(0, count);
+}
+
+export interface PublishedProductSlug {
+  slug: string;
+  createdAt: string;
+}
+
+/** Slugs of every published product, for the sitemap. */
+export async function fetchPublishedProductSlugs(): Promise<PublishedProductSlug[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("slug, created_at")
+    .eq("published", true)
+    .not("slug", "is", null)
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.error("Failed to fetch product slugs:", error.message);
+    return [];
+  }
+
+  return ((data || []) as { slug: string; created_at: string }[])
+    .filter((row) => row.slug && row.slug.trim())
+    .map((row) => ({ slug: row.slug, createdAt: row.created_at }));
+}
+
 /** @deprecated Use fetchPublishedProductsPage for the catalog. */
 export async function fetchPublishedProducts(): Promise<UiProduct[]> {
   const result = await fetchPublishedProductsPage({ page: 1, pageSize: 1000 });

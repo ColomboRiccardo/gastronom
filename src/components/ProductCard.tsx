@@ -18,6 +18,8 @@ import {
 
 export interface Product {
   id: number;
+  /** URL segment for /products/[slug]; absent on legacy cart snapshots. */
+  slug?: string;
   name: string;
   description: string;
   price: string;

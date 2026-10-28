@@ -672,6 +672,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "product.decrease_qty": "Decrease quantity",
     "product.increase_qty": "Increase quantity",
     "product.quantity": "Quantity",
+    "product.view_page": "View product page",
+    "product.back_to_shop": "Back to shop",
+    "product.in_stock": "In stock",
+    "product.out_of_stock": "Out of stock",
+    "product.no_description": "Description coming soon. Ask us in store or by phone for details about this product.",
+    "product.related_title": "You may also like",
 
     "categories.page_title": "All Categories",
     "categories.subtitle":
@@ -1362,6 +1368,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "product.decrease_qty": "Diminuer la quantité",
     "product.increase_qty": "Augmenter la quantité",
     "product.quantity": "Quantité",
+    "product.view_page": "Voir la page produit",
+    "product.back_to_shop": "Retour à la boutique",
+    "product.in_stock": "En stock",
+    "product.out_of_stock": "Rupture de stock",
+    "product.no_description": "Description à venir. Demandez-nous en magasin ou par téléphone pour plus de détails sur ce produit.",
+    "product.related_title": "Vous aimerez aussi",
 
     "categories.page_title": "Toutes les catégories",
     "categories.subtitle":
@@ -2051,6 +2063,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "product.decrease_qty": "Diminuisci quantità",
     "product.increase_qty": "Aumenta quantità",
     "product.quantity": "Quantità",
+    "product.view_page": "Vai alla pagina prodotto",
+    "product.back_to_shop": "Torna al negozio",
+    "product.in_stock": "Disponibile",
+    "product.out_of_stock": "Esaurito",
+    "product.no_description": "Descrizione in arrivo. Chiedici in negozio o per telefono per maggiori dettagli su questo prodotto.",
+    "product.related_title": "Potrebbe interessarti anche",
 
     "categories.page_title": "Tutte le categorie",
     "categories.subtitle":
@@ -2744,6 +2762,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "product.decrease_qty": "Уменьшить количество",
     "product.increase_qty": "Увеличить количество",
     "product.quantity": "Количество",
+    "product.view_page": "Открыть страницу товара",
+    "product.back_to_shop": "Назад в магазин",
+    "product.in_stock": "В наличии",
+    "product.out_of_stock": "Нет в наличии",
+    "product.no_description": "Описание скоро появится. Спросите нас в магазине или по телефону о деталях этого товара.",
+    "product.related_title": "Вам также может понравиться",
 
     "categories.page_title": "Все категории",
     "categories.subtitle":

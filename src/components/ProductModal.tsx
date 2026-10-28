@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Save, X, Heart } from "lucide-react";
+import Link from "next/link";
+import { Pencil, Save, X, Heart, ArrowUpRight } from "lucide-react";
 import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
@@ -350,11 +351,23 @@ const ProductModal = ({
               </div>
 
               {mode === "customer" && (
-                <CartQuantityControl
-                  product={{ ...product, name: copy.name, description: copy.description }}
-                  size="md"
-                  className="w-full"
-                />
+                <>
+                  <CartQuantityControl
+                    product={{ ...product, name: copy.name, description: copy.description }}
+                    size="md"
+                    className="w-full"
+                  />
+                  {product.slug && (
+                    <Link
+                      href={`/products/${encodeURIComponent(product.slug)}`}
+                      onClick={() => onOpenChange(false)}
+                      className="inline-flex w-full items-center justify-center gap-1.5 font-body text-sm text-primary underline-offset-4 hover:underline"
+                    >
+                      {t("product.view_page")}
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  )}
+                </>
               )}
 
               {mode === "admin" && (

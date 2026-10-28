@@ -47,6 +47,9 @@ export interface ProductTranslationInput {
 }
 
 export interface UiProduct extends Product {
+  slug: string;
+  categorySlug: string | null;
+  inStock: boolean;
   createdAt: string;
 }
 

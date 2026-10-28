@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 
-import { fetchPublishedCategorySummaries } from "@/lib/products/server-queries";
+import {
+  fetchPublishedCategorySummaries,
+  fetchPublishedProductSlugs,
+} from "@/lib/products/server-queries";
 import { absoluteUrl } from "@/lib/seo/site";
 
 const STATIC_PATHS: Array<{
@@ -41,5 +44,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("sitemap: failed to load categories", error);
   }
 
-  return [...staticEntries, ...categoryEntries];
+  let productEntries: MetadataRoute.Sitemap = [];
+  try {
+    const products = await fetchPublishedProductSlugs();
+    productEntries = products.map((p) => ({
+      url: absoluteUrl(`/products/${encodeURIComponent(p.slug)}`),
+      lastModified: p.createdAt ? new Date(p.createdAt) : now,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }));
+  } catch (error) {
+    console.error("sitemap: failed to load products", error);
+  }
+
+  return [...staticEntries, ...categoryEntries, ...productEntries];
 }

@@ -73,6 +73,7 @@ export function mapDbProductToUiProduct(
 
   return {
     id: row.id,
+    slug: row.slug,
     name: copy.name,
     description: copy.description,
     price: EUR_FORMATTER.format(priceNum),
@@ -80,9 +81,11 @@ export function mapDbProductToUiProduct(
     image: row.image_url || FALLBACK_IMAGE,
     category: resolveCategory(row, language),
     categoryId: row.category_id,
+    categorySlug: nest?.slug ?? null,
     categoryTranslations,
     badge: row.badge || undefined,
     isFrozen: Boolean(row.is_frozen),
+    inStock: row.stock > 0,
     translations,
     createdAt: row.created_at,
   };
