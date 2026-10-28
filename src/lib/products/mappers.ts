@@ -5,11 +5,15 @@ import {
   resolveCategoryName,
   resolveProductCopy,
   translationsToList,
+  type TagTranslationRow,
 } from "./resolve-copy";
 import {
   type AdminProduct,
   type DbCategoryNest,
   type DbProductRow,
+  type DbTagNest,
+  type DbTagTranslationRow,
+  type ProductTagRef,
   type UiProduct,
 } from "./types";
 
@@ -37,6 +41,41 @@ function nestCategory(
   const nest = row.categories;
   if (!nest) return null;
   return Array.isArray(nest) ? nest[0] ?? null : nest;
+}
+
+export function mapTagTranslations(
+  rows: DbTagTranslationRow[] | null | undefined,
+): TagTranslationRow[] {
+  return (rows ?? [])
+    .filter((row) => row.name?.trim())
+    .map((row) => ({
+      language: row.language as Language,
+      name: row.name,
+      intro: row.intro ?? null,
+      seoTitle: row.seo_title ?? null,
+      seoDescription: row.seo_description ?? null,
+    }));
+}
+
+/** Flatten product_tags → tags nest into chip-ready refs. Unpublished tags are dropped unless asked for. */
+export function mapProductTags(
+  row: Pick<DbProductRow, "product_tags">,
+  options: { includeUnpublished?: boolean } = {},
+): ProductTagRef[] {
+  const out: ProductTagRef[] = [];
+  for (const link of row.product_tags ?? []) {
+    const nest = link?.tags;
+    const tag: DbTagNest | null = Array.isArray(nest) ? nest[0] ?? null : nest ?? null;
+    if (!tag?.id) continue;
+    if (!tag.published && !options.includeUnpublished) continue;
+    out.push({
+      id: tag.id,
+      slug: tag.slug,
+      name: tag.name,
+      translations: mapTagTranslations(tag.tag_translations),
+    });
+  }
+  return out;
 }
 
 /** Prefer joined category + translations; fall back to legacy maingroup text. */
@@ -87,6 +126,7 @@ export function mapDbProductToUiProduct(
     isFrozen: Boolean(row.is_frozen),
     inStock: row.stock > 0,
     translations,
+    tags: mapProductTags(row),
     createdAt: row.created_at,
   };
 }
@@ -125,5 +165,6 @@ export function mapDbProductToAdminProduct(
     isFrozen: Boolean(row.is_frozen),
     editorLockedFields: row.editor_locked_fields ?? [],
     translations,
+    tags: mapProductTags(row, { includeUnpublished: true }),
   };
 }

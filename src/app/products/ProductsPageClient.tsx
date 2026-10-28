@@ -9,8 +9,8 @@ import ProductFilters from "@/components/ProductFilters";
 import ListPagination from "@/components/ListPagination";
 import Link from "next/link";
 import { type SortOption } from "@/lib/products/constants";
-import { resolveCategoryName } from "@/lib/products/resolve-copy";
-import { type UiProduct, type CategorySummary } from "@/lib/products/types";
+import { resolveCategoryName, resolveTagCopy } from "@/lib/products/resolve-copy";
+import { type UiProduct, type CategorySummary, type TagSummary } from "@/lib/products/types";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface ProductsPageClientProps {
@@ -19,6 +19,7 @@ interface ProductsPageClientProps {
   page: number;
   totalPages: number;
   categories: CategorySummary[];
+  tags?: TagSummary[];
   initialCategories: string[];
   initialPriceRange: number | null;
   initialSort: SortOption;
@@ -30,6 +31,7 @@ const ProductsPageClient = ({
   page,
   totalPages,
   categories,
+  tags = [],
   initialCategories,
   initialPriceRange,
   initialSort,
@@ -181,6 +183,34 @@ const ProductsPageClient = ({
                     </li>
                   );
                 })}
+              </ul>
+            </nav>
+          )}
+
+          {tags.length > 0 && (
+            <nav aria-label={t("products.collections_title")} className="mt-10">
+              <h2 className="font-display text-xl font-semibold text-foreground text-center mb-4">
+                {t("products.collections_title")}
+              </h2>
+              <ul className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-4xl mx-auto">
+                {tags.map((tag) => (
+                  <li key={tag.id}>
+                    <Link
+                      href={`/collections/${encodeURIComponent(tag.slug)}`}
+                      className="font-body text-sm text-foreground/80 underline-offset-4 hover:text-primary hover:underline"
+                    >
+                      {resolveTagCopy(tag, tag.translations, language).name}
+                    </Link>
+                  </li>
+                ))}
+                <li>
+                  <Link
+                    href="/collections"
+                    className="font-body text-sm text-primary font-medium underline-offset-4 hover:underline"
+                  >
+                    {t("collections.browse_all")}
+                  </Link>
+                </li>
               </ul>
             </nav>
           )}

@@ -15,6 +15,7 @@ import {
   type CategoryTranslationRow,
   type ProductTranslationRow,
 } from "@/lib/products/resolve-copy";
+import { type ProductTagRef } from "@/lib/products/types";
 
 export interface Product {
   id: number;
@@ -33,6 +34,8 @@ export interface Product {
   isFrozen?: boolean;
   /** All known locales; client re-resolves when the UI language changes. */
   translations?: ProductTranslationRow[];
+  /** Admin-curated collections this product belongs to (published only on public paths). */
+  tags?: ProductTagRef[];
 }
 
 const ProductCard = ({ product }: { product: Product }) => {

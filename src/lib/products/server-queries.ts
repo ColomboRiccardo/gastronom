@@ -12,11 +12,14 @@ import {
 import {
   mapDbProductToAdminProduct,
   mapDbProductToUiProduct,
+  mapTagTranslations,
 } from "./mappers";
 import {
   type AdminProduct,
   type CategorySummary,
   type DbProductRow,
+  type DbTagTranslationRow,
+  type TagSummary,
   type UiProduct,
 } from "./types";
 
@@ -45,10 +48,184 @@ const PUBLISHED_PRODUCTS_SELECT = `
     slug,
     source_key,
     category_translations ( language, name )
+  ),
+  product_tags (
+    tags (
+      id,
+      slug,
+      name,
+      published,
+      tag_translations ( language, name, intro, seo_title, seo_description )
+    )
   )
 `;
 
 const FEATURED_PRODUCTS_SELECT = PUBLISHED_PRODUCTS_SELECT;
+
+const TAG_SELECT = `
+  id,
+  slug,
+  name,
+  published,
+  sort_order,
+  image_url,
+  tag_translations ( language, name, intro, seo_title, seo_description ),
+  product_tags ( product_id, products ( published ) )
+`;
+
+interface DbTagRow {
+  id: number;
+  slug: string;
+  name: string;
+  published: boolean;
+  sort_order: number | null;
+  image_url: string | null;
+  tag_translations?: DbTagTranslationRow[] | null;
+  product_tags?: Array<{
+    product_id: number;
+    products: { published: boolean } | { published: boolean }[] | null;
+  }> | null;
+}
+
+function countPublishedProducts(row: DbTagRow): number {
+  let n = 0;
+  for (const link of row.product_tags ?? []) {
+    const p = Array.isArray(link.products) ? link.products[0] : link.products;
+    if (p?.published) n += 1;
+  }
+  return n;
+}
+
+function mapTagSummary(row: DbTagRow): TagSummary {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    imageUrl: row.image_url ?? null,
+    sortOrder: Number(row.sort_order ?? 0),
+    count: countPublishedProducts(row),
+    translations: mapTagTranslations(row.tag_translations),
+  };
+}
+
+/** Published tags with at least one published product, for listings and link lists. */
+export async function fetchPublishedTags(): Promise<TagSummary[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tags")
+    .select(TAG_SELECT)
+    .eq("published", true)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Failed to fetch tags:", error.message);
+    return [];
+  }
+
+  return ((data || []) as unknown as DbTagRow[])
+    .map(mapTagSummary)
+    .filter((tag) => tag.count > 0);
+}
+
+export type TagLookup =
+  | { kind: "found"; tag: TagSummary }
+  | { kind: "redirect"; slug: string }
+  | { kind: "missing" };
+
+/** Resolve a /collections/<slug> request, following old slugs when renamed. */
+export async function lookupPublishedTagBySlug(slug: string): Promise<TagLookup> {
+  const trimmed = slug.trim();
+  if (!trimmed) return { kind: "missing" };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tags")
+    .select(TAG_SELECT)
+    .eq("published", true)
+    .eq("slug", trimmed)
+    .limit(1);
+
+  if (error) {
+    console.error("Failed to fetch tag by slug:", error.message);
+    return { kind: "missing" };
+  }
+
+  const row = (data as unknown as DbTagRow[] | null)?.[0];
+  if (row) return { kind: "found", tag: mapTagSummary(row) };
+
+  const { data: redirect } = await supabase
+    .from("tag_slug_redirects")
+    .select("tags ( slug, published )")
+    .eq("old_slug", trimmed)
+    .limit(1);
+
+  const target = (redirect as unknown as Array<{
+    tags: { slug: string; published: boolean } | { slug: string; published: boolean }[] | null;
+  }> | null)?.[0]?.tags;
+  const tag = Array.isArray(target) ? target[0] : target;
+  if (tag?.published && tag.slug && tag.slug !== trimmed) {
+    return { kind: "redirect", slug: tag.slug };
+  }
+
+  return { kind: "missing" };
+}
+
+/** Paginated published products carrying a given tag. */
+export async function fetchPublishedProductsByTag(
+  tagId: number,
+  params: { page?: number; pageSize?: number } = {},
+): Promise<PaginatedResult<UiProduct>> {
+  const pageSize = params.pageSize ?? PUBLIC_PRODUCTS_PAGE_SIZE;
+  const requestedPage = params.page ?? 1;
+  const from = (Math.max(1, requestedPage) - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const supabase = await createClient();
+  const { data: links, error: linkError, count } = await supabase
+    .from("product_tags")
+    .select("product_id, products!inner ( id, published )", { count: "exact" })
+    .eq("tag_id", tagId)
+    .eq("products.published", true)
+    .order("product_id", { ascending: false })
+    .range(from, to);
+
+  if (linkError) {
+    console.error("Failed to fetch tagged product ids:", linkError.message);
+    return { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+  }
+
+  const ids = ((links || []) as { product_id: number }[]).map((l) => l.product_id);
+  if (ids.length === 0) {
+    return { items: [], totalCount: count ?? 0, page: 1, pageSize, totalPages: 1 };
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .select(PUBLISHED_PRODUCTS_SELECT)
+    .in("id", ids)
+    .eq("published", true);
+
+  if (error) {
+    console.error("Failed to fetch tagged products:", error.message);
+    return { items: [], totalCount: 0, page: 1, pageSize, totalPages: 1 };
+  }
+
+  const byId = new Map(
+    ((data || []) as DbProductRow[]).map((row) => [row.id, mapDbProductToUiProduct(row)]),
+  );
+  const items = ids.map((id) => byId.get(id)).filter((p): p is UiProduct => Boolean(p));
+  const totalCount = count ?? items.length;
+  const meta = buildPageMeta(totalCount, requestedPage, pageSize);
+
+  return { items, totalCount, page: meta.page, pageSize, totalPages: meta.totalPages };
+}
+
+/** Slugs of published tags for the sitemap. */
+export async function fetchPublishedTagSlugs(): Promise<string[]> {
+  const tags = await fetchPublishedTags();
+  return tags.map((t) => t.slug);
+}
 
 async function resolveCategoryIdsBySlug(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

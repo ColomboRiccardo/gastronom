@@ -12,7 +12,7 @@ import CartQuantityControl from "@/components/CartQuantityControl";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { resolveCategoryName, resolveProductCopy } from "@/lib/products/resolve-copy";
+import { resolveCategoryName, resolveProductCopy, resolveTagCopy } from "@/lib/products/resolve-copy";
 import { type UiProduct } from "@/lib/products/types";
 
 interface ProductDetailClientProps {
@@ -164,6 +164,26 @@ export default function ProductDetailClient({ product, related }: ProductDetailC
               <div className="max-w-sm">
                 <CartQuantityControl product={displayProduct} size="md" className="w-full" />
               </div>
+
+              {product.tags.length > 0 && (
+                <div className="mt-8">
+                  <p className="mb-2 font-body text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("product.tags_label")}
+                  </p>
+                  <ul className="flex flex-wrap gap-2">
+                    {product.tags.map((tag) => (
+                      <li key={tag.id}>
+                        <Link
+                          href={`/collections/${encodeURIComponent(tag.slug)}`}
+                          className="inline-block rounded-full border border-border px-3 py-1 font-body text-sm text-foreground/80 transition-colors hover:border-primary hover:text-primary"
+                        >
+                          {resolveTagCopy(tag, tag.translations, language).name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <Link
                 href="/products"

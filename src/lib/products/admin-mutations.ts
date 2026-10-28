@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { DEFAULT_LANGUAGE, toLanguage } from "@/lib/i18n/translate";
 
 import { deriveStockStatus } from "./mappers";
+import { setProductTags } from "./tag-admin";
 import { type AdminProductUpdate } from "./types";
 
 const UPDATE_BATCH_SIZE = 25;
@@ -180,6 +181,11 @@ export async function saveAdminProductEdits(
   ) {
     values.category_id = update.categoryId;
     changedFields.push("category_id");
+  }
+
+  if (update.tagIds) {
+    const tagsOk = await setProductTags(productId, update.tagIds);
+    if (!tagsOk) return false;
   }
 
   if (changedFields.length === 0) return true;

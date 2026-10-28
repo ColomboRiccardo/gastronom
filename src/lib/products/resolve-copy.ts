@@ -11,6 +11,21 @@ export interface CategoryTranslationRow {
   name: string;
 }
 
+export interface TagTranslationRow {
+  language: Language;
+  name: string;
+  intro?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+}
+
+export interface LocalizedTagCopy {
+  name: string;
+  intro: string;
+  seoTitle: string;
+  seoDescription: string;
+}
+
 export interface LocalizedProductCopy {
   name: string;
   description: string;
@@ -72,5 +87,38 @@ export function translationsToList(
 export function categoryTranslationsToList(
   translations: CategoryTranslationRow[] | null | undefined,
 ): CategoryTranslationRow[] {
+  return (translations ?? []).filter((row) => row.name?.trim());
+}
+
+/** Same language → en → canonical strategy, with per-field fallback for intro/SEO. */
+export function resolveTagCopy(
+  canonical: { name: string },
+  translations: TagTranslationRow[] | null | undefined,
+  language: Language,
+): LocalizedTagCopy {
+  const byLanguage = new Map(
+    (translations ?? [])
+      .filter((row) => row.name?.trim())
+      .map((row) => [row.language, row] as const),
+  );
+
+  const preferred = byLanguage.get(language);
+  const english = byLanguage.get(DEFAULT_LANGUAGE);
+  const name = preferred?.name?.trim() || english?.name?.trim() || canonical.name?.trim() || "";
+
+  const pick = (key: "intro" | "seoTitle" | "seoDescription"): string =>
+    (preferred?.[key] ?? "").trim() || (english?.[key] ?? "").trim();
+
+  return {
+    name,
+    intro: pick("intro"),
+    seoTitle: pick("seoTitle") || name,
+    seoDescription: pick("seoDescription"),
+  };
+}
+
+export function tagTranslationsToList(
+  translations: TagTranslationRow[] | null | undefined,
+): TagTranslationRow[] {
   return (translations ?? []).filter((row) => row.name?.trim());
 }

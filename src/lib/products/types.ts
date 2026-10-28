@@ -4,9 +4,10 @@ import { type Language } from "@/lib/i18n/translate";
 import {
   type CategoryTranslationRow,
   type ProductTranslationRow,
+  type TagTranslationRow,
 } from "./resolve-copy";
 
-export type { CategoryTranslationRow, ProductTranslationRow };
+export type { CategoryTranslationRow, ProductTranslationRow, TagTranslationRow };
 
 export interface DbCategoryNest {
   id: number;
@@ -14,6 +15,66 @@ export interface DbCategoryNest {
   slug: string;
   source_key: string | null;
   category_translations?: CategoryTranslationRow[] | null;
+}
+
+/** Raw tag_translations row shape (snake_case) from Supabase. */
+export interface DbTagTranslationRow {
+  language: string;
+  name: string;
+  intro?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+}
+
+export interface DbTagNest {
+  id: number;
+  slug: string;
+  name: string;
+  published: boolean;
+  tag_translations?: DbTagTranslationRow[] | null;
+}
+
+/** Lightweight tag reference attached to a product for chips/links. */
+export interface ProductTagRef {
+  id: number;
+  slug: string;
+  name: string;
+  translations: TagTranslationRow[];
+}
+
+/** Public tag with localized copy and published-product count. */
+export interface TagSummary {
+  id: number;
+  slug: string;
+  name: string;
+  imageUrl: string | null;
+  sortOrder: number;
+  count: number;
+  translations: TagTranslationRow[];
+}
+
+export interface AdminTag {
+  id: number;
+  slug: string;
+  name: string;
+  published: boolean;
+  sortOrder: number;
+  imageUrl: string | null;
+  translations: TagTranslationRow[];
+  productCount: number;
+}
+
+export interface AdminTagUpdate {
+  language: Language;
+  name: string;
+  intro?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  /** When changed, the previous slug is kept as a redirect. */
+  slug?: string;
+  published?: boolean;
+  sortOrder?: number;
+  imageUrl?: string | null;
 }
 
 export interface DbProductRow {
@@ -38,6 +99,8 @@ export interface DbProductRow {
   product_translations?: ProductTranslationRow[] | null;
   /** Nested select via products.category_id → categories (object or 1-element array). */
   categories?: DbCategoryNest | DbCategoryNest[] | null;
+  /** Nested select via product_tags → tags; missing on older query paths. */
+  product_tags?: Array<{ tags: DbTagNest | DbTagNest[] | null }> | null;
 }
 
 export interface ProductTranslationInput {
@@ -50,6 +113,7 @@ export interface UiProduct extends Product {
   slug: string;
   categorySlug: string | null;
   inStock: boolean;
+  tags: ProductTagRef[];
   createdAt: string;
 }
 
@@ -80,6 +144,7 @@ export interface AdminProduct {
   isFrozen: boolean;
   editorLockedFields: string[];
   translations: ProductTranslationRow[];
+  tags: ProductTagRef[];
 }
 
 export interface AdminProductUpdate {
@@ -93,6 +158,8 @@ export interface AdminProductUpdate {
   language?: Language;
   /** When set, updates products.category_id and locks it from sync. */
   categoryId?: number | null;
+  /** When set, replaces the product's tag assignments. */
+  tagIds?: number[];
 }
 
 export interface AdminCategory {

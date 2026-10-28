@@ -25,8 +25,10 @@ import { type AdminProductUpdate } from "@/lib/products/types";
 import { saveAdminProductEdits } from "@/lib/products/admin-client";
 import { resolveCategoryName, resolveProductCopy } from "@/lib/products/resolve-copy";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { type Language } from "@/lib/i18n/translate";
-import { type CategorySummary } from "@/lib/products/types";
+import { type AdminTag, type CategorySummary } from "@/lib/products/types";
+import { resolveTagCopy } from "@/lib/products/resolve-copy";
 
 interface ProductModalProps {
   product: Product | null;
@@ -65,6 +67,8 @@ const ProductModal = ({
   const [editIsFrozen, setEditIsFrozen] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState<string>("none");
   const [categoryOptions, setCategoryOptions] = useState<CategorySummary[]>([]);
+  const [editTagIds, setEditTagIds] = useState<number[]>([]);
+  const [tagOptions, setTagOptions] = useState<AdminTag[]>([]);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -91,6 +95,14 @@ const ProductModal = ({
       })
       .catch(() => {
         if (!cancelled) setCategoryOptions([]);
+      });
+    void fetch("/api/admin/tags")
+      .then((res) => res.json())
+      .then((data: { tags?: AdminTag[] }) => {
+        if (!cancelled) setTagOptions(data.tags ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setTagOptions([]);
       });
     return () => {
       cancelled = true;
@@ -121,7 +133,14 @@ const ProductModal = ({
     setEditCategoryId(
       product.categoryId != null ? String(product.categoryId) : "none",
     );
+    setEditTagIds((product.tags ?? []).map((tag) => tag.id));
     setIsEditing(true);
+  };
+
+  const toggleTag = (tagId: number, checked: boolean) => {
+    setEditTagIds((prev) =>
+      checked ? Array.from(new Set([...prev, tagId])) : prev.filter((id) => id !== tagId),
+    );
   };
 
   const handleContentLanguageChange = (lang: Language) => {
@@ -158,6 +177,7 @@ const ProductModal = ({
       isFrozen: editIsFrozen,
       language: contentLanguage,
       categoryId: editCategoryId === "none" ? null : Number.parseInt(editCategoryId, 10),
+      tagIds: editTagIds,
     };
     const ok = await saveAdminProductEdits(product.id, update);
     setIsSaving(false);
@@ -330,6 +350,32 @@ const ProductModal = ({
                     <p className="text-xs text-muted-foreground">{t("product.frozen_hint")}</p>
                   </div>
                   <Switch checked={editIsFrozen} onCheckedChange={setEditIsFrozen} />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">
+                    {t("product.tags_label")}
+                  </label>
+                  {tagOptions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">{t("product.tags_empty")}</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border border-border p-3">
+                      {tagOptions.map((tag) => {
+                        const checked = editTagIds.includes(tag.id);
+                        return (
+                          <label key={tag.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(value) => toggleTag(tag.id, value === true)}
+                            />
+                            <span className={tag.published ? "" : "text-muted-foreground"}>
+                              {resolveTagCopy(tag, tag.translations, contentLanguage).name}
+                              {!tag.published && ` (${t("admin_tags.draft")})`}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

@@ -60,6 +60,7 @@ const toProduct = (p: AdminProduct): Product => ({
   badge: p.badge ?? undefined,
   isFrozen: p.isFrozen,
   translations: p.translations,
+  tags: p.tags,
 });
 
 type AdminViewMode = "table" | "grid";

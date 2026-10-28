@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import {
   fetchPublishedCategorySummaries,
   fetchPublishedProductSlugs,
+  fetchPublishedTagSlugs,
 } from "@/lib/products/server-queries";
 import { absoluteUrl } from "@/lib/seo/site";
 
@@ -14,6 +15,7 @@ const STATIC_PATHS: Array<{
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/products", changeFrequency: "daily", priority: 0.9 },
   { path: "/categories", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/collections", changeFrequency: "weekly", priority: 0.8 },
   { path: "/about", changeFrequency: "monthly", priority: 0.7 },
   { path: "/blog", changeFrequency: "weekly", priority: 0.6 },
   { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
@@ -57,5 +59,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("sitemap: failed to load products", error);
   }
 
-  return [...staticEntries, ...categoryEntries, ...productEntries];
+  let collectionEntries: MetadataRoute.Sitemap = [];
+  try {
+    const slugs = await fetchPublishedTagSlugs();
+    collectionEntries = slugs.map((slug) => ({
+      url: absoluteUrl(`/collections/${encodeURIComponent(slug)}`),
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    console.error("sitemap: failed to load collections", error);
+  }
+
+  return [...staticEntries, ...categoryEntries, ...collectionEntries, ...productEntries];
 }

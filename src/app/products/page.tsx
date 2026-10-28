@@ -7,6 +7,7 @@ import { resolveCategoryName } from "@/lib/products/resolve-copy";
 import {
   fetchPublishedCategorySummaries,
   fetchPublishedProductsPage,
+  fetchPublishedTags,
 } from "@/lib/products/server-queries";
 import { noIndexFollow } from "@/lib/seo/site";
 
@@ -109,7 +110,7 @@ export default async function ProductsPage({
   const priceRangeIndex = parsePriceRange(params.price);
   const sort = parseSort(params.sort);
 
-  const [categorySummaries, productPage] = await Promise.all([
+  const [categorySummaries, productPage, tags] = await Promise.all([
     fetchPublishedCategorySummaries(),
     fetchPublishedProductsPage({
       page,
@@ -117,6 +118,7 @@ export default async function ProductsPage({
       priceRangeIndex,
       sort,
     }),
+    fetchPublishedTags(),
   ]);
 
   return (
@@ -126,6 +128,7 @@ export default async function ProductsPage({
       page={productPage.page}
       totalPages={productPage.totalPages}
       categories={categorySummaries}
+      tags={tags}
       initialCategories={categoriesFromUrl}
       initialPriceRange={priceRangeIndex}
       initialSort={sort}
