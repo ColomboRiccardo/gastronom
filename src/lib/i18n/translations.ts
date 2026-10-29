@@ -732,6 +732,50 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin_tags.toast_deleted": "Collection deleted",
     "admin_tags.toast_published": "Collection published",
     "admin_tags.toast_unpublished": "Collection unpublished",
+
+    "meta.site_title": "Гастроном — Eastern European Delicatessen in Sanremo",
+    "meta.site_description":
+      "Authentic Eastern European delicacies, spirits and crafts in Liguria, Italy. Shop online or visit Гастроном in Sanremo.",
+    "meta.home_description":
+      "Russian, Ukrainian, Romanian and Eastern European food in Sanremo: dairy, sausage, fish, preserves, sweets and spirits. Shop online or visit Гастроном, Via Nuvoloni 13.",
+    "meta.about_title": "About Us",
+    "meta.about_description":
+      "The story of Гастроном: Eastern European delicacies, spirits and crafts in Sanremo, Liguria.",
+    "meta.blog_title": "Blog",
+    "meta.blog_description": "Stories, guides and Slavic food culture from Гастроном in Sanremo.",
+    "meta.categories_title": "Categories",
+    "meta.categories_description":
+      "Browse Eastern European food categories at Гастроном in Sanremo: dairy, sausage, preserves, sweets and more.",
+    "meta.category_description":
+      "Shop {category} at Гастроном in Sanremo: authentic Eastern European products, online or in store.",
+    "meta.collections_title": "Collections",
+    "meta.collections_description":
+      "Curated collections of Eastern European food and drink from Гастроном in Sanremo: gift ideas, festive tables, pantry staples and more.",
+    "meta.collection_description":
+      "Shop {name} at Гастроном in Sanremo: a curated selection of Eastern European products.",
+    "meta.shop_title": "Shop",
+    "meta.shop_description":
+      "Browse the full Гастроном shop in Sanremo: Eastern European food, drinks and specialties.",
+    "meta.product_description":
+      "Buy {name} ({category}) at Гастроном, Eastern European delicatessen in Sanremo. Order online or visit the shop.",
+    "meta.page_n": "Page {page}",
+    "meta.terms_title": "Terms of Service",
+    "meta.terms_description": "Terms governing use of the Gastronom online shop.",
+    "meta.privacy_title": "Privacy Policy",
+    "meta.privacy_description": "How Gastronom collects, uses and protects your personal data under the GDPR.",
+    "meta.cookies_title": "Cookie Policy",
+    "meta.cookies_description": "How Gastronom uses cookies and similar technologies on this website.",
+    "meta.not_found": "Not found",
+
+    "product.quick_view": "Quick view",
+    "category.eyebrow": "Category",
+    "category.related_collections": "Related collections",
+    "category.other_categories": "Other categories",
+    "admin_categories.intro_label": "Intro text",
+    "admin_categories.intro_hint":
+      "Shown under the heading on the category page and used as its meta description when set. Two or three sentences with the words customers search for.",
+    "blog.all_articles": "All articles",
+    "blog.read_more": "Read article",
   },
 
   fr: {
@@ -1475,6 +1519,50 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin_tags.toast_deleted": "Collection supprimée",
     "admin_tags.toast_published": "Collection publiée",
     "admin_tags.toast_unpublished": "Collection dépubliée",
+
+    "meta.site_title": "Гастроном — Épicerie fine d'Europe de l'Est à Sanremo",
+    "meta.site_description":
+      "Spécialités, spiritueux et artisanat authentiques d'Europe de l'Est en Ligurie, Italie. Commandez en ligne ou visitez Гастроном à Sanremo.",
+    "meta.home_description":
+      "Produits russes, ukrainiens, roumains et d'Europe de l'Est à Sanremo : laitages, charcuterie, poisson, conserves, confiseries et spiritueux. En ligne ou en boutique, Via Nuvoloni 13.",
+    "meta.about_title": "À propos",
+    "meta.about_description":
+      "L'histoire de Гастроном : spécialités, spiritueux et artisanat d'Europe de l'Est à Sanremo, en Ligurie.",
+    "meta.blog_title": "Blog",
+    "meta.blog_description": "Histoires, guides et culture culinaire slave par Гастроном à Sanremo.",
+    "meta.categories_title": "Catégories",
+    "meta.categories_description":
+      "Parcourez les catégories de produits d'Europe de l'Est chez Гастроном à Sanremo : laitages, charcuterie, conserves, confiseries et plus.",
+    "meta.category_description":
+      "Achetez {category} chez Гастроном à Sanremo : produits authentiques d'Europe de l'Est, en ligne ou en boutique.",
+    "meta.collections_title": "Collections",
+    "meta.collections_description":
+      "Collections de produits d'Europe de l'Est sélectionnées par Гастроном à Sanremo : idées cadeaux, tables de fête, indispensables et plus.",
+    "meta.collection_description":
+      "Achetez {name} chez Гастроном à Sanremo : une sélection de produits d'Europe de l'Est.",
+    "meta.shop_title": "Boutique",
+    "meta.shop_description":
+      "Toute la boutique Гастроном à Sanremo : alimentation, boissons et spécialités d'Europe de l'Est.",
+    "meta.product_description":
+      "Achetez {name} ({category}) chez Гастроном, épicerie fine d'Europe de l'Est à Sanremo. Commandez en ligne ou venez en boutique.",
+    "meta.page_n": "Page {page}",
+    "meta.terms_title": "Conditions générales",
+    "meta.terms_description": "Conditions d'utilisation de la boutique en ligne Gastronom.",
+    "meta.privacy_title": "Politique de confidentialité",
+    "meta.privacy_description": "Comment Gastronom collecte, utilise et protège vos données personnelles selon le RGPD.",
+    "meta.cookies_title": "Politique de cookies",
+    "meta.cookies_description": "Comment Gastronom utilise les cookies et technologies similaires sur ce site.",
+    "meta.not_found": "Introuvable",
+
+    "product.quick_view": "Aperçu rapide",
+    "category.eyebrow": "Catégorie",
+    "category.related_collections": "Collections associées",
+    "category.other_categories": "Autres catégories",
+    "admin_categories.intro_label": "Texte d'introduction",
+    "admin_categories.intro_hint":
+      "Affiché sous le titre de la page catégorie et utilisé comme méta-description. Deux ou trois phrases avec les mots que cherchent les clients.",
+    "blog.all_articles": "Tous les articles",
+    "blog.read_more": "Lire l'article",
   },
 
   it: {
@@ -2217,6 +2305,50 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin_tags.toast_deleted": "Collezione eliminata",
     "admin_tags.toast_published": "Collezione pubblicata",
     "admin_tags.toast_unpublished": "Collezione ritirata",
+
+    "meta.site_title": "Гастроном — Gastronomia dell'Est Europa a Sanremo",
+    "meta.site_description":
+      "Specialità, liquori e artigianato autentici dell'Est Europa in Liguria. Acquista online o vieni a trovarci da Гастроном a Sanremo.",
+    "meta.home_description":
+      "Negozio russo, ucraino, rumeno e dell'Est Europa a Sanremo: latticini, salumi, pesce, conserve, dolci e liquori. Online o in negozio in Via Nuvoloni 13.",
+    "meta.about_title": "Chi siamo",
+    "meta.about_description":
+      "La storia di Гастроном: specialità, liquori e artigianato dell'Est Europa a Sanremo, in Liguria.",
+    "meta.blog_title": "Blog",
+    "meta.blog_description": "Storie, guide e cultura gastronomica slava da Гастроном a Sanremo.",
+    "meta.categories_title": "Categorie",
+    "meta.categories_description":
+      "Sfoglia le categorie di prodotti dell'Est Europa da Гастроном a Sanremo: latticini, salumi, conserve, dolci e altro.",
+    "meta.category_description":
+      "Acquista {category} da Гастроном a Sanremo: prodotti autentici dell'Est Europa, online o in negozio.",
+    "meta.collections_title": "Collezioni",
+    "meta.collections_description":
+      "Collezioni di prodotti dell'Est Europa selezionate da Гастроном a Sanremo: idee regalo, tavola delle feste, dispensa e altro.",
+    "meta.collection_description":
+      "Acquista {name} da Гастроном a Sanremo: una selezione di prodotti dell'Est Europa.",
+    "meta.shop_title": "Negozio",
+    "meta.shop_description":
+      "Tutto il negozio Гастроном a Sanremo: alimentari, bevande e specialità dell'Est Europa.",
+    "meta.product_description":
+      "Acquista {name} ({category}) da Гастроном, gastronomia dell'Est Europa a Sanremo. Ordina online o vieni in negozio.",
+    "meta.page_n": "Pagina {page}",
+    "meta.terms_title": "Termini di servizio",
+    "meta.terms_description": "Condizioni d'uso del negozio online Gastronom.",
+    "meta.privacy_title": "Informativa sulla privacy",
+    "meta.privacy_description": "Come Gastronom raccoglie, usa e protegge i tuoi dati personali secondo il GDPR.",
+    "meta.cookies_title": "Cookie policy",
+    "meta.cookies_description": "Come Gastronom usa i cookie e tecnologie simili su questo sito.",
+    "meta.not_found": "Non trovato",
+
+    "product.quick_view": "Anteprima",
+    "category.eyebrow": "Categoria",
+    "category.related_collections": "Collezioni correlate",
+    "category.other_categories": "Altre categorie",
+    "admin_categories.intro_label": "Testo introduttivo",
+    "admin_categories.intro_hint":
+      "Mostrato sotto il titolo della pagina categoria e usato come meta description. Due o tre frasi con le parole che cercano i clienti.",
+    "blog.all_articles": "Tutti gli articoli",
+    "blog.read_more": "Leggi l'articolo",
   },
 
   ru: {
@@ -2963,5 +3095,49 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin_tags.toast_deleted": "Подборка удалена",
     "admin_tags.toast_published": "Подборка опубликована",
     "admin_tags.toast_unpublished": "Подборка снята с публикации",
+
+    "meta.site_title": "Гастроном — Восточноевропейские продукты в Сан-Ремо",
+    "meta.site_description":
+      "Настоящие продукты, напитки и ремесленные изделия из Восточной Европы в Лигурии, Италия. Заказывайте онлайн или приходите в Гастроном в Сан-Ремо.",
+    "meta.home_description":
+      "Русский магазин в Сан-Ремо: молочные продукты, колбасы, рыба, консервы, сладости и напитки из России, Украины, Румынии и Восточной Европы. Онлайн или в магазине на Via Nuvoloni 13.",
+    "meta.about_title": "О нас",
+    "meta.about_description":
+      "История Гастронома: продукты, напитки и ремесленные изделия из Восточной Европы в Сан-Ремо, Лигурия.",
+    "meta.blog_title": "Блог",
+    "meta.blog_description": "Истории, гиды и славянская кулинарная культура от Гастронома в Сан-Ремо.",
+    "meta.categories_title": "Категории",
+    "meta.categories_description":
+      "Категории восточноевропейских продуктов в Гастрономе в Сан-Ремо: молочные продукты, колбасы, консервы, сладости и другое.",
+    "meta.category_description":
+      "{category} в Гастрономе в Сан-Ремо: настоящие восточноевропейские продукты, онлайн или в магазине.",
+    "meta.collections_title": "Подборки",
+    "meta.collections_description":
+      "Подборки восточноевропейских продуктов и напитков от Гастронома в Сан-Ремо: подарки, праздничный стол, базовые продукты и другое.",
+    "meta.collection_description":
+      "{name} в Гастрономе в Сан-Ремо: подборка восточноевропейских продуктов.",
+    "meta.shop_title": "Магазин",
+    "meta.shop_description":
+      "Весь ассортимент Гастронома в Сан-Ремо: продукты, напитки и деликатесы Восточной Европы.",
+    "meta.product_description":
+      "Купить {name} ({category}) в Гастрономе, магазине восточноевропейских продуктов в Сан-Ремо. Закажите онлайн или приходите в магазин.",
+    "meta.page_n": "Страница {page}",
+    "meta.terms_title": "Условия обслуживания",
+    "meta.terms_description": "Условия использования интернет-магазина Gastronom.",
+    "meta.privacy_title": "Политика конфиденциальности",
+    "meta.privacy_description": "Как Gastronom собирает, использует и защищает ваши персональные данные в соответствии с GDPR.",
+    "meta.cookies_title": "Политика cookie",
+    "meta.cookies_description": "Как Gastronom использует cookie и похожие технологии на этом сайте.",
+    "meta.not_found": "Не найдено",
+
+    "product.quick_view": "Быстрый просмотр",
+    "category.eyebrow": "Категория",
+    "category.related_collections": "Связанные подборки",
+    "category.other_categories": "Другие категории",
+    "admin_categories.intro_label": "Вступительный текст",
+    "admin_categories.intro_hint":
+      "Показывается под заголовком страницы категории и используется как мета-описание. Два-три предложения со словами, которые ищут покупатели.",
+    "blog.all_articles": "Все статьи",
+    "blog.read_more": "Читать статью",
   },
 };

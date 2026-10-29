@@ -1,10 +1,31 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+import { localizePath } from "@/lib/i18n/locale-path";
+import { type Language } from "@/lib/i18n/translate";
+
+interface SessionOptions {
+  /** Locale resolved from the URL prefix (or "en"). */
+  locale: Language;
+  /** Request path with the locale prefix removed. */
+  pathname: string;
+  /** When set, the response rewrites to this unprefixed path. */
+  rewriteTo: string | null;
+  /** Request headers to forward to the rendered route (carries x-locale). */
+  headers: Headers;
+}
+
+export async function updateSession(request: NextRequest, options: SessionOptions) {
+  const buildResponse = () => {
+    if (options.rewriteTo) {
+      const url = request.nextUrl.clone();
+      url.pathname = options.rewriteTo;
+      return NextResponse.rewrite(url, { request: { headers: options.headers } });
+    }
+    return NextResponse.next({ request: { headers: options.headers } });
+  };
+
+  let supabaseResponse = buildResponse();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,11 +39,9 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+          supabaseResponse = buildResponse();
+          cookiesToSet.forEach(({ name, value, options: cookieOptions }) =>
+            supabaseResponse.cookies.set(name, value, cookieOptions)
           );
         },
       },
@@ -34,17 +53,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { pathname, locale } = options;
+
   // Protect /account route - redirect to /login if not authenticated
-  if (!user && request.nextUrl.pathname.startsWith("/account")) {
+  if (!user && pathname.startsWith("/account")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = localizePath("/login", locale);
     return NextResponse.redirect(url);
   }
 
   // Redirect authenticated users away from /login and /signup
-  if (user && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup")) {
+  if (user && (pathname === "/login" || pathname === "/signup")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = localizePath("/", locale);
     return NextResponse.redirect(url);
   }
 

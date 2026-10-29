@@ -6,7 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { type AppUser } from "@/lib/auth/types";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
-import { LanguageProvider } from "@/context/LanguageContext";
+import { LanguageProvider, type Language } from "@/context/LanguageContext";
 import { CookieConsentProvider } from "@/context/CookieConsentContext";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,9 +16,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export default function Providers({
   children,
   initialUser,
+  initialLanguage,
 }: {
   children: React.ReactNode;
   initialUser: AppUser | null;
+  initialLanguage: Language;
 }) {
   const [queryClient] = useState(() => new QueryClient());
 
@@ -27,7 +29,7 @@ export default function Providers({
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <LanguageProvider>
+        <LanguageProvider initialLanguage={initialLanguage}>
           <CookieConsentProvider>
             <AuthProvider initialUser={initialUser}>
               <CartProvider>

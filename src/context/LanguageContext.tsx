@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { type Language } from "@/lib/i18n/translations";
 import {
   createTranslator,
@@ -8,6 +16,7 @@ import {
   type Translate,
   type TranslateVars,
 } from "@/lib/i18n/translate";
+import { localizePath, splitLocaleFromPath } from "@/lib/i18n/locale-path";
 
 export type { Language, TranslateVars };
 
@@ -34,19 +43,76 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguageState] = useState<Language>("en");
+interface LanguageProviderProps {
+  children: ReactNode;
+  /**
+   * Language the server rendered with. Comes from the URL prefix ("/it/...")
+   * or defaults to English, so SSR and the first client render agree.
+   */
+  initialLanguage?: Language;
+}
 
+// localStorage is treated as an external store so the saved preference can be
+// read without a setState-in-effect dance. Same-tab writes go through
+// writeStoredLanguage, which pokes the listeners (the "storage" event only
+// fires in other tabs).
+const listeners = new Set<() => void>();
+
+function subscribeStored(listener: () => void) {
+  listeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+function writeStoredLanguage(lang: Language) {
+  localStorage.setItem(STORAGE_KEY, lang);
+  listeners.forEach((listener) => listener());
+}
+
+export const LanguageProvider = ({ children, initialLanguage = "en" }: LanguageProviderProps) => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const urlLocale = splitLocaleFromPath(pathname ?? "/").urlLocale;
+
+  const stored = useSyncExternalStore(
+    subscribeStored,
+    () => localStorage.getItem(STORAGE_KEY),
+    () => null,
+  );
+
+  // The URL wins when it carries a locale; otherwise the saved preference, then
+  // whatever the server rendered with.
+  const language: Language = urlLocale ?? (isLanguage(stored) ? stored : initialLanguage);
+
+  // Landing on a prefixed URL updates the preference. Keyed on the URL alone:
+  // reacting to `stored` as well would write the old locale back while the
+  // navigation triggered by setLanguage is still in flight.
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (isLanguage(saved)) {
-      setLanguageState(saved);
+    if (urlLocale) {
+      writeStoredLanguage(urlLocale);
     }
-  }, []);
+  }, [urlLocale]);
+
+  // Root layout is not re-rendered on client navigation, so keep <html lang> in sync here.
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem(STORAGE_KEY, lang);
+    writeStoredLanguage(lang);
+
+    const current = splitLocaleFromPath(pathname ?? "/").pathname;
+    const target = localizePath(current, lang) + window.location.search + window.location.hash;
+    if (target !== window.location.pathname + window.location.search + window.location.hash) {
+      router.push(target);
+      // "/it/products" and "/products" rewrite to the same segments, so the
+      // router cache may still hold payloads (title, canonical) rendered in the
+      // previous language. Refreshing drops them.
+      router.refresh();
+    }
   };
 
   const t = useMemo(() => createTranslator(language), [language]);

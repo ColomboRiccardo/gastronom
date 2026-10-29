@@ -13,8 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Link from "next/link";
+import Image from "next/image";
+import Link from "@/components/LocalizedLink";
 import { Pencil, Save, X, Heart, ArrowUpRight } from "lucide-react";
+import { shouldOptimizeImage } from "@/lib/images";
 import CartQuantityControl from "@/components/CartQuantityControl";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
@@ -202,10 +204,13 @@ const ProductModal = ({
       <DialogContent className="flex flex-col gap-0 p-0 sm:max-w-[600px] max-h-[90vh] overflow-hidden">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-lg">
-            <img
+            <Image
               src={product.image}
               alt={copy.name}
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 640px"
+              className="object-cover"
+              unoptimized={!shouldOptimizeImage(product.image)}
             />
             {product.badge && (
               <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-bold font-body px-3 py-1 rounded-full">

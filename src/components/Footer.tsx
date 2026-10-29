@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocalizedLink";
 
 import CookiePreferencesLink from "@/components/CookiePreferencesLink";
 import { useLanguage } from "@/context/LanguageContext";

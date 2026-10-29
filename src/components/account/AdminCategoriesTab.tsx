@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Select,
@@ -26,6 +27,7 @@ const AdminCategoriesTab = () => {
   const [editLanguage, setEditLanguage] = useState<Language>(language);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
+  const [editIntro, setEditIntro] = useState("");
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -51,18 +53,22 @@ const AdminCategoriesTab = () => {
     setEditLanguage(language);
   }, [language]);
 
+  const loadEditFields = (cat: AdminCategory, lang: Language) => {
+    setEditName(resolveCategoryName(cat, cat.translations, lang));
+    // Intro is per language with no fallback here: an empty box means "not written yet".
+    setEditIntro(cat.translations.find((row) => row.language === lang)?.intro ?? "");
+  };
+
   const startEdit = (cat: AdminCategory) => {
     setEditingId(cat.id);
-    setEditName(resolveCategoryName(cat, cat.translations, editLanguage));
+    loadEditFields(cat, editLanguage);
   };
 
   const handleLanguageChange = (lang: Language) => {
     setEditLanguage(lang);
     if (editingId != null) {
       const cat = categories.find((c) => c.id === editingId);
-      if (cat) {
-        setEditName(resolveCategoryName(cat, cat.translations, lang));
-      }
+      if (cat) loadEditFields(cat, lang);
     }
   };
 
@@ -75,7 +81,7 @@ const AdminCategoriesTab = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           categoryId: editingId,
-          update: { language: editLanguage, name: editName },
+          update: { language: editLanguage, name: editName, intro: editIntro },
         }),
       });
       if (!res.ok) {
@@ -168,9 +174,24 @@ const AdminCategoriesTab = () => {
                 const isEditing = editingId === cat.id;
                 return (
                   <TableRow key={cat.id} className="border-border">
-                    <TableCell>
+                    <TableCell className={isEditing ? "align-top" : undefined}>
                       {isEditing ? (
-                        <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                        <div className="space-y-3 min-w-[260px]">
+                          <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                          <div>
+                            <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 block">
+                              {t("admin_categories.intro_label")}
+                            </label>
+                            <Textarea
+                              value={editIntro}
+                              onChange={(e) => setEditIntro(e.target.value)}
+                              rows={5}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {t("admin_categories.intro_hint")}
+                            </p>
+                          </div>
+                        </div>
                       ) : (
                         <span className="font-medium">{display}</span>
                       )}

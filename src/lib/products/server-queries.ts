@@ -14,6 +14,7 @@ import {
   mapDbProductToUiProduct,
   mapTagTranslations,
 } from "./mappers";
+import { type CategoryTranslationRow } from "./resolve-copy";
 import {
   type AdminProduct,
   type CategorySummary,
@@ -69,6 +70,7 @@ const TAG_SELECT = `
   published,
   sort_order,
   image_url,
+  updated_at,
   tag_translations ( language, name, intro, seo_title, seo_description ),
   product_tags ( product_id, products ( published ) )
 `;
@@ -80,6 +82,7 @@ interface DbTagRow {
   published: boolean;
   sort_order: number | null;
   image_url: string | null;
+  updated_at?: string | null;
   tag_translations?: DbTagTranslationRow[] | null;
   product_tags?: Array<{
     product_id: number;
@@ -105,6 +108,7 @@ function mapTagSummary(row: DbTagRow): TagSummary {
     sortOrder: Number(row.sort_order ?? 0),
     count: countPublishedProducts(row),
     translations: mapTagTranslations(row.tag_translations),
+    updatedAt: row.updated_at ?? null,
   };
 }
 
@@ -222,9 +226,9 @@ export async function fetchPublishedProductsByTag(
 }
 
 /** Slugs of published tags for the sitemap. */
-export async function fetchPublishedTagSlugs(): Promise<string[]> {
+export async function fetchPublishedTagSlugs(): Promise<Array<{ slug: string; updatedAt: string | null }>> {
   const tags = await fetchPublishedTags();
-  return tags.map((t) => t.slug);
+  return tags.map((t) => ({ slug: t.slug, updatedAt: t.updatedAt }));
 }
 
 async function resolveCategoryIdsBySlug(
@@ -397,7 +401,8 @@ export async function fetchRelatedPublishedProducts(
 
 export interface PublishedProductSlug {
   slug: string;
-  createdAt: string;
+  /** Last change (updated_at, falling back to created_at on older schemas). */
+  updatedAt: string;
 }
 
 /** Slugs of every published product, for the sitemap. */
@@ -405,7 +410,7 @@ export async function fetchPublishedProductSlugs(): Promise<PublishedProductSlug
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("products")
-    .select("slug, created_at")
+    .select("slug, created_at, updated_at")
     .eq("published", true)
     .not("slug", "is", null)
     .order("id", { ascending: true });
@@ -415,9 +420,32 @@ export async function fetchPublishedProductSlugs(): Promise<PublishedProductSlug
     return [];
   }
 
-  return ((data || []) as { slug: string; created_at: string }[])
+  return ((data || []) as { slug: string; created_at: string; updated_at?: string | null }[])
     .filter((row) => row.slug && row.slug.trim())
-    .map((row) => ({ slug: row.slug, createdAt: row.created_at }));
+    .map((row) => ({ slug: row.slug, updatedAt: row.updated_at || row.created_at }));
+}
+
+/** Most recent product change per category, for sitemap lastModified. */
+export async function fetchCategoryLastModified(): Promise<Map<number, string>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("category_id, updated_at, created_at")
+    .eq("published", true)
+    .not("category_id", "is", null);
+
+  const out = new Map<number, string>();
+  if (error) {
+    console.error("Failed to fetch category modification dates:", error.message);
+    return out;
+  }
+
+  for (const row of (data || []) as { category_id: number; updated_at?: string | null; created_at: string }[]) {
+    const stamp = row.updated_at || row.created_at;
+    const current = out.get(row.category_id);
+    if (!current || stamp > current) out.set(row.category_id, stamp);
+  }
+  return out;
 }
 
 /** @deprecated Use fetchPublishedProductsPage for the catalog. */
@@ -429,19 +457,40 @@ export async function fetchPublishedProducts(): Promise<UiProduct[]> {
 /** Server-side category aggregation with localized names attached. */
 export async function fetchPublishedCategorySummaries(): Promise<CategorySummary[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("products")
-    .select(`
+
+  const select = (withIntro: boolean) => `
       category_id,
       categories (
         id,
         name,
         slug,
-        category_translations ( language, name )
+        category_translations ( language, name${withIntro ? ", intro" : ""} )
       )
-    `)
-    .eq("published", true)
-    .not("category_id", "is", null);
+    `;
+
+  interface CategoryNestRow {
+    category_id: number | null;
+    categories:
+      | { id: number; name: string; slug: string; category_translations: CategoryTranslationRow[] | null }
+      | { id: number; name: string; slug: string; category_translations: CategoryTranslationRow[] | null }[]
+      | null;
+  }
+
+  const run = (withIntro: boolean) =>
+    supabase
+      .from("products")
+      .select(select(withIntro))
+      .eq("published", true)
+      .not("category_id", "is", null);
+
+  let { data, error } = await run(true);
+
+  // Migration 018 adds category_translations.intro; until it runs, fall back
+  // to the old shape instead of taking every category page down with it.
+  if (error && /intro/.test(error.message)) {
+    console.warn("category_translations.intro missing, run migration 018");
+    ({ data, error } = await run(false));
+  }
 
   if (error) {
     console.error("Failed to fetch category summaries:", error.message);
@@ -455,11 +504,11 @@ export async function fetchPublishedCategorySummaries(): Promise<CategorySummary
       slug: string;
       name: string;
       count: number;
-      translations: { language: string; name: string }[];
+      translations: CategoryTranslationRow[];
     }
   >();
 
-  for (const row of data || []) {
+  for (const row of (data || []) as unknown as CategoryNestRow[]) {
     const nest = Array.isArray(row.categories) ? row.categories[0] : row.categories;
     if (!nest?.id) continue;
     const existing = counts.get(nest.id);

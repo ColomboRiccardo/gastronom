@@ -29,7 +29,7 @@ export async function fetchAdminCategories(): Promise<AdminCategory[]> {
       source_key,
       sort_order,
       image_url,
-      category_translations ( language, name ),
+      category_translations ( language, name, intro ),
       products ( id )
     `)
     .order("sort_order", { ascending: true })
@@ -141,13 +141,19 @@ export async function saveAdminCategoryTranslation(
   const name = update.name.trim();
   if (!name) return false;
 
+  const translationRow: Record<string, unknown> = {
+    category_id: categoryId,
+    language,
+    name,
+    updated_at: new Date().toISOString(),
+  };
+  // Only touch intro when the caller sent it, so name-only edits keep existing text.
+  if (update.intro !== undefined) {
+    translationRow.intro = update.intro?.trim() || null;
+  }
+
   const { error: trError } = await supabase.from("category_translations").upsert(
-    {
-      category_id: categoryId,
-      language,
-      name,
-      updated_at: new Date().toISOString(),
-    },
+    translationRow,
     { onConflict: "category_id,language" },
   );
 

@@ -2,62 +2,80 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import ProductDetailClient from "./ProductDetailClient";
+import { getServerTranslator, localeAlternates, openGraphBase } from "@/lib/i18n/server";
+import { type Language } from "@/lib/i18n/translate";
+import { resolveCategoryName, resolveProductCopy } from "@/lib/products/resolve-copy";
 import {
   fetchPublishedProductBySlug,
   fetchRelatedPublishedProducts,
 } from "@/lib/products/server-queries";
-import { absoluteUrl } from "@/lib/seo/site";
+import { type UiProduct } from "@/lib/products/types";
+import { absoluteUrl, noIndexFollow } from "@/lib/seo/site";
+import { merchantReturnPolicy, offerShippingDetails } from "@/lib/seo/structured-data";
 import { SHOP } from "@/lib/shipping/config";
 
 type Params = Promise<{ slug: string }>;
 
 const DESCRIPTION_MAX = 155;
 
-function toMetaDescription(product: { name: string; description: string; category: string }): string {
-  const base = product.description.trim();
-  if (base) {
-    const oneLine = base.replace(/\s+/g, " ");
-    if (oneLine.length <= DESCRIPTION_MAX) return oneLine;
-    return `${oneLine.slice(0, DESCRIPTION_MAX - 1).trimEnd()}…`;
-  }
-  return `Buy ${product.name} (${product.category}) at Гастроном, Eastern European delicatessen in Sanremo. Order online or visit the shop.`;
+function localizedProduct(product: UiProduct, locale: Language) {
+  const copy = resolveProductCopy(product, product.translations, locale);
+  const category = resolveCategoryName(
+    { name: product.category },
+    product.categoryTranslations,
+    locale,
+  );
+  return { name: copy.name, description: copy.description, category };
+}
+
+function trimDescription(text: string): string {
+  const oneLine = text.trim().replace(/\s+/g, " ");
+  if (oneLine.length <= DESCRIPTION_MAX) return oneLine;
+  return `${oneLine.slice(0, DESCRIPTION_MAX - 1).trimEnd()}…`;
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await fetchPublishedProductBySlug(slug);
+  const [product, { locale, t }] = await Promise.all([
+    fetchPublishedProductBySlug(slug),
+    getServerTranslator(),
+  ]);
 
   if (!product) {
-    return {
-      title: "Product not found",
-      robots: { index: false, follow: true },
-    };
+    return { title: t("meta.not_found"), robots: noIndexFollow };
   }
 
-  const description = toMetaDescription(product);
+  const copy = localizedProduct(product, locale);
+  const description = copy.description
+    ? trimDescription(copy.description)
+    : t("meta.product_description", { name: copy.name, category: copy.category });
   const path = `/products/${encodeURIComponent(product.slug)}`;
   const imageUrl = product.image.startsWith("http") ? product.image : absoluteUrl(product.image);
 
   return {
-    title: product.name,
+    // "{name} – {category}" through the layout template adds the brand suffix.
+    title: copy.category ? `${copy.name} – ${copy.category}` : copy.name,
     description,
-    alternates: { canonical: path },
+    alternates: localeAlternates(path, locale),
     openGraph: {
-      type: "website",
-      title: `${product.name} — Гастроном`,
+      ...openGraphBase(path, locale),
+      title: `${copy.name} — Гастроном`,
       description,
-      url: path,
-      images: [{ url: imageUrl, alt: product.name }],
+      images: [{ url: imageUrl, alt: copy.name }],
     },
   };
 }
 
 export default async function ProductDetailPage({ params }: { params: Params }) {
   const { slug } = await params;
-  const product = await fetchPublishedProductBySlug(slug);
+  const [product, { locale }] = await Promise.all([
+    fetchPublishedProductBySlug(slug),
+    getServerTranslator(),
+  ]);
   if (!product) notFound();
 
   const related = await fetchRelatedPublishedProducts(product.categoryId ?? null, product.id);
+  const copy = localizedProduct(product, locale);
 
   const productUrl = absoluteUrl(`/products/${encodeURIComponent(product.slug)}`);
   const imageUrl = product.image.startsWith("http") ? product.image : absoluteUrl(product.image);
@@ -65,11 +83,11 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: product.name,
-    description: product.description || undefined,
+    name: copy.name,
+    description: copy.description || undefined,
     image: [imageUrl],
     sku: String(product.id),
-    category: product.category,
+    category: copy.category,
     url: productUrl,
     brand: { "@type": "Brand", name: SHOP.name },
     offers: {
@@ -82,6 +100,8 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
         : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: SHOP.name },
+      shippingDetails: offerShippingDetails(Boolean(product.isFrozen)),
+      hasMerchantReturnPolicy: merchantReturnPolicy(),
     },
   };
 
@@ -91,7 +111,22 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
       { "@type": "ListItem", position: 2, name: "Shop", item: absoluteUrl("/products") },
-      { "@type": "ListItem", position: 3, name: product.name, item: productUrl },
+      ...(product.categorySlug
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: copy.category,
+              item: absoluteUrl(`/categories/${encodeURIComponent(product.categorySlug)}`),
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem",
+        position: product.categorySlug ? 4 : 3,
+        name: copy.name,
+        item: productUrl,
+      },
     ],
   };
 

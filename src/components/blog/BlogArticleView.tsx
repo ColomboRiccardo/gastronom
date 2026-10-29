@@ -1,7 +1,9 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User } from "lucide-react";
 import type { BlogArticle } from "@/data/blogArticles";
 import { formatDate } from "@/lib/i18n/format";
+import { shouldOptimizeImage } from "@/lib/images";
 
 interface Props {
   article: BlogArticle;
@@ -71,11 +73,15 @@ const BlogArticleView = ({ article }: Props) => {
   return (
     <article className="pb-16">
       {/* Hero image */}
-      <div className="w-full h-64 md:h-96 overflow-hidden">
-        <img
+      <div className="relative w-full h-64 md:h-96 overflow-hidden">
+        <Image
           src={article.image}
           alt={article.title}
-          className="w-full h-full object-cover"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+          unoptimized={!shouldOptimizeImage(article.image)}
         />
       </div>
 

@@ -1,34 +1,19 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/context/LanguageContext";
 import BlogArticleCard from "@/components/blog/BlogArticleCard";
-import BlogArticleView from "@/components/blog/BlogArticleView";
 import { useBlogStore } from "@/data/blogStore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List } from "lucide-react";
 
 type SortOption = "newest" | "oldest" | "a-z" | "z-a";
 
 export default function BlogPageClient() {
-  return (
-    <Suspense>
-      <BlogContent />
-    </Suspense>
-  );
-}
-
-function BlogContent() {
   const { t } = useLanguage();
   const { articles: blogArticles } = useBlogStore();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const articleSlug = searchParams.get("article");
   const [sort, setSort] = useState<SortOption>("newest");
   const [layout, setLayout] = useState<"grid" | "list">("grid");
 
@@ -49,32 +34,6 @@ function BlogContent() {
     }
     return items;
   }, [blogArticles, sort]);
-
-  const currentArticle = articleSlug
-    ? blogArticles.find((a) => a.slug === articleSlug)
-    : null;
-
-  if (currentArticle) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <section className="pt-24 pb-6">
-          <div className="container mx-auto px-4">
-            <Button
-              variant="ghost"
-              className="gap-2 text-muted-foreground hover:text-foreground mb-4"
-              onClick={() => router.push("/blog")}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {t("blog.back")}
-            </Button>
-          </div>
-        </section>
-        <BlogArticleView article={currentArticle} />
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,12 +102,7 @@ function BlogContent() {
               : "flex flex-col gap-4"
           }>
             {sorted.map((article) => (
-              <BlogArticleCard
-                key={article.slug}
-                article={article}
-                layout={layout}
-                onClick={() => router.push(`/blog?article=${article.slug}`)}
-              />
+              <BlogArticleCard key={article.slug} article={article} layout={layout} />
             ))}
           </div>
         </div>

@@ -2,7 +2,9 @@
 
 > Eastern European delicatessen in Sanremo, Liguria (Italy). Online shop and physical store for authentic food, drinks, and specialties from Eastern Europe.
 
-Gastronom (brand name: Гастроном) sells Eastern European delicacies from Via Nuvoloni 13, 18038 Sanremo (IM), Italy. Customers can browse and order online, or visit the shop. The site is available in English, French, Italian, and Russian. Currency and checkout are in EUR.
+Gastronom (brand name: Гастроном) sells Eastern European delicacies from Via Nuvoloni 13, 18038 Sanremo (IM), Italy. Customers can browse and order online, or visit the shop. The site is available in English (default, no prefix), French (/fr), Italian (/it), and Russian (/ru). Currency and checkout are in EUR.
+
+Every product has its own page at /products/<slug>. Supplier categories live at /categories/<slug>; hand-curated collections (gift ideas, festive tables, pantry staples) live at /collections/<slug>. Blog articles live at /blog/<slug>.
 
 Shop address: Via Nuvoloni 13, 18038 Sanremo (IM), Italy.
 Phone: +39 348 655 6241.
@@ -12,9 +14,12 @@ Opening hours: Mon–Sun 10:00–14:00 / 15:00–20:00.
 
 - [Home](https://www.gastronomsanremo.com/): Landing page with featured products and categories
 - [Shop](https://www.gastronomsanremo.com/products): Full product catalogue with filters
-- [Categories](https://www.gastronomsanremo.com/categories): Browse products by food category
+- [Categories](https://www.gastronomsanremo.com/categories): Browse products by food category (each at /categories/<slug>)
+- [Collections](https://www.gastronomsanremo.com/collections): Curated product groupings (each at /collections/<slug>)
 - [About](https://www.gastronomsanremo.com/about): Store story and visit information
-- [Blog](https://www.gastronomsanremo.com/blog): Articles on Slavic food culture and guides
+- [Blog](https://www.gastronomsanremo.com/blog): Articles on Slavic food culture and guides (each at /blog/<slug>)
+- [Italian version](https://www.gastronomsanremo.com/it): Same site in Italian
+- [Russian version](https://www.gastronomsanremo.com/ru): Same site in Russian
 
 ## Optional
 

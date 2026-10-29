@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Menu, X, UserCircle, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import Link from "@/components/LocalizedLink";
 import CartDropdown from "@/components/CartDropdown";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage, LANGUAGES } from "@/context/LanguageContext";

@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
+import Link from "@/components/LocalizedLink";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Heart, Snowflake } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { resolveCategoryName, resolveProductCopy, resolveTagCopy } from "@/lib/products/resolve-copy";
 import { type UiProduct } from "@/lib/products/types";
+import { shouldOptimizeImage } from "@/lib/images";
 
 interface ProductDetailClientProps {
   product: UiProduct;
@@ -41,7 +43,7 @@ export default function ProductDetailClient({ product, related }: ProductDetailC
   const wishlisted = isInWishlist(product.id);
 
   const categoryHref = product.categorySlug
-    ? `/products?category=${encodeURIComponent(product.categorySlug)}`
+    ? `/categories/${encodeURIComponent(product.categorySlug)}`
     : "/products";
 
   const handleWishlist = () => {
@@ -100,10 +102,14 @@ export default function ProductDetailClient({ product, related }: ProductDetailC
         <div className="container mx-auto px-4">
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-14 items-start">
             <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-card">
-              <img
+              <Image
                 src={product.image}
                 alt={copy.name}
-                className="h-full w-full object-cover"
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+                unoptimized={!shouldOptimizeImage(product.image)}
               />
               {product.badge && (
                 <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 font-body text-xs font-bold text-primary-foreground">

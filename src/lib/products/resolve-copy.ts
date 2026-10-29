@@ -9,6 +9,8 @@ export interface ProductTranslationRow {
 export interface CategoryTranslationRow {
   language: Language;
   name: string;
+  /** Landing-page intro for /categories/<slug>; optional, admin-written. */
+  intro?: string | null;
 }
 
 export interface TagTranslationRow {
@@ -82,6 +84,18 @@ export function translationsToList(
   translations: ProductTranslationRow[] | null | undefined,
 ): ProductTranslationRow[] {
   return (translations ?? []).filter((row) => row.name?.trim());
+}
+
+/** Intro paragraph in the requested language, falling back to English. Null when nobody wrote one. */
+export function resolveCategoryIntro(
+  translations: CategoryTranslationRow[] | null | undefined,
+  language: Language,
+): string | null {
+  const rows = (translations ?? []).filter((row) => row.intro?.trim());
+  const exact = rows.find((row) => row.language === language);
+  if (exact?.intro) return exact.intro.trim();
+  const english = rows.find((row) => row.language === "en");
+  return english?.intro?.trim() ?? null;
 }
 
 export function categoryTranslationsToList(

@@ -51,6 +51,7 @@ export interface TagSummary {
   sortOrder: number;
   count: number;
   translations: TagTranslationRow[];
+  updatedAt: string | null;
 }
 
 export interface AdminTag {
@@ -176,6 +177,7 @@ export interface AdminCategory {
 export interface AdminCategoryUpdate {
   language: Language;
   name: string;
+  intro?: string | null;
   sortOrder?: number;
   imageUrl?: string | null;
 }

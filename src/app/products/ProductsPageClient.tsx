@@ -1,16 +1,19 @@
 "use client";
 
 import { useCallback, useTransition } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import ProductFilters from "@/components/ProductFilters";
 import ListPagination from "@/components/ListPagination";
-import Link from "next/link";
+import Link from "@/components/LocalizedLink";
 import { type SortOption } from "@/lib/products/constants";
-import { resolveCategoryName, resolveTagCopy } from "@/lib/products/resolve-copy";
+import { resolveCategoryIntro, resolveCategoryName, resolveTagCopy } from "@/lib/products/resolve-copy";
+import { shopQueryString } from "@/lib/products/shop-params";
 import { type UiProduct, type CategorySummary, type TagSummary } from "@/lib/products/types";
+import { localizeHref } from "@/lib/i18n/locale-path";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface ProductsPageClientProps {
@@ -20,9 +23,13 @@ interface ProductsPageClientProps {
   totalPages: number;
   categories: CategorySummary[];
   tags?: TagSummary[];
+  /** Collections that overlap with the current category (category pages only). */
+  relatedTags?: TagSummary[];
   initialCategories: string[];
   initialPriceRange: number | null;
   initialSort: SortOption;
+  /** "/categories/<slug>" when rendering a category landing page; defaults to "/products". */
+  basePath?: string;
 }
 
 const ProductsPageClient = ({
@@ -32,9 +39,11 @@ const ProductsPageClient = ({
   totalPages,
   categories,
   tags = [],
+  relatedTags = [],
   initialCategories,
   initialPriceRange,
   initialSort,
+  basePath = "/products",
 }: ProductsPageClientProps) => {
   const router = useRouter();
   const { t, language } = useLanguage();
@@ -47,8 +56,11 @@ const ProductsPageClient = ({
   const activeCategoryLabel = activeCategory
     ? resolveCategoryName(activeCategory, activeCategory.translations, language)
     : null;
+  const activeIntro = activeCategory
+    ? resolveCategoryIntro(activeCategory.translations, language)
+    : null;
 
-  const buildQueryString = useCallback(
+  const buildHref = useCallback(
     (overrides: {
       page?: number;
       categories?: string[];
@@ -56,47 +68,41 @@ const ProductsPageClient = ({
       sort?: SortOption;
     }) => {
       const cats = overrides.categories ?? initialCategories;
-      const price = overrides.priceRange !== undefined ? overrides.priceRange : initialPriceRange;
+      const priceRangeIndex =
+        overrides.priceRange !== undefined ? overrides.priceRange : initialPriceRange;
       const sort = overrides.sort ?? initialSort;
       const nextPage = overrides.page ?? page;
 
-      const params = new URLSearchParams();
-      cats.forEach((c) => params.append("category", c));
-      if (price != null) {
-        params.set("price", String(price));
+      // Exactly one category lives at its clean URL; anything else goes through /products.
+      if (cats.length === 1) {
+        const path = `/categories/${encodeURIComponent(cats[0])}`;
+        return `${path}${shopQueryString({ page: nextPage, sort, priceRangeIndex })}`;
       }
-      if (sort !== "newest") {
-        params.set("sort", sort);
-      }
-      if (nextPage > 1) {
-        params.set("page", String(nextPage));
-      }
-
-      const qs = params.toString();
-      return qs ? `/products?${qs}` : "/products";
+      return `/products${shopQueryString({ page: nextPage, sort, priceRangeIndex, categories: cats })}`;
     },
     [initialCategories, initialPriceRange, initialSort, page],
   );
 
   const navigate = (href: string) => {
     startTransition(() => {
-      router.push(href);
+      router.push(localizeHref(href, language));
     });
   };
 
   const handleCategoriesChange = (cats: string[]) => {
-    navigate(buildQueryString({ page: 1, categories: cats }));
+    navigate(buildHref({ page: 1, categories: cats }));
   };
 
   const handlePriceRangeChange = (idx: number | null) => {
-    navigate(buildQueryString({ page: 1, priceRange: idx }));
+    navigate(buildHref({ page: 1, priceRange: idx }));
   };
 
   const handleSortChange = (sort: SortOption) => {
-    navigate(buildQueryString({ page: 1, sort }));
+    navigate(buildHref({ page: 1, sort }));
   };
 
-  const buildPageHref = (nextPage: number) => buildQueryString({ page: nextPage });
+  const buildPageHref = (nextPage: number) => buildHref({ page: nextPage });
+  const isCategoryPage = basePath !== "/products";
 
   return (
     <div className="min-h-screen bg-background">
@@ -104,18 +110,25 @@ const ProductsPageClient = ({
 
       <section className="pt-24 pb-12 bg-muted/50 relative overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
+          {isCategoryPage && (
+            <p className="font-body text-accent text-sm tracking-[0.2em] uppercase mb-2">
+              {t("category.eyebrow")}
+            </p>
+          )}
           <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-3">
             {activeCategoryLabel ?? t("products.title")}
           </h1>
-          <p className="font-body text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="font-body text-muted-foreground max-w-3xl mx-auto leading-relaxed whitespace-pre-wrap">
             {activeCategoryLabel
-              ? t("products.category_intro", { category: activeCategoryLabel })
+              ? activeIntro ?? t("products.category_intro", { category: activeCategoryLabel })
               : t("products.subtitle")}
           </p>
         </div>
-        <img
+        <Image
           src="/slavic-border.png"
           alt=""
+          width={1920}
+          height={512}
           className="absolute bottom-0 left-0 w-full h-6 object-cover opacity-40 pointer-events-none"
         />
       </section>
@@ -135,11 +148,7 @@ const ProductsPageClient = ({
             />
 
             <div className="flex-1">
-              {totalCount === 0 ? (
-                <div className="text-center py-20">
-                  <p className="font-display text-xl text-muted-foreground">{t("products.no_results")}</p>
-                </div>
-              ) : products.length === 0 ? (
+              {totalCount === 0 || products.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="font-display text-xl text-muted-foreground">{t("products.no_results")}</p>
                 </div>
@@ -156,13 +165,33 @@ const ProductsPageClient = ({
             </div>
           </div>
 
+          {relatedTags.length > 0 && (
+            <nav aria-label={t("category.related_collections")} className="mt-14 pt-10 border-t border-border">
+              <h2 className="font-display text-xl font-semibold text-foreground text-center mb-4">
+                {t("category.related_collections")}
+              </h2>
+              <ul className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+                {relatedTags.map((tag) => (
+                  <li key={tag.id}>
+                    <Link
+                      href={`/collections/${encodeURIComponent(tag.slug)}`}
+                      className="inline-block rounded-full border border-border px-3 py-1 font-body text-sm text-foreground/80 transition-colors hover:border-primary hover:text-primary"
+                    >
+                      {resolveTagCopy(tag, tag.translations, language).name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+
           {categories.length > 1 && (
             <nav
-              aria-label={t("products.browse_categories")}
-              className="mt-14 pt-10 border-t border-border"
+              aria-label={isCategoryPage ? t("category.other_categories") : t("products.browse_categories")}
+              className={`mt-14 pt-10 border-t border-border ${relatedTags.length > 0 ? "mt-10" : ""}`}
             >
               <h2 className="font-display text-xl font-semibold text-foreground text-center mb-4">
-                {t("products.browse_categories")}
+                {isCategoryPage ? t("category.other_categories") : t("products.browse_categories")}
               </h2>
               <ul className="flex flex-wrap justify-center gap-x-3 gap-y-2 max-w-4xl mx-auto">
                 {categories.map((cat) => {
@@ -171,7 +200,8 @@ const ProductsPageClient = ({
                   return (
                     <li key={cat.id}>
                       <Link
-                        href={`/products?category=${encodeURIComponent(cat.slug)}`}
+                        href={`/categories/${encodeURIComponent(cat.slug)}`}
+                        aria-current={isActive ? "page" : undefined}
                         className={`font-body text-sm underline-offset-4 hover:underline ${
                           isActive
                             ? "text-primary font-medium"

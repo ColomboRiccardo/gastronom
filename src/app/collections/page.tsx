@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 
 import CollectionsPageClient from "./CollectionsPageClient";
+import { localizedPageMetadata } from "@/lib/i18n/server";
 import { fetchPublishedTags } from "@/lib/products/server-queries";
 
-export const metadata: Metadata = {
-  title: "Collections",
-  description:
-    "Curated collections of Eastern European food and drink from Гастроном in Sanremo: gift ideas, festive tables, pantry staples, and more.",
-  alternates: { canonical: "/collections" },
-};
+export function generateMetadata(): Promise<Metadata> {
+  return localizedPageMetadata({
+    path: "/collections",
+    titleKey: "meta.collections_title",
+    descriptionKey: "meta.collections_description",
+  });
+}
 
 export default async function CollectionsPage() {
   const tags = await fetchPublishedTags();

@@ -1,27 +1,36 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock } from "lucide-react";
+import Link from "@/components/LocalizedLink";
 import type { BlogArticle } from "@/data/blogArticles";
 import { formatDate } from "@/lib/i18n/format";
+import { shouldOptimizeImage } from "@/lib/images";
 
 interface Props {
   article: BlogArticle;
   layout: "grid" | "list";
-  onClick: () => void;
 }
 
-const BlogArticleCard = ({ article, layout, onClick }: Props) => {
+const BlogArticleCard = ({ article, layout }: Props) => {
+  const href = `/blog/${encodeURIComponent(article.slug)}`;
+  const unoptimized = !shouldOptimizeImage(article.image);
+
   if (layout === "list") {
     return (
-      <button
-        onClick={onClick}
+      <Link
+        href={href}
         className="flex gap-5 p-4 rounded-lg border border-border bg-card hover:shadow-md transition-all text-left group"
       >
-        <img
-          src={article.image}
-          alt={article.title}
-          className="w-40 h-28 object-cover rounded-md flex-shrink-0"
-          loading="lazy"
-        />
+        <div className="relative w-40 h-28 rounded-md flex-shrink-0 overflow-hidden">
+          <Image
+            src={article.image}
+            alt={article.title}
+            fill
+            sizes="160px"
+            className="object-cover"
+            unoptimized={unoptimized}
+          />
+        </div>
         <div className="flex flex-col justify-center gap-2 min-w-0">
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs font-body">
@@ -45,21 +54,23 @@ const BlogArticleCard = ({ article, layout, onClick }: Props) => {
             </span>
           </div>
         </div>
-      </button>
+      </Link>
     );
   }
 
   return (
-    <button
-      onClick={onClick}
+    <Link
+      href={href}
       className="flex flex-col rounded-lg border border-border bg-card overflow-hidden hover:shadow-lg transition-all text-left group"
     >
-      <div className="relative overflow-hidden">
-        <img
+      <div className="relative h-48 overflow-hidden">
+        <Image
           src={article.image}
           alt={article.title}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          unoptimized={unoptimized}
         />
         <Badge
           variant="secondary"
@@ -88,7 +99,7 @@ const BlogArticleCard = ({ article, layout, onClick }: Props) => {
           {article.author}
         </p>
       </div>
-    </button>
+    </Link>
   );
 };
 

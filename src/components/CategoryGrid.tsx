@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
+import Link from "@/components/LocalizedLink";
 import { PLACEHOLDER_CATEGORY_IMAGE } from "@/lib/products/mappers";
 import { type CategorySummary } from "@/lib/products/types";
 import { useLanguage } from "@/context/LanguageContext";
@@ -39,14 +40,15 @@ const CategoryGrid = ({
         return (
           <Link
             key={cat.id}
-            href={`/products?category=${encodeURIComponent(cat.slug)}`}
+            href={`/categories/${encodeURIComponent(cat.slug)}`}
             className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer border border-border hover:shadow-lg transition-shadow duration-300"
           >
-            <img
+            <Image
               src={PLACEHOLDER_CATEGORY_IMAGE}
               alt={label}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              loading="lazy"
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">

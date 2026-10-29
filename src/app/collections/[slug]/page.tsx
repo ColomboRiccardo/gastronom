@@ -2,22 +2,19 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import CollectionPageClient from "./CollectionPageClient";
-import { DEFAULT_LANGUAGE } from "@/lib/i18n/translate";
+import { getServerTranslator, localeAlternates, openGraphBase } from "@/lib/i18n/server";
+import { localizePath } from "@/lib/i18n/locale-path";
 import { resolveTagCopy } from "@/lib/products/resolve-copy";
 import {
   fetchPublishedProductsByTag,
   fetchPublishedTags,
   lookupPublishedTagBySlug,
 } from "@/lib/products/server-queries";
+import { parsePage } from "@/lib/products/shop-params";
 import { absoluteUrl, noIndexFollow } from "@/lib/seo/site";
 
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ page?: string }>;
-
-function parsePage(value: string | undefined): number {
-  const n = Number.parseInt(value || "1", 10);
-  return Number.isNaN(n) || n < 1 ? 1 : n;
-}
 
 export async function generateMetadata({
   params,
@@ -26,33 +23,34 @@ export async function generateMetadata({
   params: Params;
   searchParams: SearchParams;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const { page: pageParam } = await searchParams;
+  const [{ slug }, { page: pageParam }, { locale, t }] = await Promise.all([
+    params,
+    searchParams,
+    getServerTranslator(),
+  ]);
   const page = parsePage(pageParam);
   const lookup = await lookupPublishedTagBySlug(slug);
 
   if (lookup.kind !== "found") {
-    return { title: "Collection not found", robots: noIndexFollow };
+    return { title: t("meta.not_found"), robots: noIndexFollow };
   }
 
-  const copy = resolveTagCopy(lookup.tag, lookup.tag.translations, DEFAULT_LANGUAGE);
+  const copy = resolveTagCopy(lookup.tag, lookup.tag.translations, locale);
   const path = `/collections/${encodeURIComponent(lookup.tag.slug)}`;
-  const title = page > 1 ? `${copy.seoTitle} · Page ${page}` : copy.seoTitle;
+  const pageLabel = t("meta.page_n", { page });
+  const title = page > 1 ? `${copy.seoTitle} · ${pageLabel}` : copy.seoTitle;
   const description =
-    copy.seoDescription ||
-    copy.intro ||
-    `Shop ${copy.name} at Гастроном in Sanremo — curated Eastern European products.`;
+    copy.seoDescription || copy.intro || t("meta.collection_description", { name: copy.name });
 
   return {
     title,
-    description: page > 1 ? `${description} Page ${page}.` : description,
-    alternates: { canonical: path },
+    description: page > 1 ? `${description} ${pageLabel}.` : description,
+    alternates: localeAlternates(path, locale),
     robots: page > 1 ? noIndexFollow : undefined,
     openGraph: {
-      type: "website",
+      ...openGraphBase(path, locale),
       title: `${copy.seoTitle} — Гастроном`,
       description,
-      url: path,
       images: lookup.tag.imageUrl
         ? [{ url: lookup.tag.imageUrl.startsWith("http") ? lookup.tag.imageUrl : absoluteUrl(lookup.tag.imageUrl) }]
         : undefined,
@@ -67,13 +65,16 @@ export default async function CollectionPage({
   params: Params;
   searchParams: SearchParams;
 }) {
-  const { slug } = await params;
-  const { page: pageParam } = await searchParams;
+  const [{ slug }, { page: pageParam }, { locale }] = await Promise.all([
+    params,
+    searchParams,
+    getServerTranslator(),
+  ]);
   const page = parsePage(pageParam);
 
   const lookup = await lookupPublishedTagBySlug(slug);
   if (lookup.kind === "redirect") {
-    permanentRedirect(`/collections/${encodeURIComponent(lookup.slug)}`);
+    permanentRedirect(localizePath(`/collections/${encodeURIComponent(lookup.slug)}`, locale));
   }
   if (lookup.kind !== "found") notFound();
 
@@ -82,7 +83,7 @@ export default async function CollectionPage({
     fetchPublishedTags(),
   ]);
 
-  const copy = resolveTagCopy(lookup.tag, lookup.tag.translations, DEFAULT_LANGUAGE);
+  const copy = resolveTagCopy(lookup.tag, lookup.tag.translations, locale);
   const collectionUrl = absoluteUrl(`/collections/${encodeURIComponent(lookup.tag.slug)}`);
 
   const breadcrumbLd = {

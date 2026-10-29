@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocalizedLink";
 import { Button } from "@/components/ui/button";
 import CategoryGrid from "@/components/CategoryGrid";
 import { useLanguage } from "@/context/LanguageContext";
@@ -42,7 +42,7 @@ const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
               {categories.map((cat) => (
                 <li key={cat.id}>
                   <Link
-                    href={`/products?category=${encodeURIComponent(cat.slug)}`}
+                    href={`/categories/${encodeURIComponent(cat.slug)}`}
                     className="font-body text-sm text-foreground/80 underline-offset-4 hover:text-primary hover:underline"
                   >
                     {resolveCategoryName(cat, cat.translations, language)}

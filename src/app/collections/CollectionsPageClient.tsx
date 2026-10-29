@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
+import Link from "@/components/LocalizedLink";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -8,6 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { PLACEHOLDER_CATEGORY_IMAGE } from "@/lib/products/mappers";
 import { resolveTagCopy } from "@/lib/products/resolve-copy";
 import { type TagSummary } from "@/lib/products/types";
+import { shouldOptimizeImage } from "@/lib/images";
 
 export default function CollectionsPageClient({ tags }: { tags: TagSummary[] }) {
   const { t, language } = useLanguage();
@@ -25,9 +27,11 @@ export default function CollectionsPageClient({ tags }: { tags: TagSummary[] }) 
             {t("collections.subtitle")}
           </p>
         </div>
-        <img
+        <Image
           src="/slavic-border.png"
           alt=""
+          width={1920}
+          height={512}
           className="absolute bottom-0 left-0 w-full h-6 object-cover opacity-40 pointer-events-none"
         />
       </section>
@@ -46,11 +50,13 @@ export default function CollectionsPageClient({ tags }: { tags: TagSummary[] }) 
                     href={`/collections/${encodeURIComponent(tag.slug)}`}
                     className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:shadow-lg transition-shadow duration-300"
                   >
-                    <img
+                    <Image
                       src={tag.imageUrl || PLACEHOLDER_CATEGORY_IMAGE}
                       alt={copy.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      unoptimized={!shouldOptimizeImage(tag.imageUrl || PLACEHOLDER_CATEGORY_IMAGE)}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">

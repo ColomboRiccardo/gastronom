@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocalizedLink";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
