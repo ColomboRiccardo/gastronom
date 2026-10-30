@@ -684,6 +684,8 @@ export const translations: Record<Language, Record<string, string>> = {
       "Explore our full range of Eastern European delicacies, spirits, and crafts — organized by category.",
     "categories.intro":
       "From dairy, sausage, and fish to preserves, sweets, tea, and frozen goods, each category opens the matching products in our online shop. Visit us in Sanremo or order for pickup and delivery across Italy.",
+    "categories.seo_extra":
+      "Looking for a Russian grocery shop, Ukrainian specialties, Romanian products, or Baltic and Central European pantry staples near Sanremo? Browse by category to find smoked fish, kolbasa, fermented dairy, buckwheat, pickles, honey cake, kvass, and spirits. Every category page lists the products we stock in Via Nuvoloni 13 and online, with filters for what is in stock today.",
     "categories.empty": "No categories available yet.",
 
     "collections.title": "Collections",
@@ -1471,6 +1473,8 @@ export const translations: Record<Language, Record<string, string>> = {
       "Explorez notre gamme de délices, spiritueux et artisanat d'Europe de l'Est — organisée par catégorie.",
     "categories.intro":
       "Produits laitiers, charcuterie, poisson, conserves, confiseries, thés et surgelés : chaque catégorie ouvre les produits correspondants dans la boutique en ligne. Venez à Sanremo ou commandez pour un retrait et une livraison en Italie.",
+    "categories.seo_extra":
+      "Vous cherchez une épicerie russe, des spécialités ukrainiennes, des produits roumains ou des basiques baltes et d'Europe centrale près de Sanremo ? Parcourez les catégories pour trouver poissons fumés, kolbasa, produits laitiers fermentés, sarrasin, pickles, gâteau au miel, kvas et spiritueux. Chaque page liste ce que nous avons en stock Via Nuvoloni 13 et en ligne.",
     "categories.empty": "Aucune catégorie disponible pour le moment.",
 
     "collections.title": "Collections",
@@ -2257,6 +2261,8 @@ export const translations: Record<Language, Record<string, string>> = {
       "Esplora la nostra gamma di specialità, distillati e artigianato dell'Europa orientale — organizzata per categoria.",
     "categories.intro":
       "Da latticini, salumi e pesce a conserve, dolci, tè e surgelati: ogni categoria apre i prodotti corrispondenti nel negozio online. Vieni a Sanremo o ordina per ritiro e consegna in Italia.",
+    "categories.seo_extra":
+      "Cerchi un negozio russo, specialità ucraine, prodotti rumeni o dispensa baltica e dell'Europa centrale vicino a Sanremo? Sfoglia le categorie per trovare pesce affumicato, kolbasa, latticini fermentati, grano saraceno, sottaceti, torta al miele, kvas e liquori. Ogni pagina elenca ciò che abbiamo in stock in Via Nuvoloni 13 e online.",
     "categories.empty": "Nessuna categoria disponibile al momento.",
 
     "collections.title": "Collezioni",
@@ -3047,6 +3053,8 @@ export const translations: Record<Language, Record<string, string>> = {
       "Исследуйте наш ассортимент восточноевропейских деликатесов, напитков и ремёсел — по категориям.",
     "categories.intro":
       "От молочных продуктов, колбас и рыбы до консервов, сладостей, чая и заморозки: каждая категория открывает соответствующие товары в интернет-магазине. Приходите в Сан-Ремо или закажите самовывоз и доставку по Италии.",
+    "categories.seo_extra":
+      "Ищете русский магазин, украинские продукты, румынские специалитеты или балтийскую и центральноевропейскую кладовую рядом с Сан-Ремо? Смотрите категории: копчёная рыба, колбаса, кисломолочные продукты, гречка, соленья, медовик, квас и крепкие напитки. На каждой странице — то, что есть в наличии на Via Nuvoloni 13 и в интернет-магазине.",
     "categories.empty": "Категории пока недоступны.",
 
     "collections.title": "Подборки",

@@ -50,11 +50,21 @@ export function openGraphBase(path: string, locale: Language) {
 export async function localizedPageMetadata(options: {
   path: string;
   titleKey?: string;
+  /** When true, skip the layout "%s — Гастроном" template (homepage brand title). */
+  absoluteTitle?: boolean;
   descriptionKey: string;
 }): Promise<Metadata> {
   const { locale, t } = await getServerTranslator();
+  // Do not set `title: undefined`: Next merges that as an empty title and wipes
+  // the layout default (Semrush "title missing" on /, /it, /fr, /ru).
+  const title = options.titleKey
+    ? options.absoluteTitle
+      ? { absolute: t(options.titleKey) }
+      : t(options.titleKey)
+    : undefined;
+
   return {
-    title: options.titleKey ? t(options.titleKey) : undefined,
+    ...(title !== undefined ? { title } : {}),
     description: t(options.descriptionKey),
     alternates: localeAlternates(options.path, locale),
   };

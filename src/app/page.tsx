@@ -13,6 +13,8 @@ import { localBusinessJsonLd, organizationJsonLd, webSiteJsonLd } from "@/lib/se
 export function generateMetadata(): Promise<Metadata> {
   return localizedPageMetadata({
     path: "/",
+    titleKey: "meta.site_title",
+    absoluteTitle: true,
     descriptionKey: "meta.home_description",
   });
 }

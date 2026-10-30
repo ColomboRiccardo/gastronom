@@ -10,6 +10,15 @@ const LOCALE_HEADER = "x-locale";
  * real 308 instead of the streamed redirect a page inside a loading boundary
  * would produce.
  */
+/** Blog articles and legal pages are English-only; locale prefixes are soft duplicates. */
+const ENGLISH_ONLY_PREFIXES = ["/terms", "/privacy", "/cookies"] as const;
+
+function isEnglishOnlyPath(pathname: string): boolean {
+  if (ENGLISH_ONLY_PREFIXES.some((path) => pathname === path)) return true;
+  // /blog/<slug> is English-only; the /blog index stays localized.
+  return /^\/blog\/[^/]+$/.test(pathname);
+}
+
 function legacyRedirect(request: NextRequest, pathname: string, locale: Language): URL | null {
   const search = request.nextUrl.searchParams;
 
@@ -26,8 +35,9 @@ function legacyRedirect(request: NextRequest, pathname: string, locale: Language
   if (pathname === "/blog") {
     const article = search.get("article");
     if (article) {
+      // Articles are English-only: always land on the unprefixed URL.
       const url = request.nextUrl.clone();
-      url.pathname = localizePath(`/blog/${encodeURIComponent(article)}`, locale);
+      url.pathname = `/blog/${encodeURIComponent(article)}`;
       url.searchParams.delete("article");
       return url;
     }
@@ -42,6 +52,13 @@ export async function proxy(request: NextRequest) {
 
   // English is served at the root; "/en/..." would only create a duplicate.
   if (urlLocale === "en") {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname;
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Locale-prefixed English-only pages → strip the prefix (308).
+  if (urlLocale && isEnglishOnlyPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = pathname;
     return NextResponse.redirect(url, 308);

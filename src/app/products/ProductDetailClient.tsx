@@ -20,9 +20,17 @@ import { shouldOptimizeImage } from "@/lib/images";
 interface ProductDetailClientProps {
   product: UiProduct;
   related: UiProduct[];
+  /** Localized shop CTA; shown when the supplier description is missing or very short. */
+  shopBlurb?: string;
 }
 
-export default function ProductDetailClient({ product, related }: ProductDetailClientProps) {
+const THIN_DESCRIPTION_CHARS = 80;
+
+export default function ProductDetailClient({
+  product,
+  related,
+  shopBlurb,
+}: ProductDetailClientProps) {
   const { t, language } = useLanguage();
   const { toggleItem, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -41,6 +49,8 @@ export default function ProductDetailClient({ product, related }: ProductDetailC
     category: categoryLabel,
   };
   const wishlisted = isInWishlist(product.id);
+  const descriptionThin = copy.description.trim().length < THIN_DESCRIPTION_CHARS;
+  const showShopBlurb = Boolean(shopBlurb && descriptionThin);
 
   const categoryHref = product.categorySlug
     ? `/categories/${encodeURIComponent(product.categorySlug)}`
@@ -158,14 +168,21 @@ export default function ProductDetailClient({ product, related }: ProductDetailC
               </div>
 
               {copy.description ? (
-                <p className="mb-8 whitespace-pre-wrap font-body leading-relaxed text-muted-foreground">
+                <p
+                  className={`${showShopBlurb ? "mb-4" : "mb-8"} whitespace-pre-wrap font-body leading-relaxed text-muted-foreground`}
+                >
                   {copy.description}
                 </p>
               ) : (
-                <p className="mb-8 font-body leading-relaxed text-muted-foreground">
+                <p
+                  className={`${showShopBlurb ? "mb-4" : "mb-8"} font-body leading-relaxed text-muted-foreground`}
+                >
                   {t("product.no_description")}
                 </p>
               )}
+              {showShopBlurb ? (
+                <p className="mb-8 font-body leading-relaxed text-muted-foreground">{shopBlurb}</p>
+              ) : null}
 
               <div className="max-w-sm">
                 <CartQuantityControl product={displayProduct} size="md" className="w-full" />
